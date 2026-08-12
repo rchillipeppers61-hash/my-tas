@@ -1,0 +1,279 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "../supabaseClient";
+import { C, FONT_IMPORT } from "./theme";
+import { CATEGORIES, categoryLabel, rupiah, formatDay } from "../lib/shared";
+
+function Card({ children, title, sub, className = "" }) {
+  return (
+    <div
+      className={`rounded-3xl p-5 sm:p-6 ${className}`}
+      style={{
+        background: C.card,
+        boxShadow:
+          "0 1px 0 rgba(70,63,92,0.04), 0 12px 28px -16px rgba(70,63,92,0.22)",
+      }}>
+      {title && (
+        <div className="mb-2">
+          <h3
+            className="font-semibold text-[12px] sm:text-[13px] tracking-[0.08em] uppercase"
+            style={{ color: C.lavender }}>
+            {title}
+          </h3>
+          {sub && (
+            <p className="text-[12px] mt-0.5" style={{ color: C.inkFaint }}>
+              {sub}
+            </p>
+          )}
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
+export default function ParentDashboard({ user, onLogout }) {
+  const [childName, setChildName] = useState("");
+  const [transactions, setTransactions] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function loadData() {
+    setLoading(true);
+
+    if (!user.linked_child_id) {
+      setLoading(false);
+      return;
+    }
+
+    const { data: childData } = await supabase
+      .from("users")
+      .select("username")
+      .eq("id", user.linked_child_id)
+      .single();
+
+    if (childData) setChildName(childData.username);
+
+    const { data: txData } = await supabase
+      .from("transactions")
+      .select("*")
+      .eq("owner_id", user.linked_child_id)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false });
+
+    setTransactions(txData || []);
+    setLoading(false);
+  }
+
+  const summary = useMemo(() => {
+    const totalIn = transactions
+      .filter((t) => t.type === "in")
+      .reduce((s, t) => s + Number(t.amount), 0);
+    const totalOut = transactions
+      .filter((t) => t.type === "out")
+      .reduce((s, t) => s + Number(t.amount), 0);
+    const balance = totalIn - totalOut;
+
+    const byCategory = {};
+    transactions
+      .filter((t) => t.type === "out")
+      .forEach((t) => {
+        byCategory[t.category] =
+          (byCategory[t.category] || 0) + Number(t.amount);
+      });
+
+    const categoryRows = Object.entries(byCategory)
+      .map(([cat, amt]) => ({
+        cat,
+        amt,
+        pct: totalOut > 0 ? (amt / totalOut) * 100 : 0,
+      }))
+      .sort((a, b) => b.amt - a.amt);
+
+    return { totalIn, totalOut, balance, categoryRows };
+  }, [transactions]);
+
+  const grouped = useMemo(() => {
+    const map = {};
+    transactions.forEach((t) => {
+      if (!map[t.date]) map[t.date] = [];
+      map[t.date].push(t);
+    });
+    return Object.entries(map).sort((a, b) => (a[0] < b[0] ? 1 : -1));
+  }, [transactions]);
+
+  if (loading) {
+    return (
+      <div
+        className="min-h-screen w-full flex items-center justify-center"
+        style={{ background: C.bg }}>
+        <p style={{ color: C.inkFaint }}>Memuat...</p>
+      </div>
+    );
+  }
+
+  if (!user.linked_child_id) {
+    return (
+      <div
+        className="min-h-screen w-full flex items-center justify-center px-4"
+        style={{ background: C.bg }}>
+        <Card>
+          <p style={{ color: C.ink }}>
+            Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
+            <code>linked_child_id</code>.
+          </p>
+          <button
+            onClick={onLogout}
+            className="mt-4 px-4 py-2 rounded-2xl text-sm font-semibold"
+            style={{ background: C.lavenderSoft, color: "#fff" }}>
+            Keluar
+          </button>
+        </Card>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      className="min-h-screen w-full px-4 py-6 sm:py-10"
+      style={{ background: C.bg, fontFamily: "'Inter', sans-serif" }}>
+      <style>{FONT_IMPORT}</style>
+      <div className="max-w-2xl mx-auto">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <p
+              className="text-[11px] tracking-[0.2em] uppercase font-semibold"
+              style={{ color: C.lavender }}>
+              Pantauan Orang Tua
+            </p>
+            <h1
+              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+              className="text-[24px] font-semibold">
+              Keuangan {childName || "Anak"}
+            </h1>
+          </div>
+          <button
+            onClick={onLogout}
+            className="text-[13px] font-semibold px-3.5 py-2 rounded-2xl"
+            style={{ background: "#463F5C0f", color: C.ink }}>
+            Keluar
+          </button>
+        </div>
+
+        <div className="grid grid-cols-3 gap-3 mb-4">
+          <Card title="Saldo">
+            <p
+              className="text-[20px] font-semibold"
+              style={{ color: C.ink, fontFamily: "'Fraunces', serif" }}>
+              {rupiah(summary.balance)}
+            </p>
+          </Card>
+          <Card title="Masuk">
+            <p
+              className="text-[18px] font-semibold"
+              style={{ color: C.mintDeep }}>
+              {rupiah(summary.totalIn)}
+            </p>
+          </Card>
+          <Card title="Keluar">
+            <p
+              className="text-[18px] font-semibold"
+              style={{ color: C.roseDeep }}>
+              {rupiah(summary.totalOut)}
+            </p>
+          </Card>
+        </div>
+
+        <Card title="Pengeluaran per Kategori" className="mb-4">
+          {summary.categoryRows.length === 0 ? (
+            <p className="text-[13px]" style={{ color: C.inkFaint }}>
+              Belum ada pengeluaran tercatat.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              {summary.categoryRows.map((row) => (
+                <div key={row.cat}>
+                  <div className="flex justify-between text-[13px] mb-1">
+                    <span style={{ color: C.ink }}>
+                      {categoryLabel(row.cat)}
+                    </span>
+                    <span style={{ color: C.inkFaint }}>
+                      {rupiah(row.amt)} ({row.pct.toFixed(0)}%)
+                    </span>
+                  </div>
+                  <div
+                    className="h-2 rounded-full overflow-hidden"
+                    style={{ background: "#463F5C14" }}>
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: `${row.pct}%`,
+                        background: C.lavender,
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card
+          title="Riwayat Transaksi"
+          sub="Detail lengkap, tidak dapat diedit dari sini">
+          {grouped.length === 0 ? (
+            <p className="text-[13px]" style={{ color: C.inkFaint }}>
+              Belum ada transaksi.
+            </p>
+          ) : (
+            <div className="space-y-5">
+              {grouped.map(([date, items]) => (
+                <div key={date}>
+                  <p
+                    className="text-[12px] font-semibold mb-2"
+                    style={{ color: C.inkFaint }}>
+                    {formatDay(date)}
+                  </p>
+                  <div className="space-y-2">
+                    {items.map((t) => (
+                      <div
+                        key={t.id}
+                        className="flex items-center justify-between py-2 px-3 rounded-2xl"
+                        style={{ background: "#463F5C08" }}>
+                        <div>
+                          <p
+                            className="text-[14px] font-medium"
+                            style={{ color: C.ink }}>
+                            {t.note || categoryLabel(t.category)}
+                          </p>
+                          <p
+                            className="text-[11px]"
+                            style={{ color: C.inkFaint }}>
+                            {t.type === "out"
+                              ? categoryLabel(t.category)
+                              : "Pemasukan"}
+                          </p>
+                        </div>
+                        <p
+                          className="text-[14px] font-semibold"
+                          style={{
+                            color: t.type === "in" ? C.mintDeep : C.roseDeep,
+                          }}>
+                          {t.type === "in" ? "+" : "-"}
+                          {rupiah(t.amount)}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </div>
+  );
+}
