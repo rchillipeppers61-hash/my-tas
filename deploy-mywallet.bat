@@ -58,8 +58,8 @@ echo  ========================================
 echo         DEPLOYMENT SUCCESS!
 echo  ========================================
 echo.
-echo  GitHub: https://github.com/squad7fmuscil/app-adm-kelas7
-echo  Website: https://app-adm-kelas7.vercel.app/
+echo  GitHub: https://github.com/rchillipeppers61-hash/my-wallet
+echo  Website: https://dompetku-aghnia.vercel.app/
 echo.
 echo  Vercel will auto-deploy in 1-2 minutes.
 echo.
