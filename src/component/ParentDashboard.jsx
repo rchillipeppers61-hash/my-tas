@@ -47,6 +47,7 @@ export default function ParentDashboard({ user, onLogout }) {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportEmptyMonth, setExportEmptyMonth] = useState(null);
+  const [downloadToast, setDownloadToast] = useState("");
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showResetChildPassword, setShowResetChildPassword] = useState(false);
@@ -367,6 +368,19 @@ export default function ParentDashboard({ user, onLogout }) {
           style={{ background: C.mint }}
         />
       </div>
+      {downloadToast && (
+        <div
+          className="fixed top-5 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-semibold"
+          style={{
+            background: "#FFFFFF",
+            color: C.mintDeep,
+            boxShadow: "0 14px 32px -12px rgba(70,63,92,0.35)",
+            border: "1.5px solid #3F9E7C33",
+          }}>
+          {downloadToast}
+        </div>
+      )}
+
       <div className="max-w-2xl mx-auto relative">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3 min-w-0">
@@ -483,12 +497,22 @@ export default function ParentDashboard({ user, onLogout }) {
                     <button
                       onClick={async () => {
                         const ok = await exportToExcel(m);
-                        if (ok !== false) setShowExportModal(false);
+                        if (ok !== false) {
+                          setShowExportModal(false);
+                          setDownloadToast(
+                            `File ${monthLabel(m)} berhasil diunduh ✓`,
+                          );
+                          setTimeout(() => setDownloadToast(""), 3000);
+                        }
                       }}
                       className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-[13.5px] font-medium"
                       style={{ background: "#463F5C0a", color: C.ink }}>
                       {monthLabel(m)}
-                      <span style={{ color: C.mintDeep }}>↓</span>
+                      <span
+                        className="text-[11.5px] font-bold px-3 py-1.5 rounded-full flex-shrink-0"
+                        style={{ background: "#3F9E7C1F", color: C.mintDeep }}>
+                        Download
+                      </span>
                     </button>
                     {exportEmptyMonth === m && (
                       <p
