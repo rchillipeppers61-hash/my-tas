@@ -84,18 +84,13 @@ export default function ChildDashboard({ user, onLogout }) {
     .reduce((s, t) => s + t.amount, 0);
   const saldo = totalIn - totalOut;
   const isLow = saldo < LOW_BALANCE_LIMIT;
-  const avgOutPerDay = transactions.length
-    ? Math.round(
-        totalOut /
-          daysBetween(
-            transactions.reduce(
-              (min, t) => (t.date < min ? t.date : min),
-              transactions[0].date,
-            ),
-            todayISO(),
-          ),
-      )
-    : 0;
+  const currentMonthKey = todayISO().slice(0, 7);
+  const totalOutThisMonth = transactions
+    .filter((t) => t.type === "out" && t.date.slice(0, 7) === currentMonthKey)
+    .reduce((s, t) => s + t.amount, 0);
+  const avgOutPerDay = Math.round(
+    totalOutThisMonth / daysBetween(`${currentMonthKey}-01`, todayISO()),
+  );
 
   const availableMonths = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
@@ -279,6 +274,11 @@ export default function ChildDashboard({ user, onLogout }) {
                         color: C.lavender,
                       }}>
                       {rupiah(avgOutPerDay)}
+                    </p>
+                    <p
+                      className="text-[10.5px] mt-0.5"
+                      style={{ color: C.inkFaint }}>
+                      Bulan ini
                     </p>
                   </div>
                   <div
