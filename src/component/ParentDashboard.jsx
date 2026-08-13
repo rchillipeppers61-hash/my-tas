@@ -5,6 +5,7 @@ import { C, FONT_IMPORT } from "./theme";
 import Card from "./Card";
 import ChangePasswordModal from "./ChangePasswordModal";
 import ResetChildPasswordModal from "./ResetChildPasswordModal";
+import SavingsGoalItem from "./SavingsGoalItem";
 import {
   CATEGORIES,
   categoryLabel,
@@ -49,6 +50,9 @@ export default function ParentDashboard({ user, onLogout }) {
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showResetChildPassword, setShowResetChildPassword] = useState(false);
+  const [logs, setLogs] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [expandedLogTx, setExpandedLogTx] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -79,20 +83,42 @@ export default function ParentDashboard({ user, onLogout }) {
       .order("created_at", { ascending: false });
 
     setTransactions(txData || []);
+
+    const { data: logData } = await supabase
+      .from("transaction_logs")
+      .select("*")
+      .eq("owner_id", user.linked_child_id)
+      .order("changed_at", { ascending: false });
+
+    setLogs(logData || []);
+
+    const { data: goalData } = await supabase
+      .from("savings_goals")
+      .select("*")
+      .eq("owner_id", user.linked_child_id)
+      .order("created_at", { ascending: true });
+
+    setGoals(goalData || []);
+
     setLoading(false);
   }
 
+  const activeTransactions = useMemo(
+    () => transactions.filter((t) => !t.deleted_at),
+    [transactions],
+  );
+
   const summary = useMemo(() => {
-    const totalIn = transactions
+    const totalIn = activeTransactions
       .filter((t) => t.type === "in")
       .reduce((s, t) => s + Number(t.amount), 0);
-    const totalOut = transactions
+    const totalOut = activeTransactions
       .filter((t) => t.type === "out")
       .reduce((s, t) => s + Number(t.amount), 0);
     const balance = totalIn - totalOut;
 
     const byCategory = {};
-    transactions
+    activeTransactions
       .filter((t) => t.type === "out")
       .forEach((t) => {
         byCategory[t.category] =
@@ -108,7 +134,7 @@ export default function ParentDashboard({ user, onLogout }) {
       .sort((a, b) => b.amt - a.amt);
 
     return { totalIn, totalOut, balance, categoryRows };
-  }, [transactions]);
+  }, [activeTransactions]);
 
   const months = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
@@ -136,9 +162,38 @@ export default function ParentDashboard({ user, onLogout }) {
     return Object.entries(map).sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [monthTransactions]);
 
+  const logsByTransaction = useMemo(() => {
+    const map = {};
+    logs.forEach((l) => {
+      (map[l.transaction_id] = map[l.transaction_id] || []).push(l);
+    });
+    return map;
+  }, [logs]);
+
+  function fieldChangeSummary(oldData, newData) {
+    if (!newData) return null;
+    const fieldLabel = {
+      amount: "Jumlah",
+      note: "Catatan",
+      category: "Kategori",
+      type: "Tipe",
+    };
+    const changed = [];
+    Object.keys(fieldLabel).forEach((key) => {
+      if (String(oldData?.[key]) !== String(newData?.[key])) {
+        changed.push({
+          field: fieldLabel[key],
+          from: oldData?.[key],
+          to: newData?.[key],
+        });
+      }
+    });
+    return changed;
+  }
+
   async function exportToExcel(targetMonth) {
     const month = targetMonth || selectedMonth;
-    const rows = transactions
+    const rows = activeTransactions
       .filter((t) => t.date.slice(0, 7) === month)
       .slice()
       .sort((a, b) => (a.date < b.date ? -1 : 1));
@@ -530,6 +585,16 @@ export default function ParentDashboard({ user, onLogout }) {
           </div>
         </div>
 
+        {goals.length > 0 && (
+          <Card title="Target Nabung" accent={C.lavender} className="mb-4">
+            <div className="space-y-4">
+              {goals.map((g) => (
+                <SavingsGoalItem key={g.id} goal={g} saldo={summary.balance} />
+              ))}
+            </div>
+          </Card>
+        )}
+
         <Card
           title="Pengeluaran per Kategori"
           accent={C.lavender}
@@ -631,40 +696,158 @@ export default function ParentDashboard({ user, onLogout }) {
                         t.type === "in"
                           ? { icon: "💰", bg: "#3F9E7C22" }
                           : getCategoryMeta(t.category);
+                      const isDeleted = Boolean(t.deleted_at);
+                      const txLogs = logsByTransaction[t.id] || [];
+                      const hasLogs = txLogs.length > 0;
+                      const isExpanded = expandedLogTx === t.id;
                       return (
-                        <div
-                          key={t.id}
-                          className="flex items-center justify-between py-2 px-3 rounded-2xl"
-                          style={{ background: "#463F5C08" }}>
-                          <div className="flex items-center gap-2.5 min-w-0">
-                            <div
-                              className="w-9 h-9 rounded-2xl flex items-center justify-center text-[16px] flex-shrink-0"
-                              style={{ background: meta.bg }}>
-                              {meta.icon}
+                        <div key={t.id}>
+                          <div
+                            className="flex items-center justify-between py-2 px-3 rounded-2xl gap-2"
+                            style={{
+                              background: isDeleted ? "#F4A6B714" : "#463F5C08",
+                              opacity: isDeleted ? 0.75 : 1,
+                            }}>
+                            <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                              <div
+                                className="w-9 h-9 rounded-2xl flex items-center justify-center text-[16px] flex-shrink-0"
+                                style={{ background: meta.bg }}>
+                                {isDeleted ? "🗑️" : meta.icon}
+                              </div>
+                              <div className="min-w-0">
+                                <p
+                                  className="text-[14px] font-medium truncate"
+                                  style={{
+                                    color: isDeleted ? C.inkFaint : C.ink,
+                                    textDecoration: isDeleted
+                                      ? "line-through"
+                                      : "none",
+                                  }}>
+                                  {t.note || categoryLabel(t.category)}
+                                </p>
+                                <p
+                                  className="text-[11px] flex items-center gap-1.5 flex-wrap"
+                                  style={{ color: C.inkFaint }}>
+                                  {t.type === "out"
+                                    ? categoryLabel(t.category)
+                                    : "Pemasukan"}
+                                  {isDeleted && (
+                                    <span
+                                      className="font-semibold"
+                                      style={{ color: C.roseDeep }}>
+                                      · Dihapus anak
+                                    </span>
+                                  )}
+                                  {!isDeleted && hasLogs && (
+                                    <span
+                                      className="font-semibold"
+                                      style={{ color: C.amberDeep }}>
+                                      · Pernah diedit
+                                    </span>
+                                  )}
+                                </p>
+                              </div>
                             </div>
-                            <div className="min-w-0">
+                            <div className="flex items-center gap-2 flex-shrink-0">
                               <p
-                                className="text-[14px] font-medium truncate"
-                                style={{ color: C.ink }}>
-                                {t.note || categoryLabel(t.category)}
+                                className="text-[14px] font-semibold"
+                                style={{
+                                  color: isDeleted
+                                    ? C.inkFaint
+                                    : t.type === "in"
+                                      ? C.mintDeep
+                                      : C.roseDeep,
+                                  textDecoration: isDeleted
+                                    ? "line-through"
+                                    : "none",
+                                }}>
+                                {t.type === "in" ? "+" : "-"}
+                                {rupiah(t.amount)}
                               </p>
-                              <p
-                                className="text-[11px]"
-                                style={{ color: C.inkFaint }}>
-                                {t.type === "out"
-                                  ? categoryLabel(t.category)
-                                  : "Pemasukan"}
-                              </p>
+                              {hasLogs && (
+                                <button
+                                  onClick={() =>
+                                    setExpandedLogTx(isExpanded ? null : t.id)
+                                  }
+                                  className="text-[11px] font-semibold px-2 py-1 rounded-full flex-shrink-0"
+                                  style={{
+                                    background: "#8B72C41A",
+                                    color: C.lavender,
+                                  }}>
+                                  {isExpanded ? "Tutup" : "Riwayat"}
+                                </button>
+                              )}
                             </div>
                           </div>
-                          <p
-                            className="text-[14px] font-semibold flex-shrink-0"
-                            style={{
-                              color: t.type === "in" ? C.mintDeep : C.roseDeep,
-                            }}>
-                            {t.type === "in" ? "+" : "-"}
-                            {rupiah(t.amount)}
-                          </p>
+
+                          {isExpanded && hasLogs && (
+                            <div
+                              className="mt-1.5 ml-2 pl-3 py-2.5 space-y-2.5"
+                              style={{ borderLeft: `2px solid #8B72C433` }}>
+                              {txLogs.map((log) => {
+                                const changes = fieldChangeSummary(
+                                  log.old_data,
+                                  log.new_data,
+                                );
+                                return (
+                                  <div key={log.id} className="text-[11.5px]">
+                                    <p
+                                      className="font-semibold mb-1"
+                                      style={{ color: C.inkSoft }}>
+                                      {log.action === "delete"
+                                        ? "🗑️ Dihapus"
+                                        : "✏️ Diedit"}{" "}
+                                      ·{" "}
+                                      {new Date(log.changed_at).toLocaleString(
+                                        "id-ID",
+                                        {
+                                          day: "numeric",
+                                          month: "short",
+                                          hour: "2-digit",
+                                          minute: "2-digit",
+                                        },
+                                      )}
+                                    </p>
+                                    {log.action === "delete" ? (
+                                      <p style={{ color: C.inkFaint }}>
+                                        Nilai terakhir sebelum dihapus:{" "}
+                                        {rupiah(log.old_data.amount)} —{" "}
+                                        {log.old_data.note || "-"}
+                                      </p>
+                                    ) : changes && changes.length > 0 ? (
+                                      <ul className="space-y-0.5">
+                                        {changes.map((c, i) => (
+                                          <li
+                                            key={i}
+                                            style={{ color: C.inkFaint }}>
+                                            {c.field}:{" "}
+                                            <span
+                                              style={{
+                                                textDecoration: "line-through",
+                                              }}>
+                                              {c.field === "Jumlah"
+                                                ? rupiah(c.from)
+                                                : c.from || "-"}
+                                            </span>{" "}
+                                            →{" "}
+                                            <span style={{ color: C.ink }}>
+                                              {c.field === "Jumlah"
+                                                ? rupiah(c.to)
+                                                : c.to || "-"}
+                                            </span>
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    ) : (
+                                      <p style={{ color: C.inkFaint }}>
+                                        Tidak ada perubahan nilai.
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

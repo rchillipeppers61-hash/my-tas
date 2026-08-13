@@ -4,6 +4,7 @@ import { C, FONT_IMPORT } from "./theme";
 import Card from "./Card";
 import TransactionForm from "./TransactionForm";
 import ChangePasswordModal from "./ChangePasswordModal";
+import SavingsGoalItem from "./SavingsGoalItem";
 import {
   rupiah,
   todayISO,
@@ -44,6 +45,12 @@ export default function ChildDashboard({ user, onLogout }) {
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("week");
+  const [goals, setGoals] = useState([]);
+  const [showAddGoal, setShowAddGoal] = useState(false);
+  const [goalTitle, setGoalTitle] = useState("");
+  const [goalAmount, setGoalAmount] = useState("");
+  const [goalSaving, setGoalSaving] = useState(false);
+  const [reminderDismissed, setReminderDismissed] = useState(false);
 
   const displayName = user.nama_lengkap || capitalize(user.username) || "Kamu";
 
@@ -53,13 +60,24 @@ export default function ChildDashboard({ user, onLogout }) {
       .from("transactions")
       .select("*")
       .eq("owner_id", user.id)
+      .is("deleted_at", null)
       .order("date", { ascending: true });
     if (!error) setTransactions(data || []);
     setLoading(false);
   }
 
+  async function fetchGoals() {
+    const { data, error } = await supabase
+      .from("savings_goals")
+      .select("*")
+      .eq("owner_id", user.id)
+      .order("created_at", { ascending: true });
+    if (!error) setGoals(data || []);
+  }
+
   useEffect(() => {
     fetchTransactions();
+    fetchGoals();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -80,6 +98,7 @@ export default function ChildDashboard({ user, onLogout }) {
   }
 
   async function updateTransaction(id, { type, amount, note, category }) {
+    const oldTx = transactions.find((t) => t.id === id);
     const { error } = await supabase
       .from("transactions")
       .update({
@@ -90,11 +109,30 @@ export default function ChildDashboard({ user, onLogout }) {
       })
       .eq("id", id)
       .eq("owner_id", user.id);
-    if (!error) {
-      await fetchTransactions();
-      return true;
+    if (error) return false;
+
+    if (oldTx) {
+      await supabase.from("transaction_logs").insert({
+        transaction_id: id,
+        owner_id: user.id,
+        action: "update",
+        old_data: {
+          type: oldTx.type,
+          amount: oldTx.amount,
+          note: oldTx.note,
+          category: oldTx.category,
+        },
+        new_data: {
+          type,
+          amount,
+          note,
+          category: category || "lainnya",
+        },
+      });
     }
-    return false;
+
+    await fetchTransactions();
+    return true;
   }
 
   async function saveTransaction({ id, type, amount, note, category }) {
@@ -105,16 +143,60 @@ export default function ChildDashboard({ user, onLogout }) {
   }
 
   async function deleteTransaction(id) {
+    const oldTx = transactions.find((t) => t.id === id);
     const { error } = await supabase
       .from("transactions")
-      .delete()
+      .update({ deleted_at: new Date().toISOString() })
       .eq("id", id)
       .eq("owner_id", user.id);
+    if (error) return false;
+
+    if (oldTx) {
+      await supabase.from("transaction_logs").insert({
+        transaction_id: id,
+        owner_id: user.id,
+        action: "delete",
+        old_data: {
+          type: oldTx.type,
+          amount: oldTx.amount,
+          note: oldTx.note,
+          category: oldTx.category,
+        },
+        new_data: null,
+      });
+    }
+
+    await fetchTransactions();
+    return true;
+  }
+
+  async function addGoal() {
+    const amt = parseFloat(goalAmount);
+    if (!goalTitle.trim() || !amt || amt <= 0) return false;
+    setGoalSaving(true);
+    const { error } = await supabase.from("savings_goals").insert({
+      owner_id: user.id,
+      title: goalTitle.trim(),
+      target_amount: amt,
+    });
+    setGoalSaving(false);
     if (!error) {
-      await fetchTransactions();
+      setGoalTitle("");
+      setGoalAmount("");
+      setShowAddGoal(false);
+      await fetchGoals();
       return true;
     }
     return false;
+  }
+
+  async function deleteGoal(id) {
+    const { error } = await supabase
+      .from("savings_goals")
+      .delete()
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (!error) await fetchGoals();
   }
 
   const totalIn = transactions
@@ -125,6 +207,8 @@ export default function ChildDashboard({ user, onLogout }) {
     .reduce((s, t) => s + t.amount, 0);
   const saldo = totalIn - totalOut;
   const isLow = saldo < LOW_BALANCE_LIMIT;
+  const hasTransactionToday = transactions.some((t) => t.date === todayISO());
+  const showReminder = !loading && !hasTransactionToday && !reminderDismissed;
   const currentMonthKey = todayISO().slice(0, 7);
   const totalOutThisMonth = transactions
     .filter((t) => t.type === "out" && t.date.slice(0, 7) === currentMonthKey)
@@ -222,6 +306,29 @@ export default function ChildDashboard({ user, onLogout }) {
             </button>
           </div>
         </div>
+
+        {showReminder && (
+          <div
+            className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mb-4 sm:mb-5"
+            style={{
+              background: "#F6C4531F",
+              border: `1.5px solid #F6C45355`,
+            }}>
+            <span className="text-[18px] flex-shrink-0">👀</span>
+            <p
+              className="text-[12.5px] sm:text-[13px] font-semibold flex-1"
+              style={{ color: C.amberDeep }}>
+              Belum ada catatan transaksi hari ini, yuk catat dulu!
+            </p>
+            <button
+              onClick={() => setReminderDismissed(true)}
+              aria-label="Tutup"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] flex-shrink-0"
+              style={{ background: "#463F5C0f", color: C.amberDeep }}>
+              ✕
+            </button>
+          </div>
+        )}
 
         {loading ? (
           <p
@@ -338,6 +445,78 @@ export default function ChildDashboard({ user, onLogout }) {
                     📊
                   </div>
                 </div>
+              </Card>
+
+              <Card>
+                <div className="flex items-center justify-between mb-3">
+                  <p
+                    className="text-[11px] uppercase tracking-[0.1em] font-semibold"
+                    style={{ color: C.inkFaint }}>
+                    Target Nabung
+                  </p>
+                  <button
+                    onClick={() => setShowAddGoal((v) => !v)}
+                    className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                    style={{ background: "#8B72C41A", color: C.lavender }}>
+                    {showAddGoal ? "Batal" : "+ Tambah"}
+                  </button>
+                </div>
+
+                {showAddGoal && (
+                  <div className="mb-3.5 space-y-2">
+                    <input
+                      type="text"
+                      value={goalTitle}
+                      onChange={(e) => setGoalTitle(e.target.value)}
+                      placeholder="Contoh: Sepatu baru"
+                      className="w-full px-3 py-2.5 rounded-xl text-[13px] outline-none border-[1.5px]"
+                      style={{
+                        background: "#463F5C08",
+                        color: C.ink,
+                        borderColor: "#463F5C1F",
+                      }}
+                    />
+                    <input
+                      type="number"
+                      value={goalAmount}
+                      onChange={(e) => setGoalAmount(e.target.value)}
+                      placeholder="Target (Rp) contoh: 500000"
+                      className="w-full px-3 py-2.5 rounded-xl text-[13px] outline-none border-[1.5px]"
+                      style={{
+                        background: "#463F5C08",
+                        color: C.ink,
+                        borderColor: "#463F5C1F",
+                      }}
+                    />
+                    <button
+                      onClick={addGoal}
+                      disabled={goalSaving}
+                      className="w-full py-2.5 rounded-xl font-bold text-[13px] disabled:opacity-50"
+                      style={{
+                        background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+                        color: "#FFFFFF",
+                      }}>
+                      {goalSaving ? "Menyimpan..." : "Simpan Target"}
+                    </button>
+                  </div>
+                )}
+
+                {goals.length === 0 && !showAddGoal ? (
+                  <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
+                    Belum ada target nabung. Yuk bikin satu!
+                  </p>
+                ) : (
+                  <div className="space-y-4">
+                    {goals.map((g) => (
+                      <SavingsGoalItem
+                        key={g.id}
+                        goal={g}
+                        saldo={saldo}
+                        onDelete={deleteGoal}
+                      />
+                    ))}
+                  </div>
+                )}
               </Card>
 
               <button
