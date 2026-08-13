@@ -6,12 +6,15 @@ export default function Login({ onLoginSuccess }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(true);
+  const [showForgotHint, setShowForgotHint] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
     setError("");
+    setShowForgotHint(false);
     setLoading(true);
 
     const u = username.trim().toLowerCase();
@@ -40,93 +43,92 @@ export default function Login({ onLoginSuccess }) {
       role: data.role,
       linked_child_id: data.linked_child_id,
     };
-    localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+
+    // "Ingat saya" checked -> persist across browser restarts (localStorage).
+    // Unchecked -> only remember for this tab session (sessionStorage).
+    if (remember) {
+      sessionStorage.removeItem("mywallet_user");
+      localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+    } else {
+      localStorage.removeItem("mywallet_user");
+      sessionStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+    }
     onLoginSuccess?.(loggedInUser);
   }
 
   return (
     <div
-      className="min-h-screen w-full flex"
+      className="min-h-screen w-full flex flex-col lg:flex-row"
       style={{ background: C.bg, fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
-      {/* Left panel — illustration + welcome copy, desktop only */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden items-center justify-center px-12">
+      {/* Hero banner — full-bleed on mobile, left half on desktop */}
+      <div
+        className="relative w-full h-[228px] sm:h-[260px] lg:h-screen lg:w-1/2 flex-shrink-0 overflow-hidden flex flex-col justify-end"
+        style={{
+          background: `linear-gradient(150deg, ${C.lavender} 0%, ${C.lavenderSoft} 55%, ${C.mint} 130%)`,
+        }}>
         <div
-          className="absolute -top-28 -left-20 w-96 h-96 rounded-full opacity-50 blur-3xl"
-          style={{ background: C.mint }}
-        />
-        <div
-          className="absolute bottom-0 -right-10 w-80 h-80 rounded-full opacity-40 blur-3xl"
-          style={{ background: C.rose }}
-        />
-        <div
-          className="absolute top-1/2 left-1/3 w-64 h-64 rounded-full opacity-30 blur-3xl"
+          className="absolute -top-16 -right-10 w-56 h-56 rounded-full opacity-30 blur-3xl"
           style={{ background: C.sky }}
         />
-
-        <div className="relative max-w-sm">
-          <PiggyIllustration />
-          <p
-            className="text-[11px] tracking-[0.22em] uppercase font-semibold mt-8"
-            style={{ color: C.lavender }}>
-            Buku Kas Keluarga
-          </p>
-          <h2
-            style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-            className="text-[32px] font-semibold leading-[1.15] mt-2">
-            Satu catatan hari ini,
-            <br />
-            satu kebiasaan baik nanti.
-          </h2>
-          <p
-            className="text-[14px] mt-3 leading-relaxed"
-            style={{ color: C.inkSoft }}>
-            Catat setiap uang masuk dan keluar, biar di akhir bulan kamu tau
-            persis kemana perginya — bukan cuma nebak-nebak.
-          </p>
-          <p
-            className="text-[18px] mt-6"
-            style={{ fontFamily: "'Caveat', cursive", color: C.lavender }}>
-            "pelan-pelan, yang penting jujur ✎"
-          </p>
-        </div>
-      </div>
-
-      {/* Right panel — the form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center px-4 py-10 relative">
         <div
-          className="lg:hidden absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-40 blur-3xl pointer-events-none"
-          style={{ background: C.mint }}
-        />
-        <div
-          className="lg:hidden absolute top-1/3 -left-20 w-56 h-56 rounded-full opacity-30 blur-3xl pointer-events-none"
+          className="absolute bottom-0 left-1/3 w-64 h-64 rounded-full opacity-20 blur-3xl"
           style={{ background: C.rose }}
         />
 
+        {/* Signature — oversized bleeding wordmark, like a scrawled savings goal */}
+        <p
+          aria-hidden="true"
+          style={{
+            fontFamily: "'Fraunces', serif",
+            color: "#FFFFFF",
+            opacity: 0.92,
+            fontSize: "clamp(88px, 26vw, 168px)",
+            lineHeight: 0.82,
+            letterSpacing: "-0.03em",
+            marginLeft: "-0.04em",
+            textShadow: "0 10px 30px rgba(70,63,92,0.18)",
+          }}
+          className="font-semibold select-none whitespace-nowrap px-1">
+          SAKU
+        </p>
+        <p
+          className="relative text-[13px] sm:text-[14px] px-6 sm:px-8 lg:px-12 mb-6 sm:mb-8 lg:mb-10 lg:max-w-xs"
+          style={{ color: "#FFFFFF", opacity: 0.9 }}>
+          Uang saku bulan ini, ke mana perginya? Catat sekarang, biar tau nanti.
+        </p>
+
+        <FloatingDoodles />
+      </div>
+
+      {/* Card — overlaps the hero on mobile, sits centered on desktop */}
+      <div className="relative flex-1 flex items-start lg:items-center justify-center px-4 sm:px-6 lg:px-10 -mt-7 lg:mt-0 pb-10 lg:pb-0">
         <form
           onSubmit={handleLogin}
-          className="relative w-full max-w-sm rounded-[28px] p-7 sm:p-8"
+          className="relative w-full max-w-sm rounded-[28px] pt-11 px-6 sm:px-7 pb-7"
           style={{
             background: "#FFFFFF",
             boxShadow: "0 20px 48px -20px rgba(70,63,92,0.28)",
           }}>
-          <div className="lg:hidden flex justify-center mb-5">
+          <div className="absolute left-1/2 -top-9 -translate-x-1/2">
             <CoinBadge />
           </div>
 
           <p
-            className="text-[11px] tracking-[0.2em] uppercase mb-1 font-semibold"
+            className="text-center text-[11px] tracking-[0.2em] uppercase mb-1 font-semibold"
             style={{ color: C.lavender }}>
             Selamat Datang
           </p>
           <h1
             style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-            className="text-[27px] font-semibold mb-1">
-            My Wallet
+            className="text-center text-[24px] font-semibold mb-1">
+            Masuk ke My Wallet
           </h1>
-          <p className="text-[13px] mb-6" style={{ color: C.inkFaint }}>
-            Masuk dulu buat mulai mencatat.
+          <p
+            className="text-center text-[13px] mb-6"
+            style={{ color: C.inkFaint }}>
+            Catat dulu, baru tenang mikirinnya.
           </p>
 
           <label
@@ -161,7 +163,7 @@ export default function Login({ onLoginSuccess }) {
             style={{ color: C.inkFaint }}>
             Password
           </label>
-          <div className="relative mt-1.5 mb-5">
+          <div className="relative mt-1.5 mb-3">
             <span
               className="absolute left-3.5 top-1/2 -translate-y-1/2"
               style={{ color: C.inkFaint }}>
@@ -193,6 +195,43 @@ export default function Login({ onLoginSuccess }) {
             </button>
           </div>
 
+          <div className="flex items-center justify-between mb-5 mt-1">
+            <button
+              type="button"
+              onClick={() => setRemember((v) => !v)}
+              className="flex items-center gap-2 group">
+              <span
+                className="w-[18px] h-[18px] rounded-md flex items-center justify-center transition-colors"
+                style={{
+                  background: remember ? C.lavender : "#463F5C0d",
+                  border: remember
+                    ? `1px solid ${C.lavender}`
+                    : "1px solid #463F5C33",
+                }}>
+                {remember && <CheckIcon />}
+              </span>
+              <span className="text-[12.5px]" style={{ color: C.inkSoft }}>
+                Ingat saya
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowForgotHint((v) => !v)}
+              className="text-[12.5px] font-medium"
+              style={{ color: C.lavender }}>
+              Lupa password?
+            </button>
+          </div>
+
+          {showForgotHint && (
+            <div
+              className="text-[12px] mb-4 px-3.5 py-2.5 rounded-xl"
+              style={{ background: "#8B72C414", color: C.lavender }}>
+              Password diatur oleh orang tua / admin. Hubungi mereka untuk reset
+              ya.
+            </div>
+          )}
+
           {error && (
             <div
               className="text-[12px] mb-4 px-3.5 py-2.5 rounded-xl"
@@ -213,9 +252,9 @@ export default function Login({ onLoginSuccess }) {
           </button>
 
           <p
-            className="text-center text-[12px] mt-5"
+            className="text-center mt-6 text-[12px]"
             style={{ color: C.inkFaint }}>
-            Punya pertanyaan soal akunmu? Tanya Ayah/Ibu ya 🙂
+            © 2026 My Wallet · Buku kas harian
           </p>
         </form>
       </div>
@@ -292,16 +331,33 @@ function EyeOffIcon() {
   );
 }
 
+function CheckIcon() {
+  return (
+    <svg
+      width="12"
+      height="12"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#FFFFFF"
+      strokeWidth="3"
+      strokeLinecap="round"
+      strokeLinejoin="round">
+      <path d="M20 6 9 17l-5-5" />
+    </svg>
+  );
+}
+
 function CoinBadge() {
   return (
-    <svg width="56" height="56" viewBox="0 0 56 56" fill="none">
-      <circle cx="28" cy="28" r="26" fill={C.lavenderSoft} opacity="0.25" />
-      <circle cx="28" cy="28" r="19" fill={C.lavender} />
+    <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <circle cx="32" cy="32" r="31" fill="#FFFFFF" />
+      <circle cx="32" cy="32" r="29" fill={C.lavenderSoft} opacity="0.25" />
+      <circle cx="32" cy="32" r="21" fill={C.lavender} />
       <text
-        x="28"
-        y="35"
+        x="32"
+        y="40"
         textAnchor="middle"
-        fontSize="20"
+        fontSize="21"
         fontFamily="'Fraunces', serif"
         fontWeight="600"
         fill="#FFFFFF">
@@ -311,126 +367,40 @@ function CoinBadge() {
   );
 }
 
-/* Signature illustration: a little jar of savings with coins stacking up
-   and a hand-drawn arrow, tying the login moment to the app's purpose. */
-function PiggyIllustration() {
+/* Small scattered doodles across the hero banner — coin, arrow, sparkle —
+   echoing the app's hand-drawn accent style without competing with SAKU. */
+function FloatingDoodles() {
   return (
-    <svg width="220" height="200" viewBox="0 0 220 200" fill="none">
-      {/* jar */}
-      <path
-        d="M60 90 L58 175 Q58 188 72 188 L148 188 Q162 188 162 175 L160 90 Z"
-        fill="#FFFFFF"
-        stroke={C.ink}
-        strokeWidth="2.5"
-        opacity="0.9"
-      />
-      <rect
-        x="55"
-        y="78"
-        width="110"
-        height="16"
-        rx="8"
-        fill={C.lavenderSoft}
-        stroke={C.ink}
-        strokeWidth="2.5"
-      />
-      <rect
-        x="95"
-        y="60"
-        width="30"
-        height="20"
-        rx="4"
-        fill={C.lavenderSoft}
-        stroke={C.ink}
-        strokeWidth="2.5"
-      />
-
-      {/* coins inside jar */}
-      <ellipse
-        cx="90"
-        cy="165"
-        rx="20"
-        ry="7"
-        fill={C.mint}
-        stroke={C.ink}
-        strokeWidth="2"
-      />
-      <ellipse
-        cx="120"
-        cy="158"
-        rx="20"
-        ry="7"
-        fill={C.sky}
-        stroke={C.ink}
-        strokeWidth="2"
-      />
-      <ellipse
-        cx="98"
-        cy="145"
-        rx="20"
-        ry="7"
-        fill={C.rose}
-        stroke={C.ink}
-        strokeWidth="2"
-      />
-      <ellipse
-        cx="118"
-        cy="132"
-        rx="20"
-        ry="7"
-        fill={C.mint}
-        stroke={C.ink}
-        strokeWidth="2"
-      />
-
-      {/* falling coin */}
-      <circle
-        cx="150"
-        cy="45"
-        r="14"
-        fill={C.rose}
-        stroke={C.ink}
-        strokeWidth="2.5"
-      />
+    <svg
+      className="absolute inset-0 w-full h-full pointer-events-none"
+      viewBox="0 0 400 260"
+      preserveAspectRatio="xMidYMid slice"
+      fill="none">
+      <ellipse cx="352" cy="46" rx="17" ry="17" fill="#FFFFFF" opacity="0.16" />
       <text
-        x="150"
-        y="50"
+        x="352"
+        y="52"
         textAnchor="middle"
         fontSize="13"
         fontFamily="'Fraunces', serif"
         fontWeight="600"
-        fill={C.ink}>
+        fill="#FFFFFF"
+        opacity="0.75">
         Rp
       </text>
-
-      {/* hand-drawn arrow from coin to jar */}
       <path
-        d="M143 60 Q120 75 110 88"
-        stroke={C.lavender}
-        strokeWidth="2.5"
+        d="M28 34 L30 40 L36 42 L30 44 L28 50 L26 44 L20 42 L26 40 Z"
+        fill="#FFFFFF"
+        opacity="0.55"
+      />
+      <path
+        d="M300 90 Q320 105 310 118"
+        stroke="#FFFFFF"
+        strokeWidth="2"
         strokeLinecap="round"
         fill="none"
-        strokeDasharray="1 7"
-      />
-      <path
-        d="M104 82 L110 88 L117 84"
-        stroke={C.lavender}
-        strokeWidth="2.5"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        fill="none"
-      />
-
-      {/* sparkle accents */}
-      <path
-        d="M35 55 L37 61 L43 63 L37 65 L35 71 L33 65 L27 63 L33 61 Z"
-        fill={C.mint}
-        opacity="0.8"
-      />
-      <path
-        d="M185 110 L186.5 114 L190 115.5 L186.5 117 L185 121 L183.5 117 L180 115.5 L183.5 114 Z"
-        fill={C.sky}
-        opacity="0.8"
+        strokeDasharray="1 6"
+        opacity="0.5"
       />
     </svg>
   );

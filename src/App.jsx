@@ -9,12 +9,15 @@ export default function App() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem("mywallet_user");
+    const saved =
+      localStorage.getItem("mywallet_user") ||
+      sessionStorage.getItem("mywallet_user");
     if (saved) {
       try {
         setUser(JSON.parse(saved));
       } catch {
         localStorage.removeItem("mywallet_user");
+        sessionStorage.removeItem("mywallet_user");
       }
     }
     setLoading(false);
@@ -22,6 +25,7 @@ export default function App() {
 
   function handleLogout() {
     localStorage.removeItem("mywallet_user");
+    sessionStorage.removeItem("mywallet_user");
     setUser(null);
   }
 
