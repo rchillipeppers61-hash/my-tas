@@ -14,6 +14,12 @@ const CATEGORY_ICONS = {
 const inputClass =
   "w-full mt-1.5 mb-3.5 px-3.5 py-3.5 sm:py-3 rounded-2xl text-[15px] sm:text-[14.5px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]";
 
+function formatRibuan(value) {
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "";
+  return digits.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+}
+
 export default function TransactionForm({
   transaction,
   onSave,
@@ -23,7 +29,10 @@ export default function TransactionForm({
   const isEditing = Boolean(transaction);
   const [form, setForm] = useState({
     type: transaction?.type || "out",
-    amount: transaction?.amount != null ? String(transaction.amount) : "",
+    amount:
+      transaction?.amount != null
+        ? formatRibuan(String(transaction.amount))
+        : "",
     note: transaction?.note || "",
     category: transaction?.category || "makan",
   });
@@ -35,7 +44,7 @@ export default function TransactionForm({
   const isOut = form.type === "out";
 
   async function handleSave() {
-    const amt = parseFloat(form.amount);
+    const amt = parseFloat(form.amount.replace(/\./g, ""));
     if (!amt || amt <= 0 || !form.note.trim()) {
       setError("Isi jumlah dan catatan dulu ya.");
       return;
@@ -160,18 +169,24 @@ export default function TransactionForm({
           style={{ color: C.inkFaint }}>
           Jumlah (Rp)
         </label>
-        <input
-          type="number"
-          value={form.amount}
-          onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-          placeholder="25000"
-          className={inputClass}
-          style={{
-            background: "#463F5C08",
-            color: C.ink,
-            borderColor: "#463F5C1F",
-          }}
-        />
+        <div className="relative">
+          <input
+            type="text"
+            inputMode="numeric"
+            value={form.amount}
+            onChange={(e) =>
+              setForm((f) => ({ ...f, amount: formatRibuan(e.target.value) }))
+            }
+            placeholder="25.000"
+            className={inputClass}
+            style={{
+              background: "#463F5C08",
+              color: C.ink,
+              borderColor: "#463F5C1F",
+              paddingLeft: "2.1rem",
+            }}
+          />
+        </div>
 
         {isOut && (
           <>
