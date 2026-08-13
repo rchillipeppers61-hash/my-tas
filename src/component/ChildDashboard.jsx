@@ -440,8 +440,7 @@ export default function ChildDashboard({ user, onLogout }) {
                 <p
                   className="text-[12px] sm:text-[12.5px] font-semibold leading-snug"
                   style={{ color: C.amberDeep }}>
-                  💡 Catat Pengeluaran Uang Untuk Belajar Mengelola Uang Dengan
-                  Baik
+                  💡 Catat Pengeluaran Untuk Belajar Mengelola Uang Dengan Baik
                 </p>
               </div>
 
