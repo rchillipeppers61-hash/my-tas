@@ -3,6 +3,7 @@ import { supabase } from "../supabaseClient";
 import { C, FONT_IMPORT } from "./theme";
 import Card from "./Card";
 import TransactionForm from "./TransactionForm";
+import ChangePasswordModal from "./ChangePasswordModal";
 import {
   rupiah,
   todayISO,
@@ -39,6 +40,7 @@ function getInitials(name) {
 export default function ChildDashboard({ user, onLogout }) {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("week");
 
@@ -164,12 +166,20 @@ export default function ChildDashboard({ user, onLogout }) {
               </h1>
             </div>
           </div>
-          <button
-            onClick={onLogout}
-            className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl flex-shrink-0"
-            style={{ background: "#463F5C0f", color: C.ink }}>
-            Keluar
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setShowChangePassword(true)}
+              className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Ganti Password
+            </button>
+            <button
+              onClick={onLogout}
+              className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Keluar
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -513,6 +523,13 @@ export default function ChildDashboard({ user, onLogout }) {
         <TransactionForm
           onSave={addTransaction}
           onClose={() => setShowForm(false)}
+        />
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal
+          user={user}
+          onClose={() => setShowChangePassword(false)}
         />
       )}
     </div>

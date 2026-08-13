@@ -3,6 +3,8 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { C, FONT_IMPORT } from "./theme";
 import Card from "./Card";
+import ChangePasswordModal from "./ChangePasswordModal";
+import ResetChildPasswordModal from "./ResetChildPasswordModal";
 import {
   CATEGORIES,
   categoryLabel,
@@ -44,6 +46,9 @@ export default function ParentDashboard({ user, onLogout }) {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportEmptyMonth, setExportEmptyMonth] = useState(null);
+  const [showAccountMenu, setShowAccountMenu] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [showResetChildPassword, setShowResetChildPassword] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -332,12 +337,21 @@ export default function ParentDashboard({ user, onLogout }) {
               </h1>
             </div>
           </div>
-          <button
-            onClick={onLogout}
-            className="text-[13px] font-semibold px-3.5 py-2 rounded-2xl flex-shrink-0"
-            style={{ background: "#463F5C0f", color: C.ink }}>
-            Keluar
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setShowAccountMenu(true)}
+              aria-label="Akun"
+              className="w-9 h-9 flex items-center justify-center rounded-2xl text-[15px]"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              ⚙️
+            </button>
+            <button
+              onClick={onLogout}
+              className="text-[13px] font-semibold px-3.5 py-2 rounded-2xl"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Keluar
+            </button>
+          </div>
         </div>
 
         {showLowBalance && (
@@ -660,6 +674,68 @@ export default function ParentDashboard({ user, onLogout }) {
           )}
         </Card>
       </div>
+
+      {showAccountMenu && (
+        <div
+          className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
+          style={{ background: "rgba(70,63,92,0.4)" }}
+          onClick={() => setShowAccountMenu(false)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
+            style={{
+              background: "#FFFFFF",
+              boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
+            }}>
+            <h3
+              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+              className="text-[18px] font-semibold mb-4">
+              Akun
+            </h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => {
+                  setShowAccountMenu(false);
+                  setShowChangePassword(true);
+                }}
+                className="w-full text-left px-4 py-3 rounded-2xl text-[13.5px] font-medium"
+                style={{ background: "#463F5C0a", color: C.ink }}>
+                Ganti Password Saya
+              </button>
+              <button
+                onClick={() => {
+                  setShowAccountMenu(false);
+                  setShowResetChildPassword(true);
+                }}
+                className="w-full text-left px-4 py-3 rounded-2xl text-[13.5px] font-medium"
+                style={{ background: "#463F5C0a", color: C.ink }}>
+                Ganti Password {childName ? capitalize(childName) : "Anak"}
+              </button>
+            </div>
+            <button
+              onClick={() => setShowAccountMenu(false)}
+              className="w-full mt-4 py-3 rounded-2xl text-[13px] font-semibold"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Tutup
+            </button>
+          </div>
+        </div>
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal
+          user={user}
+          onClose={() => setShowChangePassword(false)}
+        />
+      )}
+
+      {showResetChildPassword && (
+        <ResetChildPasswordModal
+          user={user}
+          childName={childName}
+          onClose={() => setShowResetChildPassword(false)}
+        />
+      )}
     </div>
   );
 }
