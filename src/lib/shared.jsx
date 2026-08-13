@@ -20,6 +20,14 @@ export const rupiah = (n) => "Rp" + Math.round(n).toLocaleString("id-ID");
 export const capitalize = (s) =>
   s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
 
+export const monthLabel = (ym) => {
+  const [y, m] = ym.split("-");
+  return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString("id-ID", {
+    month: "long",
+    year: "numeric",
+  });
+};
+
 export const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export const formatDay = (d) =>

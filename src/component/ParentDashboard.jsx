@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { C, FONT_IMPORT } from "./theme";
@@ -9,6 +10,7 @@ import {
   formatDay,
   LOW_BALANCE_LIMIT,
   capitalize,
+  monthLabel,
 } from "../lib/shared";
 
 export default function ParentDashboard({ user, onLogout }) {
@@ -16,6 +18,7 @@ export default function ParentDashboard({ user, onLogout }) {
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showLowBalance, setShowLowBalance] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -77,14 +80,117 @@ export default function ParentDashboard({ user, onLogout }) {
     return { totalIn, totalOut, balance, categoryRows };
   }, [transactions]);
 
+  const months = useMemo(() => {
+    const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
+    return Array.from(set).sort((a, b) => (a < b ? 1 : -1));
+  }, [transactions]);
+
+  useEffect(() => {
+    if (!selectedMonth && months.length > 0) {
+      setSelectedMonth(months[0]);
+    }
+  }, [months, selectedMonth]);
+
+  const monthTransactions = useMemo(
+    () => transactions.filter((t) => t.date.slice(0, 7) === selectedMonth),
+    [transactions, selectedMonth],
+  );
+
   const grouped = useMemo(() => {
     const map = {};
-    transactions.forEach((t) => {
+    monthTransactions.forEach((t) => {
       if (!map[t.date]) map[t.date] = [];
       map[t.date].push(t);
     });
     return Object.entries(map).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [transactions]);
+  }, [monthTransactions]);
+
+  async function exportToExcel() {
+    if (monthTransactions.length === 0) return;
+
+    const rows = monthTransactions
+      .slice()
+      .sort((a, b) => (a.date < b.date ? -1 : 1));
+
+    const wb = new ExcelJS.Workbook();
+    wb.creator = "My Wallet";
+    wb.created = new Date();
+
+    const ws = wb.addWorksheet(monthLabel(selectedMonth));
+    ws.columns = [
+      { header: "Tanggal", key: "tanggal", width: 14 },
+      { header: "Tipe", key: "tipe", width: 10 },
+      { header: "Kategori", key: "kategori", width: 22 },
+      { header: "Catatan", key: "catatan", width: 30 },
+      { header: "Jumlah", key: "jumlah", width: 16 },
+    ];
+
+    const headerRow = ws.getRow(1);
+    headerRow.height = 22;
+    headerRow.eachCell((cell) => {
+      cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF8B72C4" },
+      };
+      cell.alignment = { vertical: "middle" };
+    });
+
+    rows.forEach((t) => {
+      const row = ws.addRow({
+        tanggal: t.date,
+        tipe: t.type === "in" ? "Masuk" : "Keluar",
+        kategori: t.type === "out" ? categoryLabel(t.category) : "-",
+        catatan: t.note || "",
+        jumlah: Number(t.amount),
+      });
+      row.getCell("jumlah").numFmt = '"Rp"#,##0';
+      row.getCell("tipe").font = {
+        bold: true,
+        color: { argb: t.type === "in" ? "FF3F9E7C" : "FFD9607A" },
+      };
+    });
+
+    const totalIn = rows
+      .filter((t) => t.type === "in")
+      .reduce((s, t) => s + Number(t.amount), 0);
+    const totalOut = rows
+      .filter((t) => t.type === "out")
+      .reduce((s, t) => s + Number(t.amount), 0);
+
+    ws.addRow({});
+    [
+      ["Total Masuk", totalIn],
+      ["Total Keluar", totalOut],
+      ["Selisih", totalIn - totalOut],
+    ].forEach(([label, value]) => {
+      const row = ws.addRow({ kategori: label, jumlah: value });
+      row.font = { bold: true };
+      row.getCell("jumlah").numFmt = '"Rp"#,##0';
+    });
+
+    ws.eachRow((row) => {
+      row.eachCell((cell) => {
+        cell.border = {
+          bottom: { style: "thin", color: { argb: "FFE0DCEF" } },
+        };
+      });
+    });
+
+    const buffer = await wb.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `riwayat-${(childName || "anak").toLowerCase()}-${selectedMonth}.xlsx`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
 
   useEffect(() => {
     if (!loading && summary.balance < LOW_BALANCE_LIMIT) {
@@ -183,7 +289,7 @@ export default function ParentDashboard({ user, onLogout }) {
                 style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
                 className="text-[20px] font-semibold leading-snug">
                 Saldo {capitalize(childName) || "anak"} tinggal{" "}
-                {rupiah(summary.balance)}
+                {rupiah(summary.balance)} nih!!
               </h3>
               <p
                 className="text-[13.5px] mt-2 leading-relaxed"
@@ -271,9 +377,35 @@ export default function ParentDashboard({ user, onLogout }) {
         <Card
           title="Riwayat Transaksi"
           sub="Detail lengkap, tidak dapat diedit dari sini">
+          {months.length > 0 && (
+            <div className="flex items-center gap-2 mb-4">
+              <div className="flex gap-1.5 overflow-x-auto flex-1 pb-1">
+                {months.map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setSelectedMonth(m)}
+                    className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
+                    style={{
+                      background:
+                        m === selectedMonth ? C.lavender : "#463F5C0d",
+                      color: m === selectedMonth ? "#FFFFFF" : C.inkSoft,
+                    }}>
+                    {monthLabel(m)}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={exportToExcel}
+                disabled={monthTransactions.length === 0}
+                className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold disabled:opacity-40"
+                style={{ background: C.mintDeep, color: "#FFFFFF" }}>
+                Export Excel
+              </button>
+            </div>
+          )}
           {grouped.length === 0 ? (
             <p className="text-[13px]" style={{ color: C.inkFaint }}>
-              Belum ada transaksi.
+              Belum ada transaksi{selectedMonth ? " di bulan ini" : ""}.
             </p>
           ) : (
             <div className="space-y-5">
