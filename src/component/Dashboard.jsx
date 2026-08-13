@@ -274,7 +274,8 @@ export default function Dashboard({ user, onLogout }) {
               <p
                 className="text-center mt-5 text-[16px] lg:hidden"
                 style={{ fontFamily: "'Caveat', cursive", color: C.lavender }}>
-                "catat baik-baik, biar nanti nggak nyesel di akhir bulan ✎"
+                "Catat pengeluaran uang untuk belajar mengelola uang dengan baik
+                ✎"
               </p>
             </div>
           </div>

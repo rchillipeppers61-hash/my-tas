@@ -136,7 +136,7 @@ export default function ParentDashboard({ user, onLogout }) {
           </button>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 mb-4">
+        <div className="flex flex-col gap-3 mb-4 sm:grid sm:grid-cols-3">
           <Card title="Saldo">
             <p
               className="text-[20px] font-semibold"
@@ -144,20 +144,22 @@ export default function ParentDashboard({ user, onLogout }) {
               {rupiah(summary.balance)}
             </p>
           </Card>
-          <Card title="Masuk">
-            <p
-              className="text-[18px] font-semibold"
-              style={{ color: C.mintDeep }}>
-              {rupiah(summary.totalIn)}
-            </p>
-          </Card>
-          <Card title="Keluar">
-            <p
-              className="text-[18px] font-semibold"
-              style={{ color: C.roseDeep }}>
-              {rupiah(summary.totalOut)}
-            </p>
-          </Card>
+          <div className="grid grid-cols-2 gap-3 sm:contents">
+            <Card title="Masuk">
+              <p
+                className="text-[18px] font-semibold"
+                style={{ color: C.mintDeep }}>
+                {rupiah(summary.totalIn)}
+              </p>
+            </Card>
+            <Card title="Keluar">
+              <p
+                className="text-[18px] font-semibold"
+                style={{ color: C.roseDeep }}>
+                {rupiah(summary.totalOut)}
+              </p>
+            </Card>
+          </div>
         </div>
 
         <Card title="Pengeluaran per Kategori" className="mb-4">
