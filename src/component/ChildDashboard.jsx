@@ -10,6 +10,7 @@ import {
   daysBetween,
   categoryLabel,
   capitalize,
+  monthLabel,
   LOW_BALANCE_LIMIT,
 } from "../lib/shared";
 
@@ -39,6 +40,7 @@ export default function ChildDashboard({ user, onLogout }) {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [period, setPeriod] = useState("week");
 
   const displayName = user.nama_lengkap || capitalize(user.username) || "Kamu";
 
@@ -95,13 +97,28 @@ export default function ChildDashboard({ user, onLogout }) {
       )
     : 0;
 
+  const availableMonths = useMemo(() => {
+    const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
+    return Array.from(set).sort((a, b) => (a < b ? 1 : -1));
+  }, [transactions]);
+
+  const displayTransactions = useMemo(() => {
+    if (period === "week") {
+      const cutoff = new Date();
+      cutoff.setDate(cutoff.getDate() - 6);
+      const cutoffISO = cutoff.toISOString().slice(0, 10);
+      return transactions.filter((t) => t.date >= cutoffISO);
+    }
+    return transactions.filter((t) => t.date.slice(0, 7) === period);
+  }, [transactions, period]);
+
   const byDay = useMemo(() => {
     const map = {};
-    transactions.forEach((t) => {
+    displayTransactions.forEach((t) => {
       (map[t.date] = map[t.date] || []).push(t);
     });
     return Object.entries(map).sort((a, b) => (a[0] < b[0] ? 1 : -1));
-  }, [transactions]);
+  }, [displayTransactions]);
 
   return (
     <div
@@ -285,29 +302,64 @@ export default function ChildDashboard({ user, onLogout }) {
               </button>
 
               <div
-                className="hidden lg:block rounded-3xl p-4 text-center"
+                className="hidden lg:flex items-start gap-2.5 rounded-2xl p-4"
                 style={{
-                  background: "#FFFFFF",
-                  border: `1.5px dashed ${C.lavenderSoft}`,
+                  background: "#F6C4531F",
+                  border: `1.5px solid #F6C45355`,
                 }}>
+                <span className="text-[16px] flex-shrink-0">💡</span>
                 <p
-                  className="text-[16px]"
-                  style={{
-                    fontFamily: "'Caveat', cursive",
-                    color: C.lavender,
-                  }}>
-                  "Catat pengeluaran uang untuk belajar mengelola uang dengan
-                  baik ✎"
+                  className="text-[12.5px] font-semibold leading-snug"
+                  style={{ color: C.amberDeep }}>
+                  Catat pengeluaran uang untuk belajar mengelola uang dengan
+                  baik
                 </p>
               </div>
             </div>
 
             <div className="mt-4 lg:mt-0">
-              <Card
-                title="Catatan Harian"
-                sub="Setiap hari, catat sebelum lupa">
+              <Card>
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="min-w-0">
+                    <h3
+                      className="font-semibold text-[12px] sm:text-[13px] tracking-[0.08em] uppercase"
+                      style={{ color: C.lavender }}>
+                      Catatan Harian
+                    </h3>
+                    <p
+                      className="text-[12px] mt-0.5"
+                      style={{ color: C.inkFaint }}>
+                      {period === "week"
+                        ? "7 hari terakhir"
+                        : monthLabel(period)}
+                    </p>
+                  </div>
+                  <div className="relative flex-shrink-0">
+                    <select
+                      value={period}
+                      onChange={(e) => setPeriod(e.target.value)}
+                      className="appearance-none pl-3 pr-7 py-2 rounded-full text-[11px] sm:text-[12px] font-semibold outline-none"
+                      style={{
+                        background: "#8B72C41A",
+                        color: C.lavender,
+                        border: "1px solid #8B72C433",
+                      }}>
+                      <option value="week">7 Hari Terakhir</option>
+                      {availableMonths.map((m) => (
+                        <option key={m} value={m}>
+                          {monthLabel(m)}
+                        </option>
+                      ))}
+                    </select>
+                    <span
+                      className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[9px]"
+                      style={{ color: C.lavender }}>
+                      ▾
+                    </span>
+                  </div>
+                </div>
                 <div className="mt-1 max-h-[26rem] lg:max-h-[34rem] overflow-y-auto pr-1">
-                  {byDay.length === 0 && (
+                  {transactions.length === 0 && (
                     <div className="py-10 sm:py-12 text-center">
                       <div
                         className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full flex items-center justify-center text-[26px] sm:text-[28px] mb-3"
@@ -323,6 +375,25 @@ export default function ChildDashboard({ user, onLogout }) {
                         className="text-[12px] sm:text-[12.5px] mt-1"
                         style={{ color: C.inkFaint }}>
                         Yuk mulai catat pemasukan atau pengeluaran hari ini.
+                      </p>
+                    </div>
+                  )}
+                  {transactions.length > 0 && byDay.length === 0 && (
+                    <div className="py-10 sm:py-12 text-center">
+                      <div
+                        className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-full flex items-center justify-center text-[26px] sm:text-[28px] mb-3"
+                        style={{ background: "#8B72C41A" }}>
+                        🔍
+                      </div>
+                      <p
+                        className="text-[13.5px] sm:text-[14px] font-medium"
+                        style={{ color: C.ink }}>
+                        Tidak ada transaksi di periode ini
+                      </p>
+                      <p
+                        className="text-[12px] sm:text-[12.5px] mt-1"
+                        style={{ color: C.inkFaint }}>
+                        Coba pilih periode lain di dropdown atas.
                       </p>
                     </div>
                   )}
@@ -406,12 +477,22 @@ export default function ChildDashboard({ user, onLogout }) {
                   })}
                 </div>
               </Card>
-              <p
-                className="text-center mt-5 text-[16px] lg:hidden"
-                style={{ fontFamily: "'Caveat', cursive", color: C.lavender }}>
-                "Catat pengeluaran uang untuk belajar mengelola uang dengan baik
-                ✎"
-              </p>
+              <div
+                className="flex items-start gap-2.5 rounded-2xl p-3.5 sm:p-4 mt-4 sm:mt-5 lg:hidden"
+                style={{
+                  background: "#F6C4531F",
+                  border: `1.5px solid #F6C45355`,
+                }}>
+                <span className="text-[15px] sm:text-[16px] flex-shrink-0">
+                  💡
+                </span>
+                <p
+                  className="text-[12px] sm:text-[12.5px] font-semibold leading-snug"
+                  style={{ color: C.amberDeep }}>
+                  Catat pengeluaran uang untuk belajar mengelola uang dengan
+                  baik
+                </p>
+              </div>
             </div>
           </div>
         )}
