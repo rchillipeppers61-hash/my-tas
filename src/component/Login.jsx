@@ -66,7 +66,7 @@ export default function Login({ onLoginSuccess }) {
       <div
         className="relative w-full h-[228px] sm:h-[260px] lg:h-screen lg:w-1/2 flex-shrink-0 overflow-hidden flex flex-col justify-end"
         style={{
-          background: `linear-gradient(150deg, ${C.lavender} 0%, ${C.lavenderSoft} 55%, ${C.mint} 130%)`,
+          background: `linear-gradient(135deg, ${C.lavender} 0%, ${C.lavenderSoft} 45%, ${C.skyDeep} 100%)`,
         }}>
         <div
           className="absolute -top-16 -right-10 w-56 h-56 rounded-full opacity-30 blur-3xl"
@@ -117,7 +117,7 @@ export default function Login({ onLoginSuccess }) {
         />
         <div
           className="hidden lg:block absolute bottom-[-8rem] left-[-6rem] w-[380px] h-[380px] rounded-full opacity-[0.12] blur-3xl pointer-events-none"
-          style={{ background: C.lavender }}
+          style={{ background: C.rose }}
         />
 
         <form
@@ -269,7 +269,7 @@ export default function Login({ onLoginSuccess }) {
             disabled={loading}
             className="w-full py-3.5 rounded-2xl font-semibold text-[14px] disabled:opacity-50 transition-transform active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
             style={{
-              background: `linear-gradient(135deg, ${C.lavender}, ${C.lavenderSoft})`,
+              background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
               color: "#FFFFFF",
               boxShadow: "0 16px 32px -16px rgba(139,114,196,0.6)",
               "--tw-ring-color": C.lavender,
@@ -376,9 +376,21 @@ function CheckIcon() {
 function CoinBadge() {
   return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
+      <defs>
+        <linearGradient
+          id="coinBadgeGradient"
+          x1="6"
+          y1="6"
+          x2="58"
+          y2="58"
+          gradientUnits="userSpaceOnUse">
+          <stop offset="0%" stopColor={C.lavender} />
+          <stop offset="100%" stopColor={C.skyDeep} />
+        </linearGradient>
+      </defs>
       <circle cx="32" cy="32" r="31" fill="#FFFFFF" />
       <circle cx="32" cy="32" r="29" fill={C.lavenderSoft} opacity="0.25" />
-      <circle cx="32" cy="32" r="21" fill={C.lavender} />
+      <circle cx="32" cy="32" r="21" fill="url(#coinBadgeGradient)" />
       <text
         x="32"
         y="40"
