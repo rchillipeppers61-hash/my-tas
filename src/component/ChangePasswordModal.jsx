@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { C } from "./theme";
+import PasswordField from "./PasswordField";
 
 export default function ChangePasswordModal({ user, onClose }) {
   const [oldPassword, setOldPassword] = useState("");
@@ -108,61 +109,26 @@ export default function ChangePasswordModal({ user, onClose }) {
               Masukkan password lama, lalu password baru kamu.
             </p>
 
-            <label
-              className="text-[11px] uppercase tracking-wide font-medium"
-              style={{ color: C.inkFaint }}>
-              Password Lama
-            </label>
-            <input
-              type="password"
+            <PasswordField
+              label="Password Lama"
               value={oldPassword}
               onChange={(e) => setOldPassword(e.target.value)}
-              required
               autoComplete="current-password"
-              className="w-full mt-1.5 mb-3 px-3.5 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] focus:ring-4 focus:ring-[#8B72C42A]"
-              style={{
-                background: "#463F5C08",
-                color: C.ink,
-                borderColor: "#463F5C1F",
-              }}
             />
 
-            <label
-              className="text-[11px] uppercase tracking-wide font-medium"
-              style={{ color: C.inkFaint }}>
-              Password Baru
-            </label>
-            <input
-              type="password"
+            <PasswordField
+              label="Password Baru"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              required
               autoComplete="new-password"
-              className="w-full mt-1.5 mb-3 px-3.5 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] focus:ring-4 focus:ring-[#8B72C42A]"
-              style={{
-                background: "#463F5C08",
-                color: C.ink,
-                borderColor: "#463F5C1F",
-              }}
             />
 
-            <label
-              className="text-[11px] uppercase tracking-wide font-medium"
-              style={{ color: C.inkFaint }}>
-              Konfirmasi Password Baru
-            </label>
-            <input
-              type="password"
+            <PasswordField
+              label="Konfirmasi Password Baru"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              required
               autoComplete="new-password"
-              className="w-full mt-1.5 mb-4 px-3.5 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] focus:ring-4 focus:ring-[#8B72C42A]"
-              style={{
-                background: "#463F5C08",
-                color: C.ink,
-                borderColor: "#463F5C1F",
-              }}
+              className="mb-4"
             />
 
             {error && (
