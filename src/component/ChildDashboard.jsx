@@ -50,6 +50,8 @@ export default function ChildDashboard({ user, onLogout }) {
   const [goalTitle, setGoalTitle] = useState("");
   const [goalAmount, setGoalAmount] = useState("");
   const [goalSaving, setGoalSaving] = useState(false);
+  const [goalError, setGoalError] = useState("");
+  const [goalToast, setGoalToast] = useState("");
   const [reminderDismissed, setReminderDismissed] = useState(false);
 
   const displayName = user.nama_lengkap || capitalize(user.username) || "Kamu";
@@ -172,7 +174,11 @@ export default function ChildDashboard({ user, onLogout }) {
 
   async function addGoal() {
     const amt = parseFloat(goalAmount);
-    if (!goalTitle.trim() || !amt || amt <= 0) return false;
+    if (!goalTitle.trim() || !amt || amt <= 0) {
+      setGoalError("Isi nama target dan jumlahnya dulu ya.");
+      return false;
+    }
+    setGoalError("");
     setGoalSaving(true);
     const { error } = await supabase.from("savings_goals").insert({
       owner_id: user.id,
@@ -185,8 +191,11 @@ export default function ChildDashboard({ user, onLogout }) {
       setGoalAmount("");
       setShowAddGoal(false);
       await fetchGoals();
+      setGoalToast("Target tersimpan ✓");
+      setTimeout(() => setGoalToast(""), 2500);
       return true;
     }
+    setGoalError("Gagal menyimpan target, coba lagi.");
     return false;
   }
 
@@ -196,7 +205,12 @@ export default function ChildDashboard({ user, onLogout }) {
       .delete()
       .eq("id", id)
       .eq("owner_id", user.id);
-    if (!error) await fetchGoals();
+    if (!error) {
+      await fetchGoals();
+    } else {
+      setGoalError("Gagal menghapus target, coba lagi.");
+      setTimeout(() => setGoalError(""), 3000);
+    }
   }
 
   const totalIn = transactions
@@ -417,6 +431,20 @@ export default function ChildDashboard({ user, onLogout }) {
                 </div>
               </div>
 
+              <div
+                className="rounded-2xl p-3.5 sm:p-4 text-center"
+                style={{
+                  background: "#F6C4531F",
+                  border: `1.5px solid #F6C45355`,
+                }}>
+                <p
+                  className="text-[12px] sm:text-[12.5px] font-semibold leading-snug"
+                  style={{ color: C.amberDeep }}>
+                  💡 Catat Pengeluaran Uang Untuk Belajar Mengelola Uang Dengan
+                  Baik
+                </p>
+              </div>
+
               <Card>
                 <div className="flex items-center justify-between">
                   <div>
@@ -454,12 +482,23 @@ export default function ChildDashboard({ user, onLogout }) {
                     style={{ color: C.inkFaint }}>
                     Target Nabung
                   </p>
-                  <button
-                    onClick={() => setShowAddGoal((v) => !v)}
-                    className="text-[11px] font-bold px-2.5 py-1 rounded-full"
-                    style={{ background: "#8B72C41A", color: C.lavender }}>
-                    {showAddGoal ? "Batal" : "+ Tambah"}
-                  </button>
+                  {goalToast ? (
+                    <span
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                      style={{ background: "#8FD8BE33", color: C.mintDeep }}>
+                      {goalToast}
+                    </span>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setShowAddGoal((v) => !v);
+                        setGoalError("");
+                      }}
+                      className="text-[11px] font-bold px-2.5 py-1 rounded-full"
+                      style={{ background: "#8B72C41A", color: C.lavender }}>
+                      {showAddGoal ? "Batal" : "+ Tambah"}
+                    </button>
+                  )}
                 </div>
 
                 {showAddGoal && (
@@ -488,6 +527,13 @@ export default function ChildDashboard({ user, onLogout }) {
                         borderColor: "#463F5C1F",
                       }}
                     />
+                    {goalError && (
+                      <div
+                        className="flex items-center gap-2 rounded-xl px-3 py-2 text-[11.5px] font-medium"
+                        style={{ background: "#F4A6B71F", color: C.roseDeep }}>
+                        ⚠️ {goalError}
+                      </div>
+                    )}
                     <button
                       onClick={addGoal}
                       disabled={goalSaving}
@@ -498,6 +544,14 @@ export default function ChildDashboard({ user, onLogout }) {
                       }}>
                       {goalSaving ? "Menyimpan..." : "Simpan Target"}
                     </button>
+                  </div>
+                )}
+
+                {goalError && !showAddGoal && (
+                  <div
+                    className="flex items-center gap-2 rounded-xl px-3 py-2 mb-3 text-[11.5px] font-medium"
+                    style={{ background: "#F4A6B71F", color: C.roseDeep }}>
+                    ⚠️ {goalError}
                   </div>
                 )}
 
@@ -530,21 +584,6 @@ export default function ChildDashboard({ user, onLogout }) {
                 <span className="text-[18px] leading-none">+</span> Catat
                 Transaksi
               </button>
-
-              <div
-                className="hidden lg:flex items-start gap-2.5 rounded-2xl p-4"
-                style={{
-                  background: "#F6C4531F",
-                  border: `1.5px solid #F6C45355`,
-                }}>
-                <span className="text-[16px] flex-shrink-0">💡</span>
-                <p
-                  className="text-[12.5px] font-semibold leading-snug"
-                  style={{ color: C.amberDeep }}>
-                  Catat pengeluaran uang untuk belajar mengelola uang dengan
-                  baik
-                </p>
-              </div>
             </div>
 
             <div className="mt-4 lg:mt-0">
@@ -716,22 +755,6 @@ export default function ChildDashboard({ user, onLogout }) {
                   })}
                 </div>
               </Card>
-              <div
-                className="flex items-start gap-2.5 rounded-2xl p-3.5 sm:p-4 mt-4 sm:mt-5 lg:hidden"
-                style={{
-                  background: "#F6C4531F",
-                  border: `1.5px solid #F6C45355`,
-                }}>
-                <span className="text-[15px] sm:text-[16px] flex-shrink-0">
-                  💡
-                </span>
-                <p
-                  className="text-[12px] sm:text-[12.5px] font-semibold leading-snug"
-                  style={{ color: C.amberDeep }}>
-                  Catat pengeluaran uang untuk belajar mengelola uang dengan
-                  baik
-                </p>
-              </div>
             </div>
           </div>
         )}
