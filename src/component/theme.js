@@ -1,5 +1,6 @@
 export const C = {
   bg: "#F3EEFB",
+  bgParent: "#E9F4FE",
   card: "#FFFFFF",
   ink: "#463F5C",
   inkSoft: "#463F5C99",
@@ -11,6 +12,9 @@ export const C = {
   rose: "#F4A6B7",
   roseDeep: "#D9607A",
   sky: "#9FCBF0",
+  skyDeep: "#3E7CB8",
+  amber: "#F6C453",
+  amberDeep: "#B5790A",
 };
 
 export const FONT_IMPORT = `

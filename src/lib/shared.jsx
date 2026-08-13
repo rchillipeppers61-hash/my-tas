@@ -17,6 +17,9 @@ export const LOW_BALANCE_LIMIT = 100000;
 
 export const rupiah = (n) => "Rp" + Math.round(n).toLocaleString("id-ID");
 
+export const capitalize = (s) =>
+  s ? s.charAt(0).toUpperCase() + s.slice(1) : s;
+
 export const todayISO = () => new Date().toISOString().slice(0, 10);
 
 export const formatDay = (d) =>

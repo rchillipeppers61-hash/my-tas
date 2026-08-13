@@ -8,6 +8,7 @@ import {
   rupiah,
   formatDay,
   LOW_BALANCE_LIMIT,
+  capitalize,
 } from "../lib/shared";
 
 export default function ParentDashboard({ user, onLogout }) {
@@ -96,7 +97,7 @@ export default function ParentDashboard({ user, onLogout }) {
     return (
       <div
         className="min-h-screen w-full flex items-center justify-center"
-        style={{ background: C.bg }}>
+        style={{ background: C.bgParent }}>
         <p style={{ color: C.inkFaint }}>Memuat...</p>
       </div>
     );
@@ -106,7 +107,7 @@ export default function ParentDashboard({ user, onLogout }) {
     return (
       <div
         className="min-h-screen w-full flex items-center justify-center px-4"
-        style={{ background: C.bg }}>
+        style={{ background: C.bgParent }}>
         <Card>
           <p style={{ color: C.ink }}>
             Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
@@ -125,10 +126,20 @@ export default function ParentDashboard({ user, onLogout }) {
 
   return (
     <div
-      className="min-h-screen w-full px-4 py-6 sm:py-10"
-      style={{ background: C.bg, fontFamily: "'Inter', sans-serif" }}>
+      className="min-h-screen w-full px-4 py-6 sm:py-10 relative overflow-hidden"
+      style={{ background: C.bgParent, fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
-      <div className="max-w-2xl mx-auto">
+      <div className="fixed inset-0 pointer-events-none overflow-hidden hidden sm:block">
+        <div
+          className="absolute -top-24 -right-16 w-72 h-72 rounded-full opacity-40 blur-3xl"
+          style={{ background: C.sky }}
+        />
+        <div
+          className="absolute bottom-0 -left-24 w-72 h-72 rounded-full opacity-30 blur-3xl"
+          style={{ background: C.mint }}
+        />
+      </div>
+      <div className="max-w-2xl mx-auto relative">
         <div className="flex items-center justify-between mb-6">
           <div>
             <p
@@ -139,10 +150,7 @@ export default function ParentDashboard({ user, onLogout }) {
             <h1
               style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
               className="text-[24px] font-semibold">
-              Keuangan{" "}
-              {childName
-                ? childName.charAt(0).toUpperCase() + childName.slice(1)
-                : "Anak"}
+              Keuangan {childName ? capitalize(childName) : "Anak"}
             </h1>
           </div>
           <button
@@ -163,30 +171,35 @@ export default function ParentDashboard({ user, onLogout }) {
               className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7 text-center"
               style={{
                 background: "#FFFFFF",
+                border: `1.5px solid ${C.amber}`,
                 boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
               }}>
               <div
                 className="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-[26px] font-bold mb-4"
-                style={{ background: "#D9607A1a", color: C.roseDeep }}>
+                style={{ background: "#F6C4532e", color: C.amberDeep }}>
                 !
               </div>
               <h3
                 style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
                 className="text-[20px] font-semibold leading-snug">
-                Saldo {childName || "anak"} tinggal {rupiah(summary.balance)}{" "}
-                nih!!
+                Saldo {capitalize(childName) || "anak"} tinggal{" "}
+                {rupiah(summary.balance)}
               </h3>
               <p
                 className="text-[13.5px] mt-2 leading-relaxed"
                 style={{ color: C.inkSoft }}>
-                Sudah di bawah batas {rupiah(LOW_BALANCE_LIMIT)}. Saatnya kirim
-                uang buat dia.
+                Sudah di bawah batas {rupiah(LOW_BALANCE_LIMIT)}.
+              </p>
+              <p
+                className="text-[17px] font-bold mt-1.5 leading-snug"
+                style={{ color: C.ink }}>
+                Saatnya kirim uang buat dia.
               </p>
               <button
                 onClick={() => setShowLowBalance(false)}
                 className="w-full mt-6 py-3.5 rounded-2xl font-semibold text-[14px]"
                 style={{
-                  background: `linear-gradient(135deg, ${C.lavender}, ${C.lavenderSoft})`,
+                  background: `linear-gradient(135deg, ${C.amberDeep}, ${C.amber})`,
                   color: "#FFFFFF",
                 }}>
                 Siap, dicatat!
