@@ -14,14 +14,22 @@ const CATEGORY_ICONS = {
 const inputClass =
   "w-full mt-1.5 mb-3.5 px-3.5 py-3.5 sm:py-3 rounded-2xl text-[15px] sm:text-[14.5px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]";
 
-export default function TransactionForm({ onSave, onClose }) {
+export default function TransactionForm({
+  transaction,
+  onSave,
+  onDelete,
+  onClose,
+}) {
+  const isEditing = Boolean(transaction);
   const [form, setForm] = useState({
-    type: "out",
-    amount: "",
-    note: "",
-    category: "makan",
+    type: transaction?.type || "out",
+    amount: transaction?.amount != null ? String(transaction.amount) : "",
+    note: transaction?.note || "",
+    category: transaction?.category || "makan",
   });
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState("");
 
   const isOut = form.type === "out";
@@ -35,6 +43,7 @@ export default function TransactionForm({ onSave, onClose }) {
     setError("");
     setSaving(true);
     const ok = await onSave({
+      id: transaction?.id,
       type: form.type,
       amount: amt,
       note: form.note.trim(),
@@ -45,6 +54,23 @@ export default function TransactionForm({ onSave, onClose }) {
       onClose();
     } else {
       setError("Gagal menyimpan transaksi, coba lagi.");
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    setError("");
+    setDeleting(true);
+    const ok = await onDelete(transaction.id);
+    setDeleting(false);
+    if (ok) {
+      onClose();
+    } else {
+      setError("Gagal menghapus transaksi, coba lagi.");
+      setConfirmDelete(false);
     }
   }
 
@@ -82,12 +108,16 @@ export default function TransactionForm({ onSave, onClose }) {
             <h3
               style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
               className="text-[19px] sm:text-[21px] font-semibold leading-tight">
-              Catat Transaksi
+              {isEditing ? "Edit Transaksi" : "Catat Transaksi"}
             </h3>
             <p
               className="text-[12px] sm:text-[12.5px]"
               style={{ color: C.inkFaint }}>
-              {isOut ? "Tulis pengeluaranmu" : "Tulis pemasukanmu"}
+              {isEditing
+                ? "Ubah atau hapus catatan ini"
+                : isOut
+                  ? "Tulis pengeluaranmu"
+                  : "Tulis pemasukanmu"}
             </p>
           </div>
         </div>
@@ -205,7 +235,7 @@ export default function TransactionForm({ onSave, onClose }) {
 
         <button
           onClick={handleSave}
-          disabled={saving}
+          disabled={saving || deleting}
           className="w-full py-3.5 sm:py-4 rounded-2xl font-bold text-[14px] sm:text-[15px] disabled:opacity-50 transition-shadow"
           style={{
             background: isOut
@@ -216,8 +246,25 @@ export default function TransactionForm({ onSave, onClose }) {
               ? "0 14px 28px -14px rgba(217,96,122,0.6)"
               : "0 14px 28px -14px rgba(63,158,124,0.6)",
           }}>
-          {saving ? "Menyimpan..." : "Simpan"}
+          {saving ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Simpan"}
         </button>
+
+        {isEditing && (
+          <button
+            onClick={handleDelete}
+            disabled={saving || deleting}
+            className="w-full mt-2.5 py-3 sm:py-3.5 rounded-2xl font-bold text-[13px] sm:text-[13.5px] disabled:opacity-50 transition-colors"
+            style={{
+              background: confirmDelete ? C.roseDeep : "#463F5C0f",
+              color: confirmDelete ? "#FFFFFF" : C.roseDeep,
+            }}>
+            {deleting
+              ? "Menghapus..."
+              : confirmDelete
+                ? "Yakin? Tap sekali lagi untuk hapus"
+                : "🗑️ Hapus Transaksi"}
+          </button>
+        )}
       </div>
     </div>
   );

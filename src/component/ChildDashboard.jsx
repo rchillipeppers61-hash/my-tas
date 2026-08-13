@@ -40,6 +40,7 @@ function getInitials(name) {
 export default function ChildDashboard({ user, onLogout }) {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingTx, setEditingTx] = useState(null);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("week");
@@ -71,6 +72,44 @@ export default function ChildDashboard({ user, onLogout }) {
       category: category || "lainnya",
       date: todayISO(),
     });
+    if (!error) {
+      await fetchTransactions();
+      return true;
+    }
+    return false;
+  }
+
+  async function updateTransaction(id, { type, amount, note, category }) {
+    const { error } = await supabase
+      .from("transactions")
+      .update({
+        type,
+        amount,
+        note,
+        category: category || "lainnya",
+      })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (!error) {
+      await fetchTransactions();
+      return true;
+    }
+    return false;
+  }
+
+  async function saveTransaction({ id, type, amount, note, category }) {
+    if (id) {
+      return updateTransaction(id, { type, amount, note, category });
+    }
+    return addTransaction({ type, amount, note, category });
+  }
+
+  async function deleteTransaction(id) {
+    const { error } = await supabase
+      .from("transactions")
+      .delete()
+      .eq("id", id)
+      .eq("owner_id", user.id);
     if (!error) {
       await fetchTransactions();
       return true;
@@ -166,12 +205,22 @@ export default function ChildDashboard({ user, onLogout }) {
               </h1>
             </div>
           </div>
-          <button
-            onClick={onLogout}
-            className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl flex-shrink-0"
-            style={{ background: C.roseDeep, color: "#FFFFFF" }}>
-            Keluar
-          </button>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <button
+              onClick={() => setShowChangePassword(true)}
+              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-[15px] sm:text-[16px]"
+              style={{ background: "#463F5C0f", color: C.inkSoft }}
+              aria-label="Ganti Password"
+              title="Ganti Password">
+              🔒
+            </button>
+            <button
+              onClick={onLogout}
+              className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl"
+              style={{ background: C.roseDeep, color: "#FFFFFF" }}>
+              Keluar
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -435,9 +484,10 @@ export default function ChildDashboard({ user, onLogout }) {
                                 ? { icon: "💰", bg: "#3F9E7C22" }
                                 : getCategoryMeta(t.category);
                             return (
-                              <div
+                              <button
                                 key={t.id}
-                                className="flex items-center justify-between gap-2 py-1.5">
+                                onClick={() => setEditingTx(t)}
+                                className="w-full flex items-center justify-between gap-2 py-1.5 px-1.5 -mx-1.5 rounded-xl text-left transition-colors hover:bg-[#463F5C08] active:bg-[#463F5C10]">
                                 <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
                                   <div
                                     className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-[16px] sm:text-[18px] flex-shrink-0"
@@ -462,15 +512,23 @@ export default function ChildDashboard({ user, onLogout }) {
                                     </p>
                                   </div>
                                 </div>
-                                <p
-                                  className="text-[14px] sm:text-[15px] font-bold flex-shrink-0"
-                                  style={{
-                                    color: t.type === "in" ? C.mintDeep : C.ink,
-                                  }}>
-                                  {t.type === "in" ? "+" : "-"}
-                                  {rupiah(t.amount)}
-                                </p>
-                              </div>
+                                <div className="flex items-center gap-1.5 flex-shrink-0">
+                                  <p
+                                    className="text-[14px] sm:text-[15px] font-bold"
+                                    style={{
+                                      color:
+                                        t.type === "in" ? C.mintDeep : C.ink,
+                                    }}>
+                                    {t.type === "in" ? "+" : "-"}
+                                    {rupiah(t.amount)}
+                                  </p>
+                                  <span
+                                    className="text-[11px]"
+                                    style={{ color: C.inkFaint }}>
+                                    ✏️
+                                  </span>
+                                </div>
+                              </button>
                             );
                           })}
                         </div>
@@ -498,15 +556,6 @@ export default function ChildDashboard({ user, onLogout }) {
             </div>
           </div>
         )}
-
-        <div className="text-center mt-6 lg:mt-8">
-          <button
-            onClick={() => setShowChangePassword(true)}
-            className="text-[12px] font-medium"
-            style={{ color: C.inkFaint }}>
-            Ganti Password
-          </button>
-        </div>
       </div>
 
       <button
@@ -520,10 +569,15 @@ export default function ChildDashboard({ user, onLogout }) {
         +
       </button>
 
-      {showForm && (
+      {(showForm || editingTx) && (
         <TransactionForm
-          onSave={addTransaction}
-          onClose={() => setShowForm(false)}
+          transaction={editingTx}
+          onSave={saveTransaction}
+          onDelete={deleteTransaction}
+          onClose={() => {
+            setShowForm(false);
+            setEditingTx(null);
+          }}
         />
       )}
 

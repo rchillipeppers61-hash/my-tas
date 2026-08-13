@@ -341,9 +341,10 @@ export default function ParentDashboard({ user, onLogout }) {
             <button
               onClick={() => setShowAccountMenu(true)}
               aria-label="Akun"
+              title="Ganti Password"
               className="w-9 h-9 flex items-center justify-center rounded-2xl text-[15px]"
               style={{ background: "#463F5C0f", color: C.ink }}>
-              ⚙️
+              🔒
             </button>
             <button
               onClick={onLogout}
