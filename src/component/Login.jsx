@@ -79,6 +79,11 @@ export default function Login({ onLoginSuccess }) {
 
         {/* Signature — oversized bleeding wordmark, like a scrawled savings goal */}
         <p
+          className="relative text-[11px] sm:text-[12px] px-6 sm:px-8 lg:px-12 tracking-[0.3em] uppercase font-semibold mb-1"
+          style={{ color: "#FFFFFF", opacity: 0.75 }}>
+          My Wallet
+        </p>
+        <p
           aria-hidden="true"
           style={{
             fontFamily: "'Fraunces', serif",
@@ -149,11 +154,11 @@ export default function Login({ onLoginSuccess }) {
               required
               autoCapitalize="off"
               placeholder="username kamu"
-              className="w-full pl-10 pr-3.5 py-3 rounded-2xl text-[15px] outline-none transition-shadow focus:ring-2"
+              className="w-full pl-10 pr-3.5 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
               style={{
-                background: "#463F5C0a",
+                background: "#463F5C08",
                 color: C.ink,
-                "--tw-ring-color": C.lavenderSoft,
+                borderColor: "#463F5C1F",
               }}
             />
           </div>
@@ -175,11 +180,11 @@ export default function Login({ onLoginSuccess }) {
               onChange={(e) => setPassword(e.target.value)}
               required
               placeholder="••••••••"
-              className="w-full pl-10 pr-11 py-3 rounded-2xl text-[15px] outline-none transition-shadow focus:ring-2"
+              className="w-full pl-10 pr-11 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
               style={{
-                background: "#463F5C0a",
+                background: "#463F5C08",
                 color: C.ink,
-                "--tw-ring-color": C.lavenderSoft,
+                borderColor: "#463F5C1F",
               }}
             />
             <button
@@ -201,7 +206,7 @@ export default function Login({ onLoginSuccess }) {
               onClick={() => setRemember((v) => !v)}
               className="flex items-center gap-2 group">
               <span
-                className="w-[18px] h-[18px] rounded-md flex items-center justify-center transition-colors"
+                className="w-5 h-5 rounded-md flex items-center justify-center transition-colors"
                 style={{
                   background: remember ? C.lavender : "#463F5C0d",
                   border: remember
@@ -225,18 +230,22 @@ export default function Login({ onLoginSuccess }) {
 
           {showForgotHint && (
             <div
-              className="text-[12px] mb-4 px-3.5 py-2.5 rounded-xl"
+              className="flex items-start gap-2 text-[12px] mb-4 px-3.5 py-2.5 rounded-xl"
               style={{ background: "#8B72C414", color: C.lavender }}>
-              Password diatur oleh orang tua / admin. Hubungi mereka untuk reset
-              ya.
+              <span className="flex-shrink-0">🔒</span>
+              <span>
+                Password diatur oleh orang tua / admin. Hubungi mereka untuk
+                reset ya.
+              </span>
             </div>
           )}
 
           {error && (
             <div
-              className="text-[12px] mb-4 px-3.5 py-2.5 rounded-xl"
+              className="flex items-center gap-2 text-[12px] mb-4 px-3.5 py-2.5 rounded-xl font-medium"
               style={{ background: "#D9607A14", color: C.roseDeep }}>
-              {error}
+              <span className="flex-shrink-0">⚠️</span>
+              <span>{error}</span>
             </div>
           )}
 
@@ -247,6 +256,7 @@ export default function Login({ onLoginSuccess }) {
             style={{
               background: `linear-gradient(135deg, ${C.lavender}, ${C.lavenderSoft})`,
               color: "#FFFFFF",
+              boxShadow: "0 16px 32px -16px rgba(139,114,196,0.6)",
             }}>
             {loading ? "Memproses..." : "Masuk"}
           </button>
