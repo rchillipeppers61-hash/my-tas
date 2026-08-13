@@ -1,6 +1,6 @@
 export const CATEGORIES = [
   { value: "makan", label: "Makan" },
-  { value: "kos", label: "Kos / Tempat Tinggal" },
+  { value: "pribadi", label: "Kebutuhan Pribadi" }, // ganti dari "kos"
   { value: "transport", label: "Transport" },
   { value: "kuliah", label: "Kebutuhan Kuliah" },
   { value: "jajan", label: "Jajan / Hiburan" },
