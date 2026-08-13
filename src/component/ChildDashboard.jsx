@@ -394,24 +394,37 @@ export default function ChildDashboard({ user, onLogout }) {
 
         {showReminder && (
           <div
-            className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mb-4 sm:mb-5"
-            style={{
-              background: "#F6C4531F",
-              border: `1.5px solid #F6C45355`,
-            }}>
-            <span className="text-[18px] flex-shrink-0">👀</span>
-            <p
-              className="text-[12.5px] sm:text-[13px] font-semibold flex-1"
-              style={{ color: C.amberDeep }}>
-              Belum ada catatan transaksi hari ini, yuk catat dulu!
-            </p>
-            <button
-              onClick={() => setReminderDismissed(true)}
-              aria-label="Tutup"
-              className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] flex-shrink-0"
-              style={{ background: "#463F5C0f", color: C.amberDeep }}>
-              ✕
-            </button>
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+            style={{ background: "rgba(70,63,92,0.45)" }}>
+            <div
+              className="w-full sm:max-w-sm bg-white rounded-t-[28px] sm:rounded-[28px] px-6 pt-8 pb-7 sm:pb-8 text-center animate-[slideUp_0.25s_ease-out]"
+              style={{ boxShadow: "0 -20px 60px -20px rgba(70,63,92,0.35)" }}>
+              <div
+                className="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-[22px] mb-4"
+                style={{ background: "#F6C4531F" }}>
+                👀
+              </div>
+              <h3
+                style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+                className="text-[19px] sm:text-[20px] font-semibold leading-snug">
+                Belum Ada Catatan Hari Ini
+              </h3>
+              <p
+                className="text-[13px] sm:text-[13.5px] mt-2"
+                style={{ color: C.inkFaint }}>
+                Yuk catat dulu transaksinya biar rapi.
+              </p>
+              <button
+                onClick={() => setReminderDismissed(true)}
+                className="w-full mt-6 py-3.5 rounded-2xl font-bold text-[14px] sm:text-[15px]"
+                style={{
+                  background: "linear-gradient(135deg, #D89B2E, #F6C453)",
+                  color: "#FFFFFF",
+                  boxShadow: "0 14px 28px -14px rgba(216,155,46,0.6)",
+                }}>
+                Siap, dicatat!
+              </button>
+            </div>
           </div>
         )}
 
