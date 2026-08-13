@@ -108,13 +108,25 @@ export default function Login({ onLoginSuccess }) {
       </div>
 
       {/* Card — overlaps the hero on mobile, sits centered on desktop */}
-      <div className="relative flex-1 flex items-start lg:items-center justify-center px-4 sm:px-6 lg:px-10 -mt-7 lg:mt-0 pb-10 lg:pb-0">
+      <div className="relative flex-1 flex items-start lg:items-center justify-center px-4 sm:px-6 lg:px-10 -mt-7 lg:mt-0 pb-10 lg:pb-0 overflow-hidden">
+        {/* Ambient wash so the right panel doesn't read as flat white next
+            to the styled hero — echoes the hero's blurred color blobs. */}
+        <div
+          className="hidden lg:block absolute -top-24 right-[-6rem] w-[420px] h-[420px] rounded-full opacity-[0.14] blur-3xl pointer-events-none"
+          style={{ background: C.mint }}
+        />
+        <div
+          className="hidden lg:block absolute bottom-[-8rem] left-[-6rem] w-[380px] h-[380px] rounded-full opacity-[0.12] blur-3xl pointer-events-none"
+          style={{ background: C.lavender }}
+        />
+
         <form
           onSubmit={handleLogin}
-          className="relative w-full max-w-sm rounded-[28px] pt-11 px-6 sm:px-7 pb-7"
+          className="relative w-full max-w-[400px] rounded-[28px] pt-11 px-6 sm:px-7 pb-7"
           style={{
             background: "#FFFFFF",
-            boxShadow: "0 20px 48px -20px rgba(70,63,92,0.28)",
+            boxShadow:
+              "0 24px 60px -20px rgba(70,63,92,0.22), 0 2px 8px -2px rgba(70,63,92,0.10)",
           }}>
           <div className="absolute left-1/2 -top-9 -translate-x-1/2">
             <CoinBadge />
@@ -153,6 +165,7 @@ export default function Login({ onLoginSuccess }) {
               onChange={(e) => setUsername(e.target.value)}
               required
               autoCapitalize="off"
+              autoComplete="username"
               placeholder="username kamu"
               className="w-full pl-10 pr-3.5 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
               style={{
@@ -179,6 +192,7 @@ export default function Login({ onLoginSuccess }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              autoComplete="current-password"
               placeholder="••••••••"
               className="w-full pl-10 pr-11 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
               style={{
@@ -191,8 +205,8 @@ export default function Login({ onLoginSuccess }) {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               tabIndex={-1}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
-              style={{ color: C.inkFaint }}
+              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+              style={{ color: C.inkFaint, "--tw-ring-color": C.lavender }}
               aria-label={
                 showPassword ? "Sembunyikan password" : "Tampilkan password"
               }>
@@ -204,7 +218,8 @@ export default function Login({ onLoginSuccess }) {
             <button
               type="button"
               onClick={() => setRemember((v) => !v)}
-              className="flex items-center gap-2 group">
+              className="flex items-center gap-2 group rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+              style={{ "--tw-ring-color": C.lavender }}>
               <span
                 className="w-5 h-5 rounded-md flex items-center justify-center transition-colors"
                 style={{
@@ -222,8 +237,8 @@ export default function Login({ onLoginSuccess }) {
             <button
               type="button"
               onClick={() => setShowForgotHint((v) => !v)}
-              className="text-[12.5px] font-medium"
-              style={{ color: C.lavender }}>
+              className="text-[12.5px] font-medium rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+              style={{ color: C.lavender, "--tw-ring-color": C.lavender }}>
               Lupa password?
             </button>
           </div>
@@ -252,11 +267,12 @@ export default function Login({ onLoginSuccess }) {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3.5 rounded-2xl font-semibold text-[14px] disabled:opacity-50 transition-transform active:scale-[0.98]"
+            className="w-full py-3.5 rounded-2xl font-semibold text-[14px] disabled:opacity-50 transition-transform active:scale-[0.98] outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
             style={{
               background: `linear-gradient(135deg, ${C.lavender}, ${C.lavenderSoft})`,
               color: "#FFFFFF",
               boxShadow: "0 16px 32px -16px rgba(139,114,196,0.6)",
+              "--tw-ring-color": C.lavender,
             }}>
             {loading ? "Memproses..." : "Masuk"}
           </button>
