@@ -285,7 +285,7 @@ export default function ParentDashboard({ user, onLogout }) {
           <button
             onClick={onLogout}
             className="mt-4 px-4 py-2 rounded-2xl text-sm font-semibold"
-            style={{ background: C.lavenderSoft, color: "#fff" }}>
+            style={{ background: C.roseDeep, color: "#fff" }}>
             Keluar
           </button>
         </Card>
@@ -348,7 +348,7 @@ export default function ParentDashboard({ user, onLogout }) {
             <button
               onClick={onLogout}
               className="text-[13px] font-semibold px-3.5 py-2 rounded-2xl"
-              style={{ background: "#463F5C0f", color: C.ink }}>
+              style={{ background: C.roseDeep, color: "#FFFFFF" }}>
               Keluar
             </button>
           </div>

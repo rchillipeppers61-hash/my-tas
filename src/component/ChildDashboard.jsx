@@ -166,20 +166,12 @@ export default function ChildDashboard({ user, onLogout }) {
               </h1>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => setShowChangePassword(true)}
-              className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl"
-              style={{ background: "#463F5C0f", color: C.ink }}>
-              Ganti Password
-            </button>
-            <button
-              onClick={onLogout}
-              className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl"
-              style={{ background: "#463F5C0f", color: C.ink }}>
-              Keluar
-            </button>
-          </div>
+          <button
+            onClick={onLogout}
+            className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl flex-shrink-0"
+            style={{ background: C.roseDeep, color: "#FFFFFF" }}>
+            Keluar
+          </button>
         </div>
 
         {loading ? (
@@ -506,6 +498,15 @@ export default function ChildDashboard({ user, onLogout }) {
             </div>
           </div>
         )}
+
+        <div className="text-center mt-6 lg:mt-8">
+          <button
+            onClick={() => setShowChangePassword(true)}
+            className="text-[12px] font-medium"
+            style={{ color: C.inkFaint }}>
+            Ganti Password
+          </button>
+        </div>
       </div>
 
       <button
