@@ -2,7 +2,7 @@ import { useState } from "react";
 import { supabase } from "../supabaseClient";
 import { C, FONT_IMPORT } from "./theme";
 
-export default function Login({ onLoginSuccess }) {
+export default function Login({ onLoginSuccess, onSignUpClick }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -277,8 +277,16 @@ export default function Login({ onLoginSuccess }) {
             {loading ? "Memproses..." : "Masuk"}
           </button>
 
+          <button
+            type="button"
+            onClick={onSignUpClick}
+            className="w-full text-center mt-6 text-[12.5px] font-medium"
+            style={{ color: C.lavender }}>
+            Belum punya akun? Daftar
+          </button>
+
           <p
-            className="text-center mt-6 text-[12px]"
+            className="text-center mt-4 text-[12px]"
             style={{ color: C.inkFaint }}>
             © 2026 My Wallet · Buku kas harian
           </p>

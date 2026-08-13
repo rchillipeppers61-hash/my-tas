@@ -54,11 +54,72 @@ export default function ParentDashboard({ user, onLogout }) {
   const [logs, setLogs] = useState([]);
   const [goals, setGoals] = useState([]);
   const [expandedLogTx, setExpandedLogTx] = useState(null);
+  const [inviteCode, setInviteCode] = useState(null);
+  const [inviteExpiresAt, setInviteExpiresAt] = useState(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [codeError, setCodeError] = useState("");
 
   useEffect(() => {
     loadData();
+    if (!user.linked_child_id) {
+      loadActiveInviteCode();
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  async function loadActiveInviteCode() {
+    const { data } = await supabase
+      .from("invite_codes")
+      .select("code, expires_at")
+      .eq("user_id", user.id)
+      .is("used_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setInviteCode(data.code);
+      setInviteExpiresAt(data.expires_at);
+    }
+  }
+
+  async function generateInviteCode() {
+    setGeneratingCode(true);
+    setCodeError("");
+
+    // Opsi 3: invalidate semua kode lama yang belum kepake punya user
+    // ini dulu, biar cuma ada 1 kode aktif setiap saat.
+    await supabase
+      .from("invite_codes")
+      .update({ used_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .is("used_at", null);
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 6; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error } = await supabase.from("invite_codes").insert({
+      code,
+      user_id: user.id,
+      expires_at: expiresAt,
+    });
+
+    setGeneratingCode(false);
+
+    if (error) {
+      setCodeError("Gagal membuat kode. Coba lagi.");
+      return;
+    }
+
+    setInviteCode(code);
+    setInviteExpiresAt(expiresAt);
+  }
 
   async function loadData() {
     setLoading(true);
@@ -333,15 +394,83 @@ export default function ParentDashboard({ user, onLogout }) {
       <div
         className="min-h-screen w-full flex items-center justify-center px-4"
         style={{ background: C.bgParent }}>
+        <style>{FONT_IMPORT}</style>
         <Card>
-          <p style={{ color: C.ink }}>
-            Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
-            <code>linked_child_id</code>.
+          <p
+            className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
+            style={{ color: C.lavender }}>
+            Belum Terhubung
           </p>
+          <h2
+            style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+            className="text-[19px] font-semibold mb-2">
+            Sambungkan ke akun anak
+          </h2>
+          <p className="text-[13px] mb-5" style={{ color: C.inkFaint }}>
+            Akun ini belum terhubung ke akun anak. Buat kode undangan di bawah,
+            terus kasih kodenya ke anak kamu supaya dia bisa masukin pas
+            login/daftar.
+          </p>
+
+          {inviteCode ? (
+            <>
+              <div
+                className="text-center text-[28px] font-semibold tracking-[0.3em] py-4 rounded-2xl mb-3"
+                style={{
+                  background: "#463F5C08",
+                  color: C.ink,
+                  fontFamily: "'Fraunces', serif",
+                }}>
+                {inviteCode}
+              </div>
+              {inviteExpiresAt && (
+                <p
+                  className="text-center text-[11.5px] mb-5"
+                  style={{ color: C.inkFaint }}>
+                  Berlaku sampai{" "}
+                  {new Date(inviteExpiresAt).toLocaleString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+              )}
+            </>
+          ) : (
+            <p className="text-[12.5px] mb-5" style={{ color: C.inkFaint }}>
+              Belum ada kode aktif.
+            </p>
+          )}
+
+          {codeError && (
+            <div
+              className="flex items-center gap-2 text-[12px] mb-4 px-3.5 py-2.5 rounded-xl font-medium"
+              style={{ background: "#D9607A14", color: C.roseDeep }}>
+              <span className="flex-shrink-0">⚠️</span>
+              <span>{codeError}</span>
+            </div>
+          )}
+
+          <button
+            onClick={generateInviteCode}
+            disabled={generatingCode}
+            className="w-full py-3 rounded-2xl text-sm font-semibold disabled:opacity-50"
+            style={{
+              background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+              color: "#fff",
+            }}>
+            {generatingCode
+              ? "Memproses..."
+              : inviteCode
+                ? "Buat Kode Baru"
+                : "Buat Kode Undangan"}
+          </button>
+
           <button
             onClick={onLogout}
-            className="mt-4 px-4 py-2 rounded-2xl text-sm font-semibold"
-            style={{ background: C.roseDeep, color: "#fff" }}>
+            className="w-full mt-2.5 px-4 py-2 rounded-2xl text-sm font-semibold"
+            style={{ background: "#463F5C0f", color: C.ink }}>
             Keluar
           </button>
         </Card>
