@@ -14,6 +14,28 @@ import {
   todayISO,
 } from "../lib/shared";
 
+const CATEGORY_META = {
+  makan: { icon: "🍜", bg: "#8FD8BE2A", solid: C.mintDeep },
+  jajan: { icon: "🍿", bg: "#F4A6B72A", solid: C.roseDeep },
+  transport: { icon: "🚌", bg: "#9FCBF02A", solid: C.skyDeep },
+  kuliah: { icon: "📚", bg: "#8B72C42A", solid: C.lavender },
+  pribadi: { icon: "🧴", bg: "#F6C4532A", solid: C.amberDeep },
+  lainnya: { icon: "✨", bg: "#463F5C14", solid: C.inkFaint },
+};
+
+function getCategoryMeta(cat) {
+  return CATEGORY_META[cat] || CATEGORY_META.lainnya;
+}
+
+function getInitials(name) {
+  if (!name) return "?";
+  const parts = name.trim().split(/\s+/);
+  return parts
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase())
+    .join("");
+}
+
 export default function ParentDashboard({ user, onLogout }) {
   const [childName, setChildName] = useState("");
   const [transactions, setTransactions] = useState([]);
@@ -277,27 +299,42 @@ export default function ParentDashboard({ user, onLogout }) {
           style={{ background: C.sky }}
         />
         <div
+          className="absolute top-1/3 left-1/2 w-64 h-64 rounded-full opacity-25 blur-3xl"
+          style={{ background: C.rose }}
+        />
+        <div
           className="absolute bottom-0 -left-24 w-72 h-72 rounded-full opacity-30 blur-3xl"
           style={{ background: C.mint }}
         />
       </div>
       <div className="max-w-2xl mx-auto relative">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <p
-              className="text-[11px] tracking-[0.2em] uppercase font-semibold"
-              style={{ color: C.lavender }}>
-              Pantauan Orang Tua
-            </p>
-            <h1
-              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-              className="text-[24px] font-semibold">
-              Keuangan {childName ? capitalize(childName) : "Anak"}
-            </h1>
+          <div className="flex items-center gap-3 min-w-0">
+            <div
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center font-semibold text-[14px] sm:text-[15px] flex-shrink-0"
+              style={{
+                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+                color: "#FFFFFF",
+                fontFamily: "'Fraunces', serif",
+              }}>
+              {getInitials(childName)}
+            </div>
+            <div className="min-w-0">
+              <p
+                className="text-[11px] tracking-[0.2em] uppercase font-semibold"
+                style={{ color: C.lavender }}>
+                Pantauan Orang Tua
+              </p>
+              <h1
+                style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+                className="text-[24px] font-semibold truncate">
+                Keuangan {childName ? capitalize(childName) : "Anak"}
+              </h1>
+            </div>
           </div>
           <button
             onClick={onLogout}
-            className="text-[13px] font-semibold px-3.5 py-2 rounded-2xl"
+            className="text-[13px] font-semibold px-3.5 py-2 rounded-2xl flex-shrink-0"
             style={{ background: "#463F5C0f", color: C.ink }}>
             Keluar
           </button>
@@ -403,62 +440,124 @@ export default function ParentDashboard({ user, onLogout }) {
           </div>
         )}
 
-        <div className="flex flex-col gap-3 mb-4 sm:grid sm:grid-cols-3">
-          <Card title="Saldo">
+        <div
+          className="rounded-[32px] p-6 sm:p-8 relative overflow-hidden mb-4"
+          style={{
+            background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+            boxShadow: "0 24px 48px -20px rgba(70,63,92,0.5)",
+          }}>
+          <div
+            className="absolute -top-10 -right-10 w-40 h-40 rounded-full"
+            style={{ background: "rgba(255,255,255,0.12)" }}
+          />
+          <div
+            className="absolute -bottom-14 -left-8 w-36 h-36 rounded-full"
+            style={{ background: "rgba(255,255,255,0.08)" }}
+          />
+          <div className="relative z-10">
             <p
-              className="text-[20px] font-semibold"
-              style={{ color: C.ink, fontFamily: "'Fraunces', serif" }}>
+              className="text-[11px] sm:text-[12px] uppercase tracking-[0.2em] font-semibold"
+              style={{ color: "rgba(255,255,255,0.75)" }}>
+              Saldo {capitalize(childName) || "Anak"} Sekarang
+            </p>
+            <p
+              style={{ fontFamily: "'Fraunces', serif", color: "#FFFFFF" }}
+              className="mt-1 text-[34px] sm:text-[42px] font-semibold leading-none">
               {rupiah(summary.balance)}
             </p>
-          </Card>
-          <div className="grid grid-cols-2 gap-3 sm:contents">
-            <Card title="Masuk">
-              <p
-                className="text-[18px] font-semibold"
-                style={{ color: C.mintDeep }}>
-                {rupiah(summary.totalIn)}
-              </p>
-            </Card>
-            <Card title="Keluar">
-              <p
-                className="text-[18px] font-semibold"
-                style={{ color: C.roseDeep }}>
-                {rupiah(summary.totalOut)}
-              </p>
-            </Card>
+            <span
+              className="inline-flex items-center gap-1.5 mt-3 sm:mt-4 px-3 py-1.5 rounded-full text-[11px] sm:text-[12px] font-semibold"
+              style={{
+                background: "rgba(255,255,255,0.18)",
+                color: "#FFFFFF",
+                border: "1px solid rgba(255,255,255,0.3)",
+              }}>
+              {summary.balance < LOW_BALANCE_LIMIT
+                ? "⚠️ Saldo mulai menipis"
+                : "🌱 Saldo dalam kondisi aman"}
+            </span>
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-5 sm:mt-6">
+              <div
+                className="rounded-2xl p-3 sm:p-3.5"
+                style={{
+                  background: "rgba(255,255,255,0.14)",
+                  border: "1px solid rgba(255,255,255,0.22)",
+                }}>
+                <p
+                  className="text-[9px] sm:text-[10px] uppercase tracking-wide font-semibold"
+                  style={{ color: "rgba(255,255,255,0.75)" }}>
+                  Masuk
+                </p>
+                <p
+                  className="text-[15px] sm:text-[17px] font-bold mt-0.5"
+                  style={{ color: "#FFFFFF" }}>
+                  {rupiah(summary.totalIn)}
+                </p>
+              </div>
+              <div
+                className="rounded-2xl p-3 sm:p-3.5"
+                style={{
+                  background: "rgba(255,255,255,0.14)",
+                  border: "1px solid rgba(255,255,255,0.22)",
+                }}>
+                <p
+                  className="text-[9px] sm:text-[10px] uppercase tracking-wide font-semibold"
+                  style={{ color: "rgba(255,255,255,0.75)" }}>
+                  Keluar
+                </p>
+                <p
+                  className="text-[15px] sm:text-[17px] font-bold mt-0.5"
+                  style={{ color: "#FFFFFF" }}>
+                  {rupiah(summary.totalOut)}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <Card title="Pengeluaran per Kategori" className="mb-4">
+        <Card
+          title="Pengeluaran per Kategori"
+          accent={C.lavender}
+          className="mb-4">
           {summary.categoryRows.length === 0 ? (
             <p className="text-[13px]" style={{ color: C.inkFaint }}>
               Belum ada pengeluaran tercatat.
             </p>
           ) : (
             <div className="space-y-3">
-              {summary.categoryRows.map((row) => (
-                <div key={row.cat}>
-                  <div className="flex justify-between text-[13px] mb-1">
-                    <span style={{ color: C.ink }}>
-                      {categoryLabel(row.cat)}
-                    </span>
-                    <span style={{ color: C.inkFaint }}>
-                      {rupiah(row.amt)} ({row.pct.toFixed(0)}%)
-                    </span>
-                  </div>
-                  <div
-                    className="h-2 rounded-full overflow-hidden"
-                    style={{ background: "#463F5C14" }}>
+              {summary.categoryRows.map((row) => {
+                const meta = getCategoryMeta(row.cat);
+                return (
+                  <div key={row.cat}>
+                    <div className="flex items-center justify-between text-[13px] mb-1">
+                      <span
+                        className="flex items-center gap-2"
+                        style={{ color: C.ink }}>
+                        <span
+                          className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] flex-shrink-0"
+                          style={{ background: meta.bg }}>
+                          {meta.icon}
+                        </span>
+                        {categoryLabel(row.cat)}
+                      </span>
+                      <span style={{ color: C.inkFaint }}>
+                        {rupiah(row.amt)} ({row.pct.toFixed(0)}%)
+                      </span>
+                    </div>
                     <div
-                      className="h-full rounded-full"
-                      style={{
-                        width: `${row.pct}%`,
-                        background: C.lavender,
-                      }}
-                    />
+                      className="h-2 rounded-full overflow-hidden"
+                      style={{ background: "#463F5C14" }}>
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${row.pct}%`,
+                          background: meta.solid,
+                        }}
+                      />
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </Card>
@@ -490,7 +589,10 @@ export default function ParentDashboard({ user, onLogout }) {
                 }}
                 disabled={months.length === 0}
                 className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold disabled:opacity-40"
-                style={{ background: C.mintDeep, color: "#FFFFFF" }}>
+                style={{
+                  background: `linear-gradient(135deg, ${C.mintDeep}, ${C.mint})`,
+                  color: "#FFFFFF",
+                }}>
                 Export Excel
               </button>
             </div>
@@ -509,35 +611,48 @@ export default function ParentDashboard({ user, onLogout }) {
                     {formatDay(date)}
                   </p>
                   <div className="space-y-2">
-                    {items.map((t) => (
-                      <div
-                        key={t.id}
-                        className="flex items-center justify-between py-2 px-3 rounded-2xl"
-                        style={{ background: "#463F5C08" }}>
-                        <div>
+                    {items.map((t) => {
+                      const meta =
+                        t.type === "in"
+                          ? { icon: "💰", bg: "#3F9E7C22" }
+                          : getCategoryMeta(t.category);
+                      return (
+                        <div
+                          key={t.id}
+                          className="flex items-center justify-between py-2 px-3 rounded-2xl"
+                          style={{ background: "#463F5C08" }}>
+                          <div className="flex items-center gap-2.5 min-w-0">
+                            <div
+                              className="w-9 h-9 rounded-2xl flex items-center justify-center text-[16px] flex-shrink-0"
+                              style={{ background: meta.bg }}>
+                              {meta.icon}
+                            </div>
+                            <div className="min-w-0">
+                              <p
+                                className="text-[14px] font-medium truncate"
+                                style={{ color: C.ink }}>
+                                {t.note || categoryLabel(t.category)}
+                              </p>
+                              <p
+                                className="text-[11px]"
+                                style={{ color: C.inkFaint }}>
+                                {t.type === "out"
+                                  ? categoryLabel(t.category)
+                                  : "Pemasukan"}
+                              </p>
+                            </div>
+                          </div>
                           <p
-                            className="text-[14px] font-medium"
-                            style={{ color: C.ink }}>
-                            {t.note || categoryLabel(t.category)}
-                          </p>
-                          <p
-                            className="text-[11px]"
-                            style={{ color: C.inkFaint }}>
-                            {t.type === "out"
-                              ? categoryLabel(t.category)
-                              : "Pemasukan"}
+                            className="text-[14px] font-semibold flex-shrink-0"
+                            style={{
+                              color: t.type === "in" ? C.mintDeep : C.roseDeep,
+                            }}>
+                            {t.type === "in" ? "+" : "-"}
+                            {rupiah(t.amount)}
                           </p>
                         </div>
-                        <p
-                          className="text-[14px] font-semibold"
-                          style={{
-                            color: t.type === "in" ? C.mintDeep : C.roseDeep,
-                          }}>
-                          {t.type === "in" ? "+" : "-"}
-                          {rupiah(t.amount)}
-                        </p>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 </div>
               ))}
