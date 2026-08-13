@@ -426,7 +426,7 @@ export default function ParentDashboard({ user, onLogout }) {
 
         {showLowBalance && (
           <div
-            className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
+            className="fixed inset-0 flex items-center justify-center z-50 px-4"
             style={{ background: "rgba(70,63,92,0.4)" }}
             onClick={() => setShowLowBalance(false)}>
             <div

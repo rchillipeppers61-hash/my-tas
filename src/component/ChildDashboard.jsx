@@ -394,11 +394,11 @@ export default function ChildDashboard({ user, onLogout }) {
 
         {showReminder && (
           <div
-            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+            className="fixed inset-0 z-50 flex items-center justify-center px-4"
             style={{ background: "rgba(70,63,92,0.45)" }}>
             <div
-              className="w-full sm:max-w-sm bg-white rounded-t-[28px] sm:rounded-[28px] px-6 pt-8 pb-7 sm:pb-8 text-center animate-[slideUp_0.25s_ease-out]"
-              style={{ boxShadow: "0 -20px 60px -20px rgba(70,63,92,0.35)" }}>
+              className="w-full sm:max-w-sm bg-white rounded-[28px] px-6 pt-8 pb-7 text-center"
+              style={{ boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)" }}>
               <div
                 className="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-[22px] mb-4"
                 style={{ background: "#F6C4531F" }}>
