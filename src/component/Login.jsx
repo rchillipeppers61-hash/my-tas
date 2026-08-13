@@ -108,7 +108,7 @@ export default function Login({ onLoginSuccess }) {
       </div>
 
       {/* Card — overlaps the hero on mobile, sits centered on desktop */}
-      <div className="relative flex-1 flex items-start lg:items-center justify-center px-4 sm:px-6 lg:px-10 -mt-7 lg:mt-0 pb-10 lg:pb-0 overflow-hidden">
+      <div className="relative flex-1 flex items-center justify-center px-4 sm:px-6 lg:px-10 -mt-7 lg:mt-0 pb-6 lg:pb-0 overflow-hidden">
         {/* Ambient wash so the right panel doesn't read as flat white next
             to the styled hero — echoes the hero's blurred color blobs. */}
         <div
