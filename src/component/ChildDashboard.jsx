@@ -474,8 +474,10 @@ export default function ChildDashboard({ user, onLogout }) {
             style={{ background: "#F6C4531F" }}>
             <div className="flex items-center gap-2.5 min-w-0">
               <span className="flex-shrink-0">👀</span>
-              <p className="text-[12.5px] min-w-0" style={{ color: C.inkSoft }}>
-                Belum terhubung ke akun orang tua.
+              <p
+                className="text-[12.5px] font-semibold min-w-0"
+                style={{ color: C.ink }}>
+                Belum Terhubung Ke Akun Orang Tua.
               </p>
             </div>
             <button
