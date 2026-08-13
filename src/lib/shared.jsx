@@ -10,6 +10,11 @@ export const CATEGORIES = [
 export const categoryLabel = (v) =>
   CATEGORIES.find((c) => c.value === v)?.label || "Lainnya";
 
+// Batas saldo minimum. Kalau saldo anak di bawah ini, orang tua
+// akan lihat notifikasi peringatan di ParentDashboard. Ubah angka
+// ini sesuai kebutuhan keluarga.
+export const LOW_BALANCE_LIMIT = 100000;
+
 export const rupiah = (n) => "Rp" + Math.round(n).toLocaleString("id-ID");
 
 export const todayISO = () => new Date().toISOString().slice(0, 10);

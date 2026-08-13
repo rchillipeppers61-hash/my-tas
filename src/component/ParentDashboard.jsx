@@ -2,12 +2,19 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../supabaseClient";
 import { C, FONT_IMPORT } from "./theme";
 import Card from "./Card";
-import { CATEGORIES, categoryLabel, rupiah, formatDay } from "../lib/shared";
+import {
+  CATEGORIES,
+  categoryLabel,
+  rupiah,
+  formatDay,
+  LOW_BALANCE_LIMIT,
+} from "../lib/shared";
 
 export default function ParentDashboard({ user, onLogout }) {
   const [childName, setChildName] = useState("");
   const [transactions, setTransactions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [showLowBalance, setShowLowBalance] = useState(false);
 
   useEffect(() => {
     loadData();
@@ -78,6 +85,13 @@ export default function ParentDashboard({ user, onLogout }) {
     return Object.entries(map).sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [transactions]);
 
+  useEffect(() => {
+    if (!loading && summary.balance < LOW_BALANCE_LIMIT) {
+      setShowLowBalance(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, summary.balance]);
+
   if (loading) {
     return (
       <div
@@ -125,7 +139,10 @@ export default function ParentDashboard({ user, onLogout }) {
             <h1
               style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
               className="text-[24px] font-semibold">
-              Keuangan {childName || "Anak"}
+              Keuangan{" "}
+              {childName
+                ? childName.charAt(0).toUpperCase() + childName.slice(1)
+                : "Anak"}
             </h1>
           </div>
           <button
@@ -135,6 +152,48 @@ export default function ParentDashboard({ user, onLogout }) {
             Keluar
           </button>
         </div>
+
+        {showLowBalance && (
+          <div
+            className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
+            style={{ background: "rgba(70,63,92,0.4)" }}
+            onClick={() => setShowLowBalance(false)}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7 text-center"
+              style={{
+                background: "#FFFFFF",
+                boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
+              }}>
+              <div
+                className="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-[26px] font-bold mb-4"
+                style={{ background: "#D9607A1a", color: C.roseDeep }}>
+                !
+              </div>
+              <h3
+                style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+                className="text-[20px] font-semibold leading-snug">
+                Saldo {childName || "anak"} tinggal {rupiah(summary.balance)}{" "}
+                nih!!
+              </h3>
+              <p
+                className="text-[13.5px] mt-2 leading-relaxed"
+                style={{ color: C.inkSoft }}>
+                Sudah di bawah batas {rupiah(LOW_BALANCE_LIMIT)}. Saatnya kirim
+                uang buat dia.
+              </p>
+              <button
+                onClick={() => setShowLowBalance(false)}
+                className="w-full mt-6 py-3.5 rounded-2xl font-semibold text-[14px]"
+                style={{
+                  background: `linear-gradient(135deg, ${C.lavender}, ${C.lavenderSoft})`,
+                  color: "#FFFFFF",
+                }}>
+                Siap, dicatat!
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="flex flex-col gap-3 mb-4 sm:grid sm:grid-cols-3">
           <Card title="Saldo">
