@@ -184,6 +184,7 @@ export default function ChildDashboard({ user, onLogout }) {
       owner_id: user.id,
       title: goalTitle.trim(),
       target_amount: amt,
+      saved_amount: 0,
     });
     setGoalSaving(false);
     if (!error) {
@@ -199,6 +200,19 @@ export default function ChildDashboard({ user, onLogout }) {
     return false;
   }
 
+  async function updateGoal(id, { title, target_amount }) {
+    const { error } = await supabase
+      .from("savings_goals")
+      .update({ title, target_amount })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (!error) {
+      await fetchGoals();
+      return true;
+    }
+    return false;
+  }
+
   async function deleteGoal(id) {
     const { error } = await supabase
       .from("savings_goals")
@@ -211,6 +225,58 @@ export default function ChildDashboard({ user, onLogout }) {
       setGoalError("Gagal menghapus target, coba lagi.");
       setTimeout(() => setGoalError(""), 3000);
     }
+  }
+
+  async function depositToGoal(id, amount) {
+    if (!amount || amount <= 0) {
+      return { ok: false, error: "Jumlah harus lebih dari 0." };
+    }
+    const totalSaved = goals.reduce(
+      (s, g) => s + Number(g.saved_amount || 0),
+      0,
+    );
+    const available = saldo - totalSaved;
+    if (amount > available) {
+      return {
+        ok: false,
+        error: `Saldo yang bisa disisihkan cuma ${rupiah(available)}.`,
+      };
+    }
+    const goal = goals.find((g) => g.id === id);
+    if (!goal) return { ok: false, error: "Target tidak ditemukan." };
+    const newSaved = Number(goal.saved_amount || 0) + amount;
+    const { error } = await supabase
+      .from("savings_goals")
+      .update({ saved_amount: newSaved })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (error) return { ok: false, error: "Gagal menyimpan, coba lagi." };
+    await fetchGoals();
+    return { ok: true };
+  }
+
+  async function withdrawFromGoal(id, amount) {
+    if (!amount || amount <= 0) {
+      return { ok: false, error: "Jumlah harus lebih dari 0." };
+    }
+    const goal = goals.find((g) => g.id === id);
+    if (!goal) return { ok: false, error: "Target tidak ditemukan." };
+    const currentSaved = Number(goal.saved_amount || 0);
+    if (amount > currentSaved) {
+      return {
+        ok: false,
+        error: `Yang sudah disisihkan cuma ${rupiah(currentSaved)}.`,
+      };
+    }
+    const newSaved = currentSaved - amount;
+    const { error } = await supabase
+      .from("savings_goals")
+      .update({ saved_amount: newSaved })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (error) return { ok: false, error: "Gagal menyimpan, coba lagi." };
+    await fetchGoals();
+    return { ok: true };
   }
 
   const totalIn = transactions
@@ -230,6 +296,11 @@ export default function ChildDashboard({ user, onLogout }) {
   const avgOutPerDay = Math.round(
     totalOutThisMonth / daysBetween(`${currentMonthKey}-01`, todayISO()),
   );
+  const totalSavedInGoals = goals.reduce(
+    (s, g) => s + Number(g.saved_amount || 0),
+    0,
+  );
+  const availableToAllocate = saldo - totalSavedInGoals;
 
   const availableMonths = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
@@ -351,8 +422,8 @@ export default function ChildDashboard({ user, onLogout }) {
             Memuat...
           </p>
         ) : (
-          <div className="lg:grid lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-6 lg:items-start">
-            <div className="lg:sticky lg:top-8 flex flex-col gap-4">
+          <div className="lg:grid lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-6 lg:items-stretch">
+            <div className="lg:sticky lg:top-8 flex flex-col gap-4 lg:self-start">
               <div
                 className="rounded-[32px] p-6 sm:p-8 relative overflow-hidden"
                 style={{
@@ -564,8 +635,12 @@ export default function ChildDashboard({ user, onLogout }) {
                       <SavingsGoalItem
                         key={g.id}
                         goal={g}
-                        saldo={saldo}
+                        editable
                         onDelete={deleteGoal}
+                        onEdit={updateGoal}
+                        onDeposit={depositToGoal}
+                        onWithdraw={withdrawFromGoal}
+                        availableToAllocate={availableToAllocate}
                       />
                     ))}
                   </div>
@@ -585,8 +660,8 @@ export default function ChildDashboard({ user, onLogout }) {
               </button>
             </div>
 
-            <div className="mt-4 lg:mt-0">
-              <Card>
+            <div className="mt-4 lg:mt-0 lg:flex lg:flex-col lg:h-full">
+              <Card className="lg:flex lg:flex-col lg:h-full">
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="min-w-0">
                     <h3
@@ -626,7 +701,7 @@ export default function ChildDashboard({ user, onLogout }) {
                     </span>
                   </div>
                 </div>
-                <div className="mt-1 max-h-[26rem] lg:max-h-[34rem] overflow-y-auto pr-1">
+                <div className="mt-1 max-h-[26rem] lg:max-h-none lg:flex-1 overflow-y-auto pr-1">
                   {transactions.length === 0 && (
                     <div className="py-10 sm:py-12 text-center">
                       <div

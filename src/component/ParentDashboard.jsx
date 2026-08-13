@@ -589,7 +589,7 @@ export default function ParentDashboard({ user, onLogout }) {
           <Card title="Target Nabung" accent={C.lavender} className="mb-4">
             <div className="space-y-4">
               {goals.map((g) => (
-                <SavingsGoalItem key={g.id} goal={g} saldo={summary.balance} />
+                <SavingsGoalItem key={g.id} goal={g} />
               ))}
             </div>
           </Card>
