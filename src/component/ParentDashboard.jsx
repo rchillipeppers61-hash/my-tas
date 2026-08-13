@@ -395,13 +395,13 @@ export default function ParentDashboard({ user, onLogout }) {
             </div>
             <div className="min-w-0">
               <p
-                className="text-[11px] tracking-[0.2em] uppercase font-semibold"
+                className="text-[12px] tracking-[0.2em] uppercase font-semibold"
                 style={{ color: C.lavender }}>
                 Pantauan Orang Tua
               </p>
               <h1
                 style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-                className="text-[24px] font-semibold truncate">
+                className="text-[19px] font-semibold truncate">
                 Keuangan {childName ? capitalize(childName) : "Anak"}
               </h1>
             </div>
