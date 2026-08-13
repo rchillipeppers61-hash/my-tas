@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { C } from "./component/theme";
 import Login from "./component/Login";
-import Dashboard from "./component/Dashboard";
+import ChildDashboard from "./component/ChildDashboard";
 import ParentDashboard from "./component/ParentDashboard";
 
 export default function App() {
@@ -47,5 +47,5 @@ export default function App() {
     return <ParentDashboard user={user} onLogout={handleLogout} />;
   }
 
-  return <Dashboard user={user} onLogout={handleLogout} />;
+  return <ChildDashboard user={user} onLogout={handleLogout} />;
 }

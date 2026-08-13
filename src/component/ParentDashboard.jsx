@@ -11,6 +11,7 @@ import {
   LOW_BALANCE_LIMIT,
   capitalize,
   monthLabel,
+  todayISO,
 } from "../lib/shared";
 
 export default function ParentDashboard({ user, onLogout }) {
@@ -19,6 +20,8 @@ export default function ParentDashboard({ user, onLogout }) {
   const [loading, setLoading] = useState(true);
   const [showLowBalance, setShowLowBalance] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(null);
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportEmptyMonth, setExportEmptyMonth] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -35,11 +38,11 @@ export default function ParentDashboard({ user, onLogout }) {
 
     const { data: childData } = await supabase
       .from("users")
-      .select("username")
+      .select("nama_lengkap")
       .eq("id", user.linked_child_id)
       .single();
 
-    if (childData) setChildName(childData.username);
+    if (childData) setChildName(childData.nama_lengkap);
 
     const { data: txData } = await supabase
       .from("transactions")
@@ -82,6 +85,7 @@ export default function ParentDashboard({ user, onLogout }) {
 
   const months = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
+    set.add(todayISO().slice(0, 7));
     return Array.from(set).sort((a, b) => (a < b ? 1 : -1));
   }, [transactions]);
 
@@ -105,27 +109,50 @@ export default function ParentDashboard({ user, onLogout }) {
     return Object.entries(map).sort((a, b) => (a[0] < b[0] ? 1 : -1));
   }, [monthTransactions]);
 
-  async function exportToExcel() {
-    if (monthTransactions.length === 0) return;
-
-    const rows = monthTransactions
+  async function exportToExcel(targetMonth) {
+    const month = targetMonth || selectedMonth;
+    const rows = transactions
+      .filter((t) => t.date.slice(0, 7) === month)
       .slice()
       .sort((a, b) => (a.date < b.date ? -1 : 1));
+
+    if (rows.length === 0) {
+      setExportEmptyMonth(month);
+      return false;
+    }
 
     const wb = new ExcelJS.Workbook();
     wb.creator = "My Wallet";
     wb.created = new Date();
 
-    const ws = wb.addWorksheet(monthLabel(selectedMonth));
+    const ws = wb.addWorksheet(monthLabel(month));
     ws.columns = [
-      { header: "Tanggal", key: "tanggal", width: 14 },
-      { header: "Tipe", key: "tipe", width: 10 },
-      { header: "Kategori", key: "kategori", width: 22 },
-      { header: "Catatan", key: "catatan", width: 30 },
-      { header: "Jumlah", key: "jumlah", width: 16 },
+      { key: "tanggal", width: 14 },
+      { key: "tipe", width: 10 },
+      { key: "kategori", width: 22 },
+      { key: "catatan", width: 30 },
+      { key: "jumlah", width: 16 },
     ];
 
-    const headerRow = ws.getRow(1);
+    const titleRow = ws.addRow(["DATA PENGELUARAN UANG"]);
+    ws.mergeCells(`A${titleRow.number}:E${titleRow.number}`);
+    titleRow.font = { bold: true, size: 14, color: { argb: "FF463F5C" } };
+    titleRow.height = 22;
+
+    const subRow = ws.addRow([`Bulan : ${monthLabel(month)}`]);
+    ws.mergeCells(`A${subRow.number}:E${subRow.number}`);
+    subRow.font = { italic: true, color: { argb: "FF8B72C4" } };
+
+    ws.addRow([]);
+    ws.addRow([]);
+
+    const headerRow = ws.addRow([
+      "Tanggal",
+      "Tipe",
+      "Kategori",
+      "Catatan",
+      "Jumlah",
+    ]);
     headerRow.height = 22;
     headerRow.eachCell((cell) => {
       cell.font = { bold: true, color: { argb: "FFFFFFFF" } };
@@ -134,19 +161,19 @@ export default function ParentDashboard({ user, onLogout }) {
         pattern: "solid",
         fgColor: { argb: "FF8B72C4" },
       };
-      cell.alignment = { vertical: "middle" };
+      cell.alignment = { vertical: "middle", horizontal: "center" };
     });
 
     rows.forEach((t) => {
-      const row = ws.addRow({
-        tanggal: t.date,
-        tipe: t.type === "in" ? "Masuk" : "Keluar",
-        kategori: t.type === "out" ? categoryLabel(t.category) : "-",
-        catatan: t.note || "",
-        jumlah: Number(t.amount),
-      });
-      row.getCell("jumlah").numFmt = '"Rp"#,##0';
-      row.getCell("tipe").font = {
+      const row = ws.addRow([
+        t.date,
+        t.type === "in" ? "Masuk" : "Keluar",
+        t.type === "out" ? categoryLabel(t.category) : "-",
+        t.note || "",
+        Number(t.amount),
+      ]);
+      row.getCell(5).numFmt = '"Rp"#,##0';
+      row.getCell(2).font = {
         bold: true,
         color: { argb: t.type === "in" ? "FF3F9E7C" : "FFD9607A" },
       };
@@ -159,24 +186,32 @@ export default function ParentDashboard({ user, onLogout }) {
       .filter((t) => t.type === "out")
       .reduce((s, t) => s + Number(t.amount), 0);
 
-    ws.addRow({});
+    const firstTotalRowNumber = ws.lastRow.number + 1;
     [
       ["Total Masuk", totalIn],
       ["Total Keluar", totalOut],
       ["Selisih", totalIn - totalOut],
     ].forEach(([label, value]) => {
-      const row = ws.addRow({ kategori: label, jumlah: value });
+      const row = ws.addRow(["", "", label, "", value]);
       row.font = { bold: true };
-      row.getCell("jumlah").numFmt = '"Rp"#,##0';
+      row.getCell(5).numFmt = '"Rp"#,##0';
     });
 
-    ws.eachRow((row) => {
-      row.eachCell((cell) => {
-        cell.border = {
-          bottom: { style: "thin", color: { argb: "FFE0DCEF" } },
+    const thin = { style: "thin", color: { argb: "FFCBC3E8" } };
+    for (let r = headerRow.number; r < firstTotalRowNumber; r++) {
+      const row = ws.getRow(r);
+      for (let c = 1; c <= 5; c++) {
+        row.getCell(c).border = {
+          top: thin,
+          bottom: thin,
+          left: thin,
+          right: thin,
         };
-      });
-    });
+      }
+    }
+    for (let r = firstTotalRowNumber; r <= ws.lastRow.number; r++) {
+      ws.getRow(r).getCell(5).border = { top: thin, bottom: thin };
+    }
 
     const buffer = await wb.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -185,11 +220,12 @@ export default function ParentDashboard({ user, onLogout }) {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `riwayat-${(childName || "anak").toLowerCase()}-${selectedMonth}.xlsx`;
+    a.download = `riwayat-${(childName || "anak").toLowerCase()}-${month}.xlsx`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    return true;
   }
 
   useEffect(() => {
@@ -289,7 +325,7 @@ export default function ParentDashboard({ user, onLogout }) {
                 style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
                 className="text-[20px] font-semibold leading-snug">
                 Saldo {capitalize(childName) || "anak"} tinggal{" "}
-                {rupiah(summary.balance)} nih!!
+                {rupiah(summary.balance)}
               </h3>
               <p
                 className="text-[13.5px] mt-2 leading-relaxed"
@@ -309,6 +345,59 @@ export default function ParentDashboard({ user, onLogout }) {
                   color: "#FFFFFF",
                 }}>
                 Siap, dicatat!
+              </button>
+            </div>
+          </div>
+        )}
+
+        {showExportModal && (
+          <div
+            className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
+            style={{ background: "rgba(70,63,92,0.4)" }}
+            onClick={() => setShowExportModal(false)}>
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
+              style={{
+                background: "#FFFFFF",
+                boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
+              }}>
+              <h3
+                style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+                className="text-[18px] font-semibold mb-1">
+                Export bulan mana?
+              </h3>
+              <p className="text-[12.5px] mb-4" style={{ color: C.inkFaint }}>
+                Data akan diunduh sebagai file Excel (.xlsx)
+              </p>
+              <div className="space-y-1.5 max-h-72 overflow-y-auto -mx-1 px-1">
+                {months.map((m) => (
+                  <div key={m}>
+                    <button
+                      onClick={async () => {
+                        const ok = await exportToExcel(m);
+                        if (ok !== false) setShowExportModal(false);
+                      }}
+                      className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-[13.5px] font-medium"
+                      style={{ background: "#463F5C0a", color: C.ink }}>
+                      {monthLabel(m)}
+                      <span style={{ color: C.mintDeep }}>↓</span>
+                    </button>
+                    {exportEmptyMonth === m && (
+                      <p
+                        className="text-[12px] mt-1 mb-1 px-1"
+                        style={{ color: C.roseDeep }}>
+                        Belum ada transaksi di bulan ini.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowExportModal(false)}
+                className="w-full mt-4 py-3 rounded-2xl text-[13px] font-semibold"
+                style={{ background: "#463F5C0f", color: C.ink }}>
+                Batal
               </button>
             </div>
           </div>
@@ -395,8 +484,11 @@ export default function ParentDashboard({ user, onLogout }) {
                 ))}
               </div>
               <button
-                onClick={exportToExcel}
-                disabled={monthTransactions.length === 0}
+                onClick={() => {
+                  setExportEmptyMonth(null);
+                  setShowExportModal(true);
+                }}
+                disabled={months.length === 0}
                 className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold disabled:opacity-40"
                 style={{ background: C.mintDeep, color: "#FFFFFF" }}>
                 Export Excel
