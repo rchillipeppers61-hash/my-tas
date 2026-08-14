@@ -23,6 +23,7 @@ export default function TugasPage({ user }) {
   const navigate = useNavigate();
   const [tugas, setTugas] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [filter, setFilter] = useState("semua");
   const [updatingId, setUpdatingId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
@@ -30,12 +31,17 @@ export default function TugasPage({ user }) {
 
   async function fetchTugas() {
     setLoading(true);
-    const { data, error } = await supabase
+    setError(null);
+    const { data, error: fetchError } = await supabase
       .from("tugas")
       .select("*, mata_kuliah(id, nama, warna)")
       .eq("user_id", user.id)
       .order("deadline", { ascending: true });
-    if (!error) setTugas(data || []);
+    if (fetchError) {
+      setError("Gagal memuat tugas. Cek koneksi kamu, terus coba lagi.");
+    } else {
+      setTugas(data || []);
+    }
     setLoading(false);
   }
 
@@ -96,7 +102,7 @@ export default function TugasPage({ user }) {
 
   return (
     <div
-      className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-28 lg:pb-10"
+      className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-28 lg:pb-10"
       style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
@@ -140,10 +146,39 @@ export default function TugasPage({ user }) {
         ))}
       </div>
 
+      {!loading && error && (
+        <div
+          className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mb-4"
+          style={{ background: "#D9607A1F", border: "1.5px solid #D9607A55" }}>
+          <span className="text-[18px] flex-shrink-0">⚠️</span>
+          <p
+            className="text-[12.5px] sm:text-[13px] font-semibold flex-1 min-w-0"
+            style={{ color: C.roseDeep }}>
+            {error}
+          </p>
+          <button
+            onClick={fetchTugas}
+            className="flex-shrink-0 min-h-[40px] px-3.5 rounded-full text-[12px] font-semibold"
+            style={{ color: C.roseDeep, background: "#FFFFFF" }}>
+            Coba lagi
+          </button>
+        </div>
+      )}
+
       {loading ? (
-        <p className="text-[13px] text-center py-10" style={{ color: C.inkFaint }}>
-          Memuat...
-        </p>
+        <div
+          className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:space-y-0"
+          aria-live="polite"
+          aria-busy="true">
+          {[0, 1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-[74px] rounded-3xl animate-pulse"
+              style={{ background: "#463F5C0F" }}
+            />
+          ))}
+          <span className="sr-only">Memuat tugas...</span>
+        </div>
       ) : filtered.length === 0 ? (
         <Card className="text-center py-10">
           <div
@@ -151,7 +186,9 @@ export default function TugasPage({ user }) {
             style={{ background: "#F4A6B71F" }}>
             📌
           </div>
-          <p className="text-[13.5px] font-medium mb-1" style={{ color: C.ink }}>
+          <p
+            className="text-[13.5px] font-medium mb-1"
+            style={{ color: C.ink }}>
             {filter === "semua" ? "Belum ada tugas" : "Gak ada tugas di sini"}
           </p>
           <p className="text-[12px]" style={{ color: C.inkFaint }}>
@@ -161,7 +198,7 @@ export default function TugasPage({ user }) {
           </p>
         </Card>
       ) : (
-        <div className="space-y-2.5">
+        <div className="space-y-2.5 lg:grid lg:grid-cols-2 lg:gap-2.5 lg:space-y-0">
           {filtered.map((item) => {
             const meta = statusMeta(item.status);
             const prio = prioritasMeta(item.prioritas);
@@ -172,13 +209,16 @@ export default function TugasPage({ user }) {
             const course = courseLabel(item);
 
             return (
-              <Card key={item.id} className="!p-4" accent={course ? courseColor(item) : null}>
+              <Card
+                key={item.id}
+                className="!p-4"
+                accent={course ? courseColor(item) : null}>
                 <div className="flex items-start gap-3">
                   <button
                     onClick={() => handleToggleStatus(item)}
                     disabled={updatingId === item.id}
                     aria-label="Ubah status"
-                    className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center text-[16px] mt-0.5 transition-opacity disabled:opacity-50"
+                    className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-[16px] transition-opacity disabled:opacity-50"
                     style={{ background: meta.bg }}>
                     {meta.icon}
                   </button>
@@ -222,7 +262,8 @@ export default function TugasPage({ user }) {
                           color: isUrgent ? C.roseDeep : C.inkFaint,
                         }}>
                         {isUrgent ? "⏰ " : ""}
-                        {deadlineLabel(item.deadline)} · {formatDeadline(item.deadline)}
+                        {deadlineLabel(item.deadline)} ·{" "}
+                        {formatDeadline(item.deadline)}
                       </span>
                     </div>
                   </button>
@@ -230,12 +271,16 @@ export default function TugasPage({ user }) {
                   <button
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
-                    className="flex-shrink-0 text-[11px] font-semibold px-2.5 py-1.5 rounded-full disabled:opacity-50"
+                    className="flex-shrink-0 min-w-[44px] min-h-[44px] text-[11px] font-semibold px-3 rounded-full disabled:opacity-50 flex items-center justify-center"
                     style={{
                       background: isConfirming ? C.roseDeep : "#463F5C0f",
                       color: isConfirming ? "#FFFFFF" : C.inkFaint,
                     }}>
-                    {deletingId === item.id ? "..." : isConfirming ? "Yakin?" : "🗑️"}
+                    {deletingId === item.id
+                      ? "..."
+                      : isConfirming
+                        ? "Yakin?"
+                        : "🗑️"}
                   </button>
                 </div>
               </Card>
@@ -263,7 +308,7 @@ function FilterChip({ active, onClick, label }) {
   return (
     <button
       onClick={onClick}
-      className="flex-shrink-0 px-3.5 py-1.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
+      className="flex-shrink-0 px-3.5 py-2.5 rounded-full text-[12px] font-semibold whitespace-nowrap transition-colors"
       style={{
         background: active ? C.roseDeep : "#463F5C0d",
         color: active ? "#FFFFFF" : C.inkSoft,

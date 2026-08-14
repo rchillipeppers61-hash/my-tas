@@ -43,11 +43,7 @@ export default function TugasFormPage({ user }) {
   const [mataKuliahList, setMataKuliahList] = useState([]);
   const [loadingMk, setLoadingMk] = useState(true);
   const [mode, setMode] = useState(
-    editing
-      ? editing.mata_kuliah_id
-        ? "dropdown"
-        : "manual"
-      : "dropdown",
+    editing ? (editing.mata_kuliah_id ? "dropdown" : "manual") : "dropdown",
   );
 
   const [judul, setJudul] = useState(editing?.judul || "");
@@ -173,7 +169,7 @@ export default function TugasFormPage({ user }) {
 
       <button
         onClick={() => navigate("/akademik/tugas")}
-        className="text-[12.5px] font-semibold mb-4 flex items-center gap-1"
+        className="text-[12.5px] font-semibold mb-4 -ml-1 px-1 py-2 flex items-center gap-1"
         style={{ color: C.roseDeep }}>
         ← Kembali
       </button>
@@ -217,7 +213,7 @@ export default function TugasFormPage({ user }) {
             key={opt.key}
             type="button"
             onClick={() => setMode(opt.key)}
-            className="flex-1 py-2.5 rounded-xl text-[12.5px] font-bold transition-all"
+            className="flex-1 py-3 rounded-xl text-[12.5px] font-bold transition-all"
             style={{
               background: mode === opt.key ? C.roseDeep : "transparent",
               color: mode === opt.key ? "#FFFFFF" : C.inkSoft,
@@ -285,7 +281,7 @@ export default function TugasFormPage({ user }) {
             key={p.value}
             type="button"
             onClick={() => setPrioritas(p.value)}
-            className="py-2.5 rounded-2xl text-[12.5px] font-bold border-[1.5px] transition-colors"
+            className="py-3 rounded-2xl text-[12.5px] font-bold border-[1.5px] transition-colors"
             style={{
               background: prioritas === p.value ? p.color : "#463F5C08",
               color: prioritas === p.value ? "#FFFFFF" : C.ink,
@@ -309,7 +305,7 @@ export default function TugasFormPage({ user }) {
                 key={s.value}
                 type="button"
                 onClick={() => setStatus(s.value)}
-                className="py-2.5 rounded-2xl text-[11.5px] font-bold border-[1.5px] transition-colors"
+                className="py-3 rounded-2xl text-[11.5px] font-bold border-[1.5px] transition-colors"
                 style={{
                   background: status === s.value ? s.color : "#463F5C08",
                   color: status === s.value ? "#FFFFFF" : C.ink,
@@ -353,7 +349,11 @@ export default function TugasFormPage({ user }) {
           color: "#FFFFFF",
           boxShadow: "0 14px 28px -14px rgba(217,96,122,0.6)",
         }}>
-        {saving ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Simpan Tugas"}
+        {saving
+          ? "Menyimpan..."
+          : isEditing
+            ? "Simpan Perubahan"
+            : "Simpan Tugas"}
       </button>
 
       {isEditing && (

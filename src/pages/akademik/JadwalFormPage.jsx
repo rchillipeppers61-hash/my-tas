@@ -48,7 +48,9 @@ export default function JadwalFormPage({ user }) {
 
   // Jadwal
   const [hari, setHari] = useState(editing?.hari || HARI_LIST[0]);
-  const [jamMulai, setJamMulai] = useState(editing?.jam_mulai?.slice(0, 5) || "");
+  const [jamMulai, setJamMulai] = useState(
+    editing?.jam_mulai?.slice(0, 5) || "",
+  );
   const [jamSelesai, setJamSelesai] = useState(
     editing?.jam_selesai?.slice(0, 5) || "",
   );
@@ -191,7 +193,7 @@ export default function JadwalFormPage({ user }) {
 
       <button
         onClick={() => navigate("/akademik/jadwal")}
-        className="text-[12.5px] font-semibold mb-4 flex items-center gap-1"
+        className="text-[12.5px] font-semibold mb-4 -ml-1 px-1 py-2 flex items-center gap-1"
         style={{ color: C.lavender }}>
         ← Kembali
       </button>
@@ -202,8 +204,7 @@ export default function JadwalFormPage({ user }) {
         {isEditing ? "Edit Jadwal" : "Tambah Jadwal"}
       </h1>
       <p className="text-[12.5px] mb-6" style={{ color: C.inkFaint }}>
-        Pilih mata kuliah yang udah ada, atau tambah baru sekalian sama
-        jamnya.
+        Pilih mata kuliah yang udah ada, atau tambah baru sekalian sama jamnya.
       </p>
 
       {/* Toggle mode -- disembunyikan pas edit tanpa mata_kuliah lama
@@ -219,7 +220,7 @@ export default function JadwalFormPage({ user }) {
             key={opt.key}
             type="button"
             onClick={() => setMode(opt.key)}
-            className="flex-1 py-2.5 rounded-xl text-[12.5px] font-bold transition-all"
+            className="flex-1 py-3 rounded-xl text-[12.5px] font-bold transition-all"
             style={{
               background: mode === opt.key ? C.lavender : "transparent",
               color: mode === opt.key ? "#FFFFFF" : C.inkSoft,
@@ -259,7 +260,9 @@ export default function JadwalFormPage({ user }) {
             </span>
           </div>
           {!loadingMk && mataKuliahList.length === 0 && (
-            <p className="text-[11.5px] -mt-2.5 mb-3.5" style={{ color: C.inkFaint }}>
+            <p
+              className="text-[11.5px] -mt-2.5 mb-3.5"
+              style={{ color: C.inkFaint }}>
               Belum ada mata kuliah tersimpan. Coba pilih "Mata Kuliah Baru".
             </p>
           )}
@@ -294,7 +297,7 @@ export default function JadwalFormPage({ user }) {
             style={inputStyle}
           />
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div>
               <label
                 className="text-[11px] uppercase tracking-wide font-bold"
@@ -311,32 +314,34 @@ export default function JadwalFormPage({ user }) {
                 style={inputStyle}
               />
             </div>
-            <div>
-              <label
-                className="text-[11px] uppercase tracking-wide font-bold"
-                style={{ color: C.inkFaint }}>
-                Warna
-              </label>
-              <div className="flex items-center gap-2 mt-1.5 mb-3.5 h-[46px]">
-                {WARNA_MK.map((w) => (
-                  <button
-                    key={w.value}
-                    type="button"
-                    onClick={() => setWarna(w.value)}
-                    aria-label={w.label}
-                    className="w-7 h-7 rounded-full flex-shrink-0 transition-transform"
-                    style={{
-                      background: w.value,
-                      transform: warna === w.value ? "scale(1.15)" : "scale(1)",
-                      boxShadow:
-                        warna === w.value
-                          ? `0 0 0 2px #FFFFFF, 0 0 0 4px ${w.value}`
-                          : "none",
-                    }}
-                  />
-                ))}
-              </div>
-            </div>
+          </div>
+
+          <label
+            className="text-[11px] uppercase tracking-wide font-bold"
+            style={{ color: C.inkFaint }}>
+            Warna
+          </label>
+          <div className="flex items-center flex-wrap gap-0.5 -mx-1 mt-1.5 mb-3.5">
+            {WARNA_MK.map((w) => (
+              <button
+                key={w.value}
+                type="button"
+                onClick={() => setWarna(w.value)}
+                aria-label={w.label}
+                className="w-11 h-11 rounded-full flex-shrink-0 flex items-center justify-center">
+                <span
+                  className="w-7 h-7 rounded-full block transition-transform"
+                  style={{
+                    background: w.value,
+                    transform: warna === w.value ? "scale(1.15)" : "scale(1)",
+                    boxShadow:
+                      warna === w.value
+                        ? `0 0 0 2px #FFFFFF, 0 0 0 4px ${w.value}`
+                        : "none",
+                  }}
+                />
+              </button>
+            ))}
           </div>
         </>
       )}
@@ -427,7 +432,11 @@ export default function JadwalFormPage({ user }) {
           color: "#FFFFFF",
           boxShadow: "0 14px 28px -14px rgba(139,114,196,0.6)",
         }}>
-        {saving ? "Menyimpan..." : isEditing ? "Simpan Perubahan" : "Simpan Jadwal"}
+        {saving
+          ? "Menyimpan..."
+          : isEditing
+            ? "Simpan Perubahan"
+            : "Simpan Jadwal"}
       </button>
 
       {isEditing && (

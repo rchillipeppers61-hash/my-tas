@@ -101,7 +101,7 @@ export function PasswordField({
           onChange={onChange}
           required
           autoComplete={autoComplete}
-          className="w-full px-3.5 pr-11 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] focus:ring-4 focus:ring-[#8B72C42A]"
+          className="w-full px-3.5 pr-12 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] focus:ring-4 focus:ring-[#8B72C42A]"
           style={{
             background: "#463F5C08",
             color: C.ink,
@@ -112,7 +112,7 @@ export function PasswordField({
           type="button"
           onClick={() => setVisible((v) => !v)}
           tabIndex={-1}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+          className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
           style={{ color: C.inkFaint, "--tw-ring-color": C.lavender }}
           aria-label={visible ? "Sembunyikan password" : "Tampilkan password"}>
           {visible ? <EyeOffIcon /> : <EyeIcon />}

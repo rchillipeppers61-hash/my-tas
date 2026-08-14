@@ -55,7 +55,7 @@ export default function AkademikPage({ user }) {
 
   return (
     <div
-      className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10"
+      className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10"
       style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
@@ -76,7 +76,7 @@ export default function AkademikPage({ user }) {
         sampai catatan.
       </p>
 
-      <div className="grid sm:grid-cols-2 gap-3.5 sm:gap-4">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
         {MENU_ITEMS.map((item) => (
           <MenuCard key={item.to} {...item} />
         ))}
@@ -142,7 +142,11 @@ function MenuCard({ to, icon, title, desc, accent, tint, active }) {
   );
 
   if (!active) {
-    return <div className="cursor-not-allowed">{content}</div>;
+    return (
+      <div className="cursor-not-allowed" aria-disabled="true">
+        {content}
+      </div>
+    );
   }
 
   return (

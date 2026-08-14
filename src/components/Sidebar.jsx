@@ -36,7 +36,7 @@ export default function Sidebar({ user, onLogout, onAccountClick }) {
           <NavLink
             key={item.to}
             to={item.to}
-            className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl text-[13.5px] font-semibold transition-colors"
+            className="flex items-center gap-3 px-3.5 py-3 rounded-2xl text-[13.5px] font-semibold transition-colors"
             style={({ isActive }) => ({
               background: isActive ? C.lavender : "transparent",
               color: isActive ? "#FFFFFF" : C.inkSoft,
@@ -50,14 +50,14 @@ export default function Sidebar({ user, onLogout, onAccountClick }) {
       <div className="space-y-1.5">
         <button
           onClick={onAccountClick}
-          className="w-full flex items-center gap-3 text-[12.5px] font-semibold px-3.5 py-2.5 rounded-2xl text-left"
+          className="w-full flex items-center gap-3 text-[12.5px] font-semibold px-3.5 py-3 rounded-2xl text-left"
           style={{ background: "#463F5C0a", color: C.inkSoft }}>
           <span className="text-[16px] leading-none">🔒</span>
           Akun
         </button>
         <button
           onClick={onLogout}
-          className="w-full flex items-center gap-3 text-[12.5px] font-semibold px-3.5 py-2.5 rounded-2xl text-left"
+          className="w-full flex items-center gap-3 text-[12.5px] font-semibold px-3.5 py-3 rounded-2xl text-left"
           style={{ background: "#D9607A1a", color: C.roseDeep }}>
           <span className="text-[16px] leading-none">🚪</span>
           Keluar

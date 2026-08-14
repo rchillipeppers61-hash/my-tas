@@ -40,9 +40,27 @@ export const WARNA_MK = [
 // Status Tugas -- 3 tahap: belum dikerjakan -> lagi dikerjakan -> selesai.
 // ------------------------------------------------------------
 export const STATUS_TUGAS = [
-  { value: "belum", label: "Belum Dikerjakan", icon: "⭕", color: C.roseDeep, bg: "#F4A6B71F" },
-  { value: "proses", label: "Sedang Dikerjakan", icon: "🔨", color: C.amberDeep, bg: "#F6C4531F" },
-  { value: "selesai", label: "Selesai", icon: "✅", color: C.mintDeep, bg: "#8FD8BE22" },
+  {
+    value: "belum",
+    label: "Belum Dikerjakan",
+    icon: "⭕",
+    color: C.roseDeep,
+    bg: "#F4A6B71F",
+  },
+  {
+    value: "proses",
+    label: "Sedang Dikerjakan",
+    icon: "🔨",
+    color: C.amberDeep,
+    bg: "#F6C4531F",
+  },
+  {
+    value: "selesai",
+    label: "Selesai",
+    icon: "✅",
+    color: C.mintDeep,
+    bg: "#8FD8BE22",
+  },
 ];
 
 export const statusMeta = (v) =>

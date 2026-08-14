@@ -33,6 +33,7 @@ export default function HomePage({ user }) {
   const targetLinked = isParent ? Boolean(user.linked_child_id) : true;
 
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   // Wallet
   const [saldo, setSaldo] = useState(0);
@@ -56,12 +57,17 @@ export default function HomePage({ user }) {
 
   async function loadAll() {
     setLoading(true);
-    await Promise.all([
-      loadChildName(),
-      loadWallet(),
-      loadJadwal(),
-      loadTugas(),
-    ]);
+    setError(null);
+    try {
+      await Promise.all([
+        loadChildName(),
+        loadWallet(),
+        loadJadwal(),
+        loadTugas(),
+      ]);
+    } catch (err) {
+      setError("Gagal memuat data. Cek koneksi kamu, terus coba lagi.");
+    }
     setLoading(false);
   }
 
@@ -82,7 +88,8 @@ export default function HomePage({ user }) {
       .eq("owner_id", targetId)
       .is("deleted_at", null);
 
-    if (!error && data) {
+    if (error) throw error;
+    if (data) {
       const totalIn = data
         .filter((t) => t.type === "in")
         .reduce((s, t) => s + Number(t.amount), 0);
@@ -100,7 +107,8 @@ export default function HomePage({ user }) {
       .eq("user_id", targetId)
       .eq("hari", todayHari())
       .order("jam_mulai", { ascending: true });
-    if (!error) setJadwalHariIni(data || []);
+    if (error) throw error;
+    setJadwalHariIni(data || []);
   }
 
   async function loadTugas() {
@@ -110,7 +118,8 @@ export default function HomePage({ user }) {
       .eq("user_id", targetId)
       .neq("status", "selesai")
       .order("deadline", { ascending: true });
-    if (!error) setTugasList(data || []);
+    if (error) throw error;
+    setTugasList(data || []);
   }
 
   async function handleToggleStatus(item) {
@@ -203,7 +212,7 @@ export default function HomePage({ user }) {
 
   return (
     <div
-      className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10 pb-20 lg:pb-10"
+      className="max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-20 lg:pb-10"
       style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
@@ -214,16 +223,47 @@ export default function HomePage({ user }) {
       </p>
       <h1
         style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-        className="text-[24px] font-semibold mb-6 sm:mb-8">
+        className="text-[24px] sm:text-[26px] font-semibold mb-6 sm:mb-8">
         Halo, {name} 👋
       </h1>
 
+      {!loading && error && (
+        <div
+          className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mb-4"
+          style={{ background: "#D9607A1F", border: "1.5px solid #D9607A55" }}>
+          <span className="text-[18px] flex-shrink-0">⚠️</span>
+          <p
+            className="text-[12.5px] sm:text-[13px] font-semibold flex-1 min-w-0"
+            style={{ color: C.roseDeep }}>
+            {error}
+          </p>
+          <button
+            onClick={loadAll}
+            className="flex-shrink-0 min-h-[40px] px-3.5 rounded-full text-[12px] font-semibold"
+            style={{ color: C.roseDeep, background: "#FFFFFF" }}>
+            Coba lagi
+          </button>
+        </div>
+      )}
+
       {loading ? (
-        <p
-          className="text-[13px] text-center py-10"
-          style={{ color: C.inkFaint }}>
-          Memuat...
-        </p>
+        <div className="space-y-4" aria-live="polite" aria-busy="true">
+          <div
+            className="rounded-[28px] h-[132px] sm:h-[148px] animate-pulse"
+            style={{ background: "#463F5C14" }}
+          />
+          <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
+            <div
+              className="rounded-[28px] h-[190px] animate-pulse"
+              style={{ background: "#463F5C0F" }}
+            />
+            <div
+              className="rounded-[28px] h-[190px] animate-pulse"
+              style={{ background: "#463F5C0F" }}
+            />
+          </div>
+          <span className="sr-only">Memuat data...</span>
+        </div>
       ) : (
         <div className="space-y-4">
           {/* Reminder terpenting -- muncul cuma kalau ada tugas urgent/overdue. */}
@@ -284,136 +324,142 @@ export default function HomePage({ user }) {
             </div>
           </Link>
 
-          {/* Card Jadwal Hari Ini */}
-          <Card
-            title={
-              isParent
-                ? `Jadwal ${capitalize(childName) || "Anak"} Hari Ini`
-                : "Jadwal Hari Ini"
-            }
-            sub={todayHari()}
-            accent={C.lavender}>
-            {jadwalHariIni.length === 0 ? (
-              <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
-                {isParent
-                  ? "Gak ada jadwal kuliah hari ini."
-                  : "Gak ada jadwal hari ini, healing dulu! 😌"}
-              </p>
-            ) : (
-              <div className="space-y-2.5">
-                {jadwalHariIni.map((j) => {
-                  const mk = j.mata_kuliah || {};
-                  return (
-                    <div
-                      key={j.id}
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
-                      style={{ background: "#463F5C08" }}>
+          {/* Jadwal & Tugas: numpuk 1 kolom di HP/tablet portrait, 2 kolom mulai laptop */}
+          <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:items-start">
+            {/* Card Jadwal Hari Ini */}
+            <Card
+              title={
+                isParent
+                  ? `Jadwal ${capitalize(childName) || "Anak"} Hari Ini`
+                  : "Jadwal Hari Ini"
+              }
+              sub={todayHari()}
+              accent={C.lavender}>
+              {jadwalHariIni.length === 0 ? (
+                <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
+                  {isParent
+                    ? "Gak ada jadwal kuliah hari ini."
+                    : "Gak ada jadwal hari ini, healing dulu! 😌"}
+                </p>
+              ) : (
+                <div className="space-y-2.5">
+                  {jadwalHariIni.map((j) => {
+                    const mk = j.mata_kuliah || {};
+                    return (
                       <div
-                        className="w-1.5 h-9 rounded-full flex-shrink-0"
-                        style={{ background: mk.warna || C.lavender }}
-                      />
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="text-[13.5px] font-semibold truncate"
-                          style={{ color: C.ink }}>
-                          {mk.nama || "Tanpa nama"}
-                        </p>
-                        <p
-                          className="text-[11.5px]"
-                          style={{ color: C.inkFaint }}>
-                          {j.jam_mulai?.slice(0, 5)}–
-                          {j.jam_selesai?.slice(0, 5)}
-                          {j.ruangan ? ` · ${j.ruangan}` : ""}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {!isParent && (
-              <Link
-                to="/akademik/jadwal"
-                className="inline-block mt-3.5 text-[12px] font-semibold"
-                style={{ color: C.lavender }}>
-                Lihat semua jadwal →
-              </Link>
-            )}
-          </Card>
-
-          {/* Card Tugas Mendekati Deadline */}
-          <Card
-            title={
-              isParent
-                ? `Tugas ${capitalize(childName) || "Anak"} Mendekati Deadline`
-                : "Tugas Mendekati Deadline"
-            }
-            sub={`${URGENT_DAYS_LIMIT} hari ke depan`}
-            accent={C.roseDeep}>
-            {tugasUrgent.length === 0 ? (
-              <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
-                Gak ada tugas yang mendesak. Aman! ✅
-              </p>
-            ) : (
-              <div className="space-y-2">
-                {tugasUrgent.map((item) => {
-                  const meta = statusMeta(item.status);
-                  const prio = prioritasMeta(item.prioritas);
-                  const overdue = daysUntil(item.deadline) < 0;
-                  return (
-                    <div
-                      key={item.id}
-                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
-                      style={{
-                        background: overdue ? "#F4A6B71A" : "#463F5C08",
-                      }}>
-                      <button
-                        onClick={() => handleToggleStatus(item)}
-                        disabled={updatingTugasId === item.id || isParent}
-                        aria-label="Ubah status"
-                        className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-[14px] disabled:opacity-50"
-                        style={{
-                          background: meta.bg,
-                          cursor: isParent ? "default" : "pointer",
-                        }}>
-                        {meta.icon}
-                      </button>
-                      <div className="min-w-0 flex-1">
-                        <p
-                          className="text-[13.5px] font-semibold truncate"
-                          style={{ color: C.ink }}>
-                          {item.judul}
-                        </p>
-                        <div className="flex items-center flex-wrap gap-1.5 mt-1">
-                          <span
-                            className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
-                            style={{ background: prio.bg, color: prio.color }}>
-                            {prio.label}
-                          </span>
-                          <span
-                            className="text-[10.5px] font-semibold"
-                            style={{
-                              color: overdue ? C.roseDeep : C.inkFaint,
-                            }}>
-                            {deadlineLabel(item.deadline)} ·{" "}
-                            {formatDeadline(item.deadline)}
-                          </span>
+                        key={j.id}
+                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
+                        style={{ background: "#463F5C08" }}>
+                        <div
+                          className="w-1.5 h-9 rounded-full flex-shrink-0"
+                          style={{ background: mk.warna || C.lavender }}
+                        />
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className="text-[13.5px] font-semibold truncate"
+                            style={{ color: C.ink }}>
+                            {mk.nama || "Tanpa nama"}
+                          </p>
+                          <p
+                            className="text-[11.5px]"
+                            style={{ color: C.inkFaint }}>
+                            {j.jam_mulai?.slice(0, 5)}–
+                            {j.jam_selesai?.slice(0, 5)}
+                            {j.ruangan ? ` · ${j.ruangan}` : ""}
+                          </p>
                         </div>
                       </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            {!isParent && (
-              <Link
-                to="/akademik/tugas"
-                className="inline-block mt-3.5 text-[12px] font-semibold"
-                style={{ color: C.roseDeep }}>
-                Lihat semua tugas →
-              </Link>
-            )}
-          </Card>
+                    );
+                  })}
+                </div>
+              )}
+              {!isParent && (
+                <Link
+                  to="/akademik/jadwal"
+                  className="inline-block mt-3.5 -mx-1 px-1 py-2 text-[12px] font-semibold"
+                  style={{ color: C.lavender }}>
+                  Lihat semua jadwal →
+                </Link>
+              )}
+            </Card>
+
+            {/* Card Tugas Mendekati Deadline */}
+            <Card
+              title={
+                isParent
+                  ? `Tugas ${capitalize(childName) || "Anak"} Mendekati Deadline`
+                  : "Tugas Mendekati Deadline"
+              }
+              sub={`${URGENT_DAYS_LIMIT} hari ke depan`}
+              accent={C.roseDeep}>
+              {tugasUrgent.length === 0 ? (
+                <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
+                  Gak ada tugas yang mendesak. Aman! ✅
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {tugasUrgent.map((item) => {
+                    const meta = statusMeta(item.status);
+                    const prio = prioritasMeta(item.prioritas);
+                    const overdue = daysUntil(item.deadline) < 0;
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
+                        style={{
+                          background: overdue ? "#F4A6B71A" : "#463F5C08",
+                        }}>
+                        <button
+                          onClick={() => handleToggleStatus(item)}
+                          disabled={updatingTugasId === item.id || isParent}
+                          aria-label="Ubah status"
+                          className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-[16px] active:scale-95 transition-transform disabled:opacity-50"
+                          style={{
+                            background: meta.bg,
+                            cursor: isParent ? "default" : "pointer",
+                          }}>
+                          {meta.icon}
+                        </button>
+                        <div className="min-w-0 flex-1">
+                          <p
+                            className="text-[13.5px] font-semibold truncate"
+                            style={{ color: C.ink }}>
+                            {item.judul}
+                          </p>
+                          <div className="flex items-center flex-wrap gap-1.5 mt-1">
+                            <span
+                              className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
+                              style={{
+                                background: prio.bg,
+                                color: prio.color,
+                              }}>
+                              {prio.label}
+                            </span>
+                            <span
+                              className="text-[10.5px] font-semibold"
+                              style={{
+                                color: overdue ? C.roseDeep : C.inkFaint,
+                              }}>
+                              {deadlineLabel(item.deadline)} ·{" "}
+                              {formatDeadline(item.deadline)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+              {!isParent && (
+                <Link
+                  to="/akademik/tugas"
+                  className="inline-block mt-3.5 -mx-1 px-1 py-2 text-[12px] font-semibold"
+                  style={{ color: C.roseDeep }}>
+                  Lihat semua tugas →
+                </Link>
+              )}
+            </Card>
+          </div>
         </div>
       )}
     </div>

@@ -199,7 +199,7 @@ export function Login({ onLoginSuccess }) {
               required
               autoComplete="current-password"
               placeholder="••••••••"
-              className="w-full pl-10 pr-11 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
+              className="w-full pl-10 pr-12 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
               style={{
                 background: "#463F5C08",
                 color: C.ink,
@@ -210,7 +210,7 @@ export function Login({ onLoginSuccess }) {
               type="button"
               onClick={() => setShowPassword((v) => !v)}
               tabIndex={-1}
-              className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+              className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
               style={{ color: C.inkFaint, "--tw-ring-color": C.lavender }}
               aria-label={
                 showPassword ? "Sembunyikan password" : "Tampilkan password"
@@ -219,11 +219,11 @@ export function Login({ onLoginSuccess }) {
             </button>
           </div>
 
-          <div className="flex items-center justify-between mb-5 mt-1">
+          <div className="flex items-center justify-between mb-5 mt-1 -mx-1">
             <button
               type="button"
               onClick={() => setRemember((v) => !v)}
-              className="flex items-center gap-2 group rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+              className="flex items-center gap-2 group rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1 py-2 px-1"
               style={{ "--tw-ring-color": C.lavender }}>
               <span
                 className="w-5 h-5 rounded-md flex items-center justify-center transition-colors"
@@ -242,7 +242,7 @@ export function Login({ onLoginSuccess }) {
             <button
               type="button"
               onClick={() => setShowForgotHint((v) => !v)}
-              className="text-[12.5px] font-medium rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+              className="text-[12.5px] font-medium rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1 py-2 px-1"
               style={{ color: C.lavender, "--tw-ring-color": C.lavender }}>
               Lupa password?
             </button>
@@ -604,7 +604,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
               key={opt.key}
               type="button"
               onClick={() => setRole(opt.key)}
-              className="py-2.5 rounded-2xl text-[13.5px] font-semibold border-[1.5px] transition-colors"
+              className="py-3 rounded-2xl text-[13.5px] font-semibold border-[1.5px] transition-colors"
               style={{
                 background: role === opt.key ? C.lavender : "#463F5C08",
                 color: role === opt.key ? "#FFFFFF" : C.ink,
@@ -669,7 +669,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
             onChange={(e) => setPassword(e.target.value)}
             required
             placeholder="••••••••"
-            className="w-full pl-3.5 pr-11 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
+            className="w-full pl-3.5 pr-12 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
             style={{
               background: "#463F5C08",
               color: C.ink,
@@ -680,7 +680,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
             type="button"
             onClick={() => setShowPassword((v) => !v)}
             tabIndex={-1}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
             style={{ color: C.inkFaint, "--tw-ring-color": C.lavender }}
             aria-label={
               showPassword ? "Sembunyikan password" : "Tampilkan password"
@@ -702,7 +702,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
             onChange={(e) => setConfirmPassword(e.target.value)}
             required
             placeholder="••••••••"
-            className="w-full pl-3.5 pr-11 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
+            className="w-full pl-3.5 pr-12 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
             style={{
               background: "#463F5C08",
               color: C.ink,
@@ -713,7 +713,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
             type="button"
             onClick={() => setShowConfirmPassword((v) => !v)}
             tabIndex={-1}
-            className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
+            className="absolute right-1.5 top-1/2 -translate-y-1/2 w-11 h-11 flex items-center justify-center rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-offset-1"
             style={{ color: C.inkFaint, "--tw-ring-color": C.lavender }}
             aria-label={
               showConfirmPassword
