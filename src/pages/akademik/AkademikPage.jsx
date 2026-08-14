@@ -88,9 +88,10 @@ export default function AkademikPage({ user }) {
 function MenuCard({ to, icon, title, desc, accent, tint, active }) {
   const content = (
     <div
-      className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 h-full transition-transform"
+      className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 h-full transition-transform border"
       style={{
         background: active ? tint : "#463F5C0a",
+        borderColor: active ? `${accent}40` : "#463F5C1F",
         boxShadow: active
           ? "0 1px 0 rgba(70,63,92,0.04), 0 12px 28px -16px rgba(70,63,92,0.22)"
           : "none",
