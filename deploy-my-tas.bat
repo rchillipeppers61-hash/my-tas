@@ -8,7 +8,7 @@ echo      DEPLOY APLIKASI MY WALLET
 echo  ========================================
 echo.
 
-cd "D:\Aplikasi Produksi\my-wallet"
+cd "D:\Aplikasi Produksi\Aplikasi MyTAS"
 
 echo  [INFO] Current directory: %CD%
 echo.
@@ -58,8 +58,8 @@ echo  ========================================
 echo         DEPLOYMENT SUCCESS!
 echo  ========================================
 echo.
-echo  GitHub: https://github.com/rchillipeppers61-hash/my-wallet
-echo  Website: https://dompetku-aghnia.vercel.app/
+echo  GitHub: https://github.com/rchillipeppers61-hash/my-tas
+echo  Website: https://my-tas.vercel.app/
 echo.
 echo  Vercel will auto-deploy in 1-2 minutes.
 echo.

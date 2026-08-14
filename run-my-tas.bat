@@ -8,7 +8,7 @@ echo.
 echo [*] Memulai aplikasi...
 echo.
 
-cd /d "D:\Aplikasi Produksi\my-wallet"
+cd /d "D:\Aplikasi Produksi\Aplikasi MyTAS"
 
 if not exist "package.json" (
     echo [ERROR] File package.json tidak ditemukan!
