@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { C } from "./shared/theme";
-import Login from "./shared/auth/Login";
-import AppShell from "./layout/AppShell";
-import HomePage from "./layout/HomePage";
-import WalletPage from "./modules/wallet/WalletPage";
+import { C } from "./lib/theme";
+import { Login } from "./components/auth";
+import AppShell from "./components/Layout";
+import HomePage from "./pages/HomePage";
+import WalletPage from "./pages/wallet/WalletPage";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -49,12 +49,9 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route element={<AppShell user={user} onLogout={handleLogout} />}>
-          <Route index element={<Navigate to="/wallet" replace />} />
+          <Route index element={<Navigate to="/home" replace />} />
           <Route path="home" element={<HomePage user={user} />} />
-          <Route
-            path="wallet"
-            element={<WalletPage user={user} onLogout={handleLogout} />}
-          />
+          <Route path="wallet" element={<WalletPage user={user} />} />
           {/* Modul baru nanti nambah <Route> di sini, contoh:
           <Route path="akademik" element={<AkademikPage user={user} />} /> */}
         </Route>

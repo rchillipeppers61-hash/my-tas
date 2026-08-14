@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
-import { C } from "../shared/theme";
-import { capitalize } from "../shared/lib/format";
+import { C } from "../lib/theme";
+import { capitalize } from "../lib/format";
 
 // Daftar modul ada DI SINI SAJA. Nambah modul baru = nambah 1 baris,
 // nggak perlu ubah apa-apa di komponen lain.
@@ -10,7 +10,7 @@ const NAV_ITEMS = [
   // { to: "/akademik", label: "Akademik", icon: "📚" }, ← nanti nyusul
 ];
 
-export default function Sidebar({ user, onLogout }) {
+export default function Sidebar({ user, onLogout, onAccountClick }) {
   const name = capitalize(user?.username) || "Kamu";
 
   return (
@@ -46,12 +46,22 @@ export default function Sidebar({ user, onLogout }) {
         ))}
       </nav>
 
-      <button
-        onClick={onLogout}
-        className="text-[12.5px] font-semibold px-3.5 py-2.5 rounded-2xl text-left"
-        style={{ background: "#D9607A1a", color: C.roseDeep }}>
-        Keluar
-      </button>
+      <div className="space-y-1.5">
+        <button
+          onClick={onAccountClick}
+          className="w-full flex items-center gap-3 text-[12.5px] font-semibold px-3.5 py-2.5 rounded-2xl text-left"
+          style={{ background: "#463F5C0a", color: C.inkSoft }}>
+          <span className="text-[16px] leading-none">🔒</span>
+          Akun
+        </button>
+        <button
+          onClick={onLogout}
+          className="w-full flex items-center gap-3 text-[12.5px] font-semibold px-3.5 py-2.5 rounded-2xl text-left"
+          style={{ background: "#D9607A1a", color: C.roseDeep }}>
+          <span className="text-[16px] leading-none">🚪</span>
+          Keluar
+        </button>
+      </div>
     </aside>
   );
 }

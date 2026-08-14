@@ -1,5 +1,5 @@
-import { C } from "../shared/theme";
-import { capitalize } from "../shared/lib/format";
+import { C } from "../lib/theme";
+import { capitalize } from "../lib/format";
 
 // Placeholder Home. Nanti ini jadi ringkasan semua modul
 // (preview saldo Wallet, jumlah tugas Akademik, dst).

@@ -1,7 +1,12 @@
 import { useState } from "react";
-import { C } from "../../shared/theme";
-import { CATEGORIES } from "./lib/walletConstants";
+import { C } from "../../lib/theme";
+import { rupiah } from "../../lib/format";
+import { CATEGORIES } from "./constants";
 
+// ============================================================
+// TransactionForm — modal tambah/edit transaksi (dipakai di
+// ChildDashboard).
+// ============================================================
 const CATEGORY_ICONS = {
   makan: "🍜",
   jajan: "🍿",
@@ -14,12 +19,7 @@ const CATEGORY_ICONS = {
 const inputClass =
   "w-full mt-1.5 mb-3.5 px-3.5 py-3.5 sm:py-3 rounded-2xl text-[15px] sm:text-[14.5px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]";
 
-export default function TransactionForm({
-  transaction,
-  onSave,
-  onDelete,
-  onClose,
-}) {
+export function TransactionForm({ transaction, onSave, onDelete, onClose }) {
   const isEditing = Boolean(transaction);
   const [form, setForm] = useState({
     type: transaction?.type || "out",
@@ -266,6 +266,65 @@ export default function TransactionForm({
           </button>
         )}
       </div>
+    </div>
+  );
+}
+
+// ============================================================
+// SavingsGoalItem — baris progress satu target nabung (dipakai
+// di ChildDashboard & ParentDashboard).
+// ============================================================
+export function SavingsGoalItem({ goal, saldo, onDelete }) {
+  const pct = Math.max(
+    0,
+    Math.min(100, Math.round((saldo / goal.target_amount) * 100)),
+  );
+  const achieved = saldo >= goal.target_amount;
+
+  return (
+    <div>
+      <div className="flex items-center justify-between gap-2 text-[13px] mb-1">
+        <span
+          className="font-medium truncate flex items-center gap-1.5"
+          style={{ color: C.ink }}>
+          {achieved ? "🏆" : "🎯"} {goal.title}
+        </span>
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <span style={{ color: C.inkFaint }}>
+            {rupiah(Math.min(saldo, goal.target_amount))} /{" "}
+            {rupiah(goal.target_amount)}
+          </span>
+          {onDelete && (
+            <button
+              onClick={() => onDelete(goal.id)}
+              aria-label="Hapus target"
+              className="text-[11px] w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+              style={{ background: "#463F5C0f", color: C.inkFaint }}>
+              ✕
+            </button>
+          )}
+        </div>
+      </div>
+      <div
+        className="h-2.5 rounded-full overflow-hidden"
+        style={{ background: "#463F5C14" }}>
+        <div
+          className="h-full rounded-full transition-all"
+          style={{
+            width: `${pct}%`,
+            background: achieved
+              ? `linear-gradient(135deg, ${C.mintDeep}, ${C.mint})`
+              : `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+          }}
+        />
+      </div>
+      {achieved && (
+        <p
+          className="text-[11px] mt-1 font-semibold"
+          style={{ color: C.mintDeep }}>
+          🎉 Target tercapai!
+        </p>
+      )}
     </div>
   );
 }

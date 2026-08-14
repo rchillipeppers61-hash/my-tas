@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../supabaseClient";
-import { C, FONT_IMPORT } from "../../shared/theme";
-import Card from "../../shared/ui/Card";
-import TransactionForm from "./TransactionForm";
-import ChangePasswordModal from "../../shared/auth/ChangePasswordModal";
-import SavingsGoalItem from "./SavingsGoalItem";
+import { C, FONT_IMPORT } from "../../lib/theme";
+import { Card } from "../../components/ui";
+import { TransactionForm, SavingsGoalItem } from "./forms";
 import {
   rupiah,
   todayISO,
@@ -12,8 +10,8 @@ import {
   daysBetween,
   capitalize,
   monthLabel,
-} from "../../shared/lib/format";
-import { categoryLabel, LOW_BALANCE_LIMIT } from "./lib/walletConstants";
+} from "../../lib/format";
+import { categoryLabel, LOW_BALANCE_LIMIT } from "./constants";
 
 const CATEGORY_META = {
   makan: { icon: "🍜", bg: "#8FD8BE2A" },
@@ -37,11 +35,10 @@ function getInitials(name) {
     .join("");
 }
 
-export default function ChildDashboard({ user, onLogout }) {
+export default function ChildDashboard({ user }) {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
   const [editingTx, setEditingTx] = useState(null);
-  const [showChangePassword, setShowChangePassword] = useState(false);
   const [loading, setLoading] = useState(true);
   const [period, setPeriod] = useState("week");
   const [goals, setGoals] = useState([]);
@@ -301,22 +298,6 @@ export default function ChildDashboard({ user, onLogout }) {
                 Halo, {displayName} 👋
               </h1>
             </div>
-          </div>
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <button
-              onClick={() => setShowChangePassword(true)}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-[15px] sm:text-[16px]"
-              style={{ background: "#463F5C0f", color: C.inkSoft }}
-              aria-label="Ganti Password"
-              title="Ganti Password">
-              🔒
-            </button>
-            <button
-              onClick={onLogout}
-              className="text-[12px] font-semibold px-3.5 py-2 rounded-2xl"
-              style={{ background: C.roseDeep, color: "#FFFFFF" }}>
-              Keluar
-            </button>
           </div>
         </div>
 
@@ -782,13 +763,6 @@ export default function ChildDashboard({ user, onLogout }) {
             setShowForm(false);
             setEditingTx(null);
           }}
-        />
-      )}
-
-      {showChangePassword && (
-        <ChangePasswordModal
-          user={user}
-          onClose={() => setShowChangePassword(false)}
         />
       )}
     </div>
