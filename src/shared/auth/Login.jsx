@@ -77,11 +77,13 @@ export default function Login({ onLoginSuccess }) {
           style={{ background: C.rose }}
         />
 
-        {/* Signature — oversized bleeding wordmark, like a scrawled savings goal */}
+        {/* Signature — oversized bleeding wordmark. TAS = Teman Aktivitas
+            Sehari-hari, bukan cuma nama gaya-gayaan: nama ini nyeritain
+            appnya sebagai hub (duit, jadwal, tugas), bukan Wallet doang. */}
         <p
           className="relative text-[11px] sm:text-[12px] px-6 sm:px-8 lg:px-12 tracking-[0.3em] uppercase font-semibold mb-1"
           style={{ color: "#FFFFFF", opacity: 0.75 }}>
-          My Wallet
+          Teman Aktivitas Sehari-hari
         </p>
         <p
           aria-hidden="true"
@@ -96,12 +98,12 @@ export default function Login({ onLoginSuccess }) {
             textShadow: "0 10px 30px rgba(70,63,92,0.18)",
           }}
           className="font-semibold select-none whitespace-nowrap px-1">
-          SAKU
+          TAS
         </p>
         <p
           className="relative text-[13px] sm:text-[14px] px-6 sm:px-8 lg:px-12 mb-6 sm:mb-8 lg:mb-10 lg:max-w-xs"
           style={{ color: "#FFFFFF", opacity: 0.9 }}>
-          Uang saku bulan ini, ke mana perginya? Catat sekarang, biar tau nanti.
+          Uang jajan, jadwal, tugas kuliah — semua kesimpen rapi di satu tempat.
         </p>
 
         <FloatingDoodles />
@@ -129,7 +131,7 @@ export default function Login({ onLoginSuccess }) {
               "0 24px 60px -20px rgba(70,63,92,0.22), 0 2px 8px -2px rgba(70,63,92,0.10)",
           }}>
           <div className="absolute left-1/2 -top-9 -translate-x-1/2">
-            <CoinBadge />
+            <TasBadge />
           </div>
 
           <p
@@ -140,12 +142,12 @@ export default function Login({ onLoginSuccess }) {
           <h1
             style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
             className="text-center text-[24px] font-semibold mb-1">
-            Masuk ke My Wallet
+            Masuk ke TAS
           </h1>
           <p
             className="text-center text-[13px] mb-6"
             style={{ color: C.inkFaint }}>
-            Catat dulu, baru tenang mikirinnya.
+            Satu akun, semua urusan harian kuliahmu.
           </p>
 
           <label
@@ -280,7 +282,7 @@ export default function Login({ onLoginSuccess }) {
           <p
             className="text-center mt-6 text-[12px]"
             style={{ color: C.inkFaint }}>
-            © 2026 My Wallet · Buku kas harian
+            © 2026 TAS · Teman Aktivitas Sehari-hari
           </p>
         </form>
       </div>
@@ -373,12 +375,14 @@ function CheckIcon() {
   );
 }
 
-function CoinBadge() {
+function TasBadge() {
+  // Ikon tas ransel simpel -- representasi "TAS" sebagai wadah semua
+  // urusan harian, bukan ikon duit lagi kayak CoinBadge sebelumnya.
   return (
     <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
       <defs>
         <linearGradient
-          id="coinBadgeGradient"
+          id="tasBadgeGradient"
           x1="6"
           y1="6"
           x2="58"
@@ -390,55 +394,67 @@ function CoinBadge() {
       </defs>
       <circle cx="32" cy="32" r="31" fill="#FFFFFF" />
       <circle cx="32" cy="32" r="29" fill={C.lavenderSoft} opacity="0.25" />
-      <circle cx="32" cy="32" r="21" fill="url(#coinBadgeGradient)" />
-      <text
-        x="32"
-        y="40"
-        textAnchor="middle"
-        fontSize="21"
-        fontFamily="'Fraunces', serif"
-        fontWeight="600"
-        fill="#FFFFFF">
-        Rp
-      </text>
+      <circle cx="32" cy="32" r="21" fill="url(#tasBadgeGradient)" />
+      <path
+        d="M26 27v-3a6 6 0 0 1 12 0v3"
+        stroke="#FFFFFF"
+        strokeWidth="2.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <rect
+        x="21"
+        y="27"
+        width="22"
+        height="17"
+        rx="4"
+        fill="#FFFFFF"
+        opacity="0.95"
+      />
+      <rect x="30" y="33" width="4" height="3.2" rx="1" fill={C.lavender} />
     </svg>
   );
 }
 
-/* Small scattered doodles across the hero banner — coin, arrow, sparkle —
-   echoing the app's hand-drawn accent style without competing with SAKU. */
+/* Small scattered doodles across the hero banner. Dulu isinya cuma koin
+   "Rp" (Wallet-only). Sekarang mix 3 ikon tipis yang masing-masing
+   mewakili satu modul appnya -- dompet, kalender, checklist -- biar
+   dari hero langsung kebaca ini hub, bukan cuma soal duit. */
 function FloatingDoodles() {
   return (
     <svg
       className="absolute inset-0 w-full h-full pointer-events-none"
       viewBox="0 0 400 260"
       preserveAspectRatio="xMidYMid slice"
-      fill="none">
-      <ellipse cx="352" cy="46" rx="17" ry="17" fill="#FFFFFF" opacity="0.16" />
-      <text
-        x="352"
-        y="52"
-        textAnchor="middle"
-        fontSize="13"
-        fontFamily="'Fraunces', serif"
-        fontWeight="600"
-        fill="#FFFFFF"
-        opacity="0.75">
-        Rp
-      </text>
+      fill="none"
+      stroke="#FFFFFF"
+      strokeLinecap="round"
+      strokeLinejoin="round">
+      {/* Dompet -- Wallet */}
+      <g opacity="0.55" strokeWidth="1.8">
+        <rect x="336" y="34" width="30" height="22" rx="4" />
+        <path d="M336 42h30" />
+        <circle cx="356" cy="46" r="2.2" fill="#FFFFFF" stroke="none" />
+      </g>
+
+      {/* Kalender -- Jadwal */}
+      <g opacity="0.5" strokeWidth="1.8">
+        <rect x="18" y="26" width="26" height="24" rx="4" />
+        <path d="M18 34h26" />
+        <path d="M25 22v8M37 22v8" />
+      </g>
+
+      {/* Checklist -- Tugas */}
+      <g opacity="0.5" strokeWidth="1.8">
+        <path d="M296 96 L302 102 L314 88" />
+        <circle cx="303" cy="94" r="17" opacity="0.6" />
+      </g>
+
       <path
-        d="M28 34 L30 40 L36 42 L30 44 L28 50 L26 44 L20 42 L26 40 Z"
+        d="M28 100 L30 106 L36 108 L30 110 L28 116 L26 110 L20 108 L26 106 Z"
         fill="#FFFFFF"
-        opacity="0.55"
-      />
-      <path
-        d="M300 90 Q320 105 310 118"
-        stroke="#FFFFFF"
-        strokeWidth="2"
-        strokeLinecap="round"
-        fill="none"
-        strokeDasharray="1 6"
-        opacity="0.5"
+        stroke="none"
+        opacity="0.45"
       />
     </svg>
   );
