@@ -4,12 +4,11 @@ import { capitalize } from "../lib/format";
 
 // Daftar modul ada DI SINI SAJA (+ satu salinan lagi di Layout.jsx
 // buat BottomNav mobile -- sinkronin manual kalau nambah modul).
-// Akademik nge-link ke landing card menu-nya (/akademik), bukan
-// langsung ke /akademik/jadwal atau /akademik/tugas.
 const NAV_ITEMS = [
   { to: "/home", label: "Beranda", icon: "🏠" },
   { to: "/wallet", label: "Wallet", icon: "💰" },
   { to: "/akademik", label: "Akademik", icon: "🎓" },
+  { to: "/journal", label: "Catatan", icon: "📝" },
 ];
 
 export default function Sidebar({ user, onLogout, onAccountClick }) {

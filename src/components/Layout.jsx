@@ -9,6 +9,7 @@ const NAV_ITEMS = [
   { to: "/home", label: "Beranda", icon: "🏠" },
   { to: "/wallet", label: "Wallet", icon: "💰" },
   { to: "/akademik", label: "Akademik", icon: "🎓" },
+  { to: "/journal", label: "Catatan", icon: "📝" },
 ];
 
 // ============================================================
@@ -32,7 +33,7 @@ export default function AppShell({ user, onLogout }) {
         onLogout={onLogout}
         onAccountClick={() => setShowAccountMenu(true)}
       />
-      <main className="flex-1 min-w-0 pb-16 lg:pb-0">
+      <main className="flex-1 min-w-0 pb-20 lg:pb-0">
         <Outlet />
       </main>
       <BottomNav
@@ -123,30 +124,28 @@ function BottomNav({ onLogout, onAccountClick }) {
         <NavLink
           key={item.to}
           to={item.to}
-          className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10.5px] font-semibold"
+          className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[13px] font-semibold"
           style={({ isActive }) => ({
             color: isActive ? C.lavender : C.inkFaint,
           })}>
-          <span className="text-[19px] leading-none">{item.icon}</span>
+          <span className="text-[24px] leading-none">{item.icon}</span>
           {item.label}
         </NavLink>
       ))}
-      {/* Akun & Logout tinggal di shell (Sidebar utk desktop, sini utk
-          mobile), bukan di masing-masing halaman modul. */}
       <button
         type="button"
         onClick={onAccountClick}
-        className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10.5px] font-semibold"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[13px] font-semibold"
         style={{ color: C.inkFaint }}>
-        <span className="text-[19px] leading-none">🔒</span>
+        <span className="text-[24px] leading-none">🔒</span>
         Akun
       </button>
       <button
         type="button"
         onClick={onLogout}
-        className="flex-1 flex flex-col items-center justify-center gap-0.5 py-2 text-[10.5px] font-semibold"
+        className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[13px] font-semibold"
         style={{ color: C.roseDeep }}>
-        <span className="text-[19px] leading-none">🚪</span>
+        <span className="text-[24px] leading-none">🚪</span>
         Keluar
       </button>
     </nav>
