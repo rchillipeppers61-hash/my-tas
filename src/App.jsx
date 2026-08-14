@@ -5,6 +5,11 @@ import { Login } from "./components/auth";
 import AppShell from "./components/Layout";
 import HomePage from "./pages/HomePage";
 import WalletPage from "./pages/wallet/WalletPage";
+import AkademikPage from "./pages/akademik/AkademikPage";
+import JadwalPage from "./pages/akademik/JadwalPage";
+import JadwalFormPage from "./pages/akademik/JadwalFormPage";
+import TugasPage from "./pages/akademik/TugasPage";
+import TugasFormPage from "./pages/akademik/TugasFormPage";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -52,8 +57,24 @@ export default function App() {
           <Route index element={<Navigate to="/home" replace />} />
           <Route path="home" element={<HomePage user={user} />} />
           <Route path="wallet" element={<WalletPage user={user} />} />
+
+          {/* Modul Akademik -- landing card menu + Jadwal & Tugas.
+              Form pakai route yang sama buat tambah & edit (edit
+              ngirim data lewat navigate state dari halaman list). */}
+          <Route path="akademik" element={<AkademikPage user={user} />} />
+          <Route path="akademik/jadwal" element={<JadwalPage user={user} />} />
+          <Route
+            path="akademik/jadwal/tambah"
+            element={<JadwalFormPage user={user} />}
+          />
+          <Route path="akademik/tugas" element={<TugasPage user={user} />} />
+          <Route
+            path="akademik/tugas/tambah"
+            element={<TugasFormPage user={user} />}
+          />
+
           {/* Modul baru nanti nambah <Route> di sini, contoh:
-          <Route path="akademik" element={<AkademikPage user={user} />} /> */}
+          <Route path="ipk" element={<IpkPage user={user} />} /> */}
         </Route>
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
