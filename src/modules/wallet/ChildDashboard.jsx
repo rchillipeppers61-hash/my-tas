@@ -760,8 +760,12 @@ export default function ChildDashboard({ user, onLogout }) {
 
       <button
         onClick={() => setShowForm(true)}
-        className="fixed bottom-6 right-5 sm:right-8 lg:hidden w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-[26px] sm:text-[30px] font-light"
+        className="fixed right-5 sm:right-8 lg:hidden w-14 h-14 sm:w-16 sm:h-16 rounded-full flex items-center justify-center text-[26px] sm:text-[30px] font-light"
         style={{
+          // bottom-24 biar nangkring di ATAS BottomNav (nav tinggi ~4.5rem +
+          // safe-area), bukan numpuk di atasnya. Kalau tinggi BottomNav
+          // berubah nanti, angka ini ikut disesuaikan.
+          bottom: "calc(4.5rem + env(safe-area-inset-bottom, 0px) + 0.75rem)",
           background: `linear-gradient(135deg, ${C.mintDeep}, ${C.mint})`,
           color: "#FFFFFF",
           boxShadow: "0 14px 30px -10px rgba(63,158,124,0.6)",
