@@ -1,4 +1,4 @@
-import { C } from "./theme";
+import { C } from "../theme";
 
 export default function Card({
   children,

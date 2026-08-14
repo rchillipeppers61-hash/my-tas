@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { C } from "./theme";
+import { C } from "../theme";
 
 function EyeIcon() {
   return (

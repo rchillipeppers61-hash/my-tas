@@ -1,21 +1,23 @@
 import ExcelJS from "exceljs";
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../supabaseClient";
-import { C, FONT_IMPORT } from "./theme";
-import Card from "./Card";
-import ChangePasswordModal from "./ChangePasswordModal";
+import { supabase } from "../../supabaseClient";
+import { C, FONT_IMPORT } from "../../shared/theme";
+import Card from "../../shared/ui/Card";
+import ChangePasswordModal from "../../shared/auth/ChangePasswordModal";
 import ResetChildPasswordModal from "./ResetChildPasswordModal";
 import SavingsGoalItem from "./SavingsGoalItem";
 import {
-  CATEGORIES,
-  categoryLabel,
   rupiah,
   formatDay,
-  LOW_BALANCE_LIMIT,
   capitalize,
   monthLabel,
   todayISO,
-} from "../lib/shared";
+} from "../../shared/lib/format";
+import {
+  CATEGORIES,
+  categoryLabel,
+  LOW_BALANCE_LIMIT,
+} from "./lib/walletConstants";
 
 const CATEGORY_META = {
   makan: { icon: "🍜", bg: "#8FD8BE2A", solid: C.mintDeep },
@@ -47,90 +49,17 @@ export default function ParentDashboard({ user, onLogout }) {
   const [selectedMonth, setSelectedMonth] = useState(null);
   const [showExportModal, setShowExportModal] = useState(false);
   const [exportEmptyMonth, setExportEmptyMonth] = useState(null);
-  const [downloadToast, setDownloadToast] = useState("");
   const [showAccountMenu, setShowAccountMenu] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
   const [showResetChildPassword, setShowResetChildPassword] = useState(false);
   const [logs, setLogs] = useState([]);
   const [goals, setGoals] = useState([]);
   const [expandedLogTx, setExpandedLogTx] = useState(null);
-  const [inviteCode, setInviteCode] = useState(null);
-  const [inviteExpiresAt, setInviteExpiresAt] = useState(null);
-  const [generatingCode, setGeneratingCode] = useState(false);
-  const [codeError, setCodeError] = useState("");
-  const [codeCopied, setCodeCopied] = useState(false);
-
-  async function handleCopyInviteCode() {
-    try {
-      await navigator.clipboard.writeText(inviteCode);
-      setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 2000);
-    } catch {
-      // Clipboard API gagal -- diemin aja, user masih bisa select manual.
-    }
-  }
 
   useEffect(() => {
     loadData();
-    if (!user.linked_child_id) {
-      loadActiveInviteCode();
-    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function loadActiveInviteCode() {
-    const { data } = await supabase
-      .from("invite_codes")
-      .select("code, expires_at")
-      .eq("user_id", user.id)
-      .is("used_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (data) {
-      setInviteCode(data.code);
-      setInviteExpiresAt(data.expires_at);
-    }
-  }
-
-  async function generateInviteCode() {
-    setGeneratingCode(true);
-    setCodeError("");
-
-    // Opsi 3: invalidate semua kode lama yang belum kepake punya user
-    // ini dulu, biar cuma ada 1 kode aktif setiap saat.
-    await supabase
-      .from("invite_codes")
-      .update({ used_at: new Date().toISOString() })
-      .eq("user_id", user.id)
-      .is("used_at", null);
-
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let code = "";
-    for (let i = 0; i < 6; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    const { error } = await supabase.from("invite_codes").insert({
-      code,
-      user_id: user.id,
-      expires_at: expiresAt,
-    });
-
-    setGeneratingCode(false);
-
-    if (error) {
-      setCodeError("Gagal membuat kode. Coba lagi.");
-      return;
-    }
-
-    setInviteCode(code);
-    setInviteExpiresAt(expiresAt);
-  }
 
   async function loadData() {
     setLoading(true);
@@ -405,93 +334,15 @@ export default function ParentDashboard({ user, onLogout }) {
       <div
         className="min-h-screen w-full flex items-center justify-center px-4"
         style={{ background: C.bgParent }}>
-        <style>{FONT_IMPORT}</style>
         <Card>
-          <p
-            className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
-            style={{ color: C.lavender }}>
-            Belum Terhubung
+          <p style={{ color: C.ink }}>
+            Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
+            <code>linked_child_id</code>.
           </p>
-          <h2
-            style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-            className="text-[19px] font-semibold mb-2">
-            Sambungkan ke akun anak
-          </h2>
-          <p className="text-[13px] mb-5" style={{ color: C.inkFaint }}>
-            Akun ini belum terhubung ke akun anak. Buat kode undangan di bawah,
-            terus kasih kodenya ke anak kamu supaya dia bisa masukin pas
-            login/daftar.
-          </p>
-
-          {inviteCode ? (
-            <>
-              <div
-                className="text-center text-[28px] font-semibold tracking-[0.3em] py-4 rounded-2xl mb-3"
-                style={{
-                  background: "#463F5C08",
-                  color: C.ink,
-                  fontFamily: "'Fraunces', serif",
-                }}>
-                {inviteCode}
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyInviteCode}
-                className="w-full py-2.5 rounded-2xl font-semibold text-[13px] mb-3 transition-colors"
-                style={{
-                  background: codeCopied ? "#3F9E7C1F" : "#463F5C0d",
-                  color: codeCopied ? C.mintDeep : C.ink,
-                }}>
-                {codeCopied ? "✓ Kode disalin" : "Salin Kode"}
-              </button>
-              {inviteExpiresAt && (
-                <p
-                  className="text-center text-[11.5px] mb-5"
-                  style={{ color: C.inkFaint }}>
-                  Berlaku sampai{" "}
-                  {new Date(inviteExpiresAt).toLocaleString("id-ID", {
-                    day: "numeric",
-                    month: "short",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })}
-                </p>
-              )}
-            </>
-          ) : (
-            <p className="text-[12.5px] mb-5" style={{ color: C.inkFaint }}>
-              Belum ada kode aktif.
-            </p>
-          )}
-
-          {codeError && (
-            <div
-              className="flex items-center gap-2 text-[12px] mb-4 px-3.5 py-2.5 rounded-xl font-medium"
-              style={{ background: "#D9607A14", color: C.roseDeep }}>
-              <span className="flex-shrink-0">⚠️</span>
-              <span>{codeError}</span>
-            </div>
-          )}
-
-          <button
-            onClick={generateInviteCode}
-            disabled={generatingCode}
-            className="w-full py-3 rounded-2xl text-sm font-semibold disabled:opacity-50"
-            style={{
-              background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
-              color: "#fff",
-            }}>
-            {generatingCode
-              ? "Memproses..."
-              : inviteCode
-                ? "Buat Kode Baru"
-                : "Buat Kode Undangan"}
-          </button>
-
           <button
             onClick={onLogout}
-            className="w-full mt-2.5 px-4 py-2 rounded-2xl text-sm font-semibold"
-            style={{ background: "#463F5C0f", color: C.ink }}>
+            className="mt-4 px-4 py-2 rounded-2xl text-sm font-semibold"
+            style={{ background: C.roseDeep, color: "#fff" }}>
             Keluar
           </button>
         </Card>
@@ -518,19 +369,6 @@ export default function ParentDashboard({ user, onLogout }) {
           style={{ background: C.mint }}
         />
       </div>
-      {downloadToast && (
-        <div
-          className="fixed top-5 left-1/2 -translate-x-1/2 z-[60] flex items-center gap-2 px-4 py-3 rounded-2xl text-[13px] font-semibold"
-          style={{
-            background: "#FFFFFF",
-            color: C.mintDeep,
-            boxShadow: "0 14px 32px -12px rgba(70,63,92,0.35)",
-            border: "1.5px solid #3F9E7C33",
-          }}>
-          {downloadToast}
-        </div>
-      )}
-
       <div className="max-w-2xl mx-auto relative">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3 min-w-0">
@@ -545,13 +383,13 @@ export default function ParentDashboard({ user, onLogout }) {
             </div>
             <div className="min-w-0">
               <p
-                className="text-[12px] tracking-[0.2em] uppercase font-semibold"
+                className="text-[11px] tracking-[0.2em] uppercase font-semibold"
                 style={{ color: C.lavender }}>
                 Pantauan Orang Tua
               </p>
               <h1
                 style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-                className="text-[19px] font-semibold truncate">
+                className="text-[24px] font-semibold truncate">
                 Keuangan {childName ? capitalize(childName) : "Anak"}
               </h1>
             </div>
@@ -576,7 +414,7 @@ export default function ParentDashboard({ user, onLogout }) {
 
         {showLowBalance && (
           <div
-            className="fixed inset-0 flex items-center justify-center z-50 px-4"
+            className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
             style={{ background: "rgba(70,63,92,0.4)" }}
             onClick={() => setShowLowBalance(false)}>
             <div
@@ -647,22 +485,12 @@ export default function ParentDashboard({ user, onLogout }) {
                     <button
                       onClick={async () => {
                         const ok = await exportToExcel(m);
-                        if (ok !== false) {
-                          setShowExportModal(false);
-                          setDownloadToast(
-                            `File ${monthLabel(m)} berhasil diunduh ✓`,
-                          );
-                          setTimeout(() => setDownloadToast(""), 3000);
-                        }
+                        if (ok !== false) setShowExportModal(false);
                       }}
                       className="w-full flex items-center justify-between px-4 py-3 rounded-2xl text-[13.5px] font-medium"
                       style={{ background: "#463F5C0a", color: C.ink }}>
                       {monthLabel(m)}
-                      <span
-                        className="text-[11.5px] font-bold px-3 py-1.5 rounded-full flex-shrink-0"
-                        style={{ background: "#3F9E7C1F", color: C.mintDeep }}>
-                        Download
-                      </span>
+                      <span style={{ color: C.mintDeep }}>↓</span>
                     </button>
                     {exportEmptyMonth === m && (
                       <p
@@ -763,7 +591,7 @@ export default function ParentDashboard({ user, onLogout }) {
           <Card title="Target Nabung" accent={C.lavender} className="mb-4">
             <div className="space-y-4">
               {goals.map((g) => (
-                <SavingsGoalItem key={g.id} goal={g} />
+                <SavingsGoalItem key={g.id} goal={g} saldo={summary.balance} />
               ))}
             </div>
           </Card>

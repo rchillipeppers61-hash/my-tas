@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { supabase } from "../supabaseClient";
-import { C, FONT_IMPORT } from "./theme";
+import { supabase } from "../../supabaseClient";
+import { C, FONT_IMPORT } from "../theme";
 
 // Kode 6 karakter, huruf besar + angka, tanpa karakter yang gampang
 // ketuker (0/O, 1/I) biar gampang dibacain manual (WA, lisan, dll).

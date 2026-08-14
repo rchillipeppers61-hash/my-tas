@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { supabase } from "../supabaseClient";
-import { C } from "./theme";
-import PasswordField from "./PasswordField";
+import { supabase } from "../../supabaseClient";
+import { C } from "../theme";
+import PasswordField from "../ui/PasswordField";
 
 export default function ChangePasswordModal({ user, onClose }) {
   const [oldPassword, setOldPassword] = useState("");

@@ -1,19 +1,6 @@
-export const CATEGORIES = [
-  { value: "makan", label: "Makan" },
-  { value: "jajan", label: "Jajan / Hiburan" },
-  { value: "transport", label: "Transport" },
-  { value: "kuliah", label: "Kebutuhan Kuliah" },
-  { value: "pribadi", label: "Kebutuhan Pribadi" },
-  { value: "lainnya", label: "Lainnya" },
-];
-
-export const categoryLabel = (v) =>
-  CATEGORIES.find((c) => c.value === v)?.label || "Lainnya";
-
-// Batas saldo minimum. Kalau saldo anak di bawah ini, orang tua
-// akan lihat notifikasi peringatan di ParentDashboard. Ubah angka
-// ini sesuai kebutuhan keluarga.
-export const LOW_BALANCE_LIMIT = 100000;
+// Helper generik yang dipakai lintas modul (bukan cuma Wallet).
+// Kalau ada modul baru butuh format tanggal/angka/string yang sama,
+// taro di sini, JANGAN duplikat di modul masing-masing.
 
 export const rupiah = (n) => "Rp" + Math.round(n).toLocaleString("id-ID");
 

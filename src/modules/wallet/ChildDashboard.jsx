@@ -1,20 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { supabase } from "../supabaseClient";
-import { C, FONT_IMPORT } from "./theme";
-import Card from "./Card";
+import { supabase } from "../../supabaseClient";
+import { C, FONT_IMPORT } from "../../shared/theme";
+import Card from "../../shared/ui/Card";
 import TransactionForm from "./TransactionForm";
-import ChangePasswordModal from "./ChangePasswordModal";
+import ChangePasswordModal from "../../shared/auth/ChangePasswordModal";
 import SavingsGoalItem from "./SavingsGoalItem";
 import {
   rupiah,
   todayISO,
   formatDay,
   daysBetween,
-  categoryLabel,
   capitalize,
   monthLabel,
-  LOW_BALANCE_LIMIT,
-} from "../lib/shared";
+} from "../../shared/lib/format";
+import { categoryLabel, LOW_BALANCE_LIMIT } from "./lib/walletConstants";
 
 const CATEGORY_META = {
   makan: { icon: "🍜", bg: "#8FD8BE2A" },
@@ -53,23 +52,6 @@ export default function ChildDashboard({ user, onLogout }) {
   const [goalError, setGoalError] = useState("");
   const [goalToast, setGoalToast] = useState("");
   const [reminderDismissed, setReminderDismissed] = useState(false);
-  const [isLinked, setIsLinked] = useState(null); // null = belum dicek
-  const [showLinkModal, setShowLinkModal] = useState(false);
-  const [inviteCode, setInviteCode] = useState(null);
-  const [inviteExpiresAt, setInviteExpiresAt] = useState(null);
-  const [generatingCode, setGeneratingCode] = useState(false);
-  const [codeError, setCodeError] = useState("");
-  const [codeCopied, setCodeCopied] = useState(false);
-
-  async function handleCopyInviteCode() {
-    try {
-      await navigator.clipboard.writeText(inviteCode);
-      setCodeCopied(true);
-      setTimeout(() => setCodeCopied(false), 2000);
-    } catch {
-      // Clipboard API gagal -- diemin aja, user masih bisa select manual.
-    }
-  }
 
   const displayName = user.nama_lengkap || capitalize(user.username) || "Kamu";
 
@@ -97,78 +79,8 @@ export default function ChildDashboard({ user, onLogout }) {
   useEffect(() => {
     fetchTransactions();
     fetchGoals();
-    checkLinkStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  async function checkLinkStatus() {
-    const { data } = await supabase
-      .from("users")
-      .select("id")
-      .eq("role", "orang_tua")
-      .eq("linked_child_id", user.id)
-      .maybeSingle();
-
-    setIsLinked(!!data);
-
-    if (!data) {
-      loadActiveInviteCode();
-    }
-  }
-
-  async function loadActiveInviteCode() {
-    const { data } = await supabase
-      .from("invite_codes")
-      .select("code, expires_at")
-      .eq("user_id", user.id)
-      .is("used_at", null)
-      .gt("expires_at", new Date().toISOString())
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (data) {
-      setInviteCode(data.code);
-      setInviteExpiresAt(data.expires_at);
-    }
-  }
-
-  async function generateInviteCode() {
-    setGeneratingCode(true);
-    setCodeError("");
-
-    // Opsi 3: invalidate semua kode lama yang belum kepake punya user
-    // ini dulu, biar cuma ada 1 kode aktif setiap saat.
-    await supabase
-      .from("invite_codes")
-      .update({ used_at: new Date().toISOString() })
-      .eq("user_id", user.id)
-      .is("used_at", null);
-
-    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let code = "";
-    for (let i = 0; i < 6; i++) {
-      code += chars[Math.floor(Math.random() * chars.length)];
-    }
-
-    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-
-    const { error } = await supabase.from("invite_codes").insert({
-      code,
-      user_id: user.id,
-      expires_at: expiresAt,
-    });
-
-    setGeneratingCode(false);
-
-    if (error) {
-      setCodeError("Gagal membuat kode. Coba lagi.");
-      return;
-    }
-
-    setInviteCode(code);
-    setInviteExpiresAt(expiresAt);
-  }
 
   async function addTransaction({ type, amount, note, category }) {
     const { error } = await supabase.from("transactions").insert({
@@ -271,7 +183,6 @@ export default function ChildDashboard({ user, onLogout }) {
       owner_id: user.id,
       title: goalTitle.trim(),
       target_amount: amt,
-      saved_amount: 0,
     });
     setGoalSaving(false);
     if (!error) {
@@ -287,19 +198,6 @@ export default function ChildDashboard({ user, onLogout }) {
     return false;
   }
 
-  async function updateGoal(id, { title, target_amount }) {
-    const { error } = await supabase
-      .from("savings_goals")
-      .update({ title, target_amount })
-      .eq("id", id)
-      .eq("owner_id", user.id);
-    if (!error) {
-      await fetchGoals();
-      return true;
-    }
-    return false;
-  }
-
   async function deleteGoal(id) {
     const { error } = await supabase
       .from("savings_goals")
@@ -312,58 +210,6 @@ export default function ChildDashboard({ user, onLogout }) {
       setGoalError("Gagal menghapus target, coba lagi.");
       setTimeout(() => setGoalError(""), 3000);
     }
-  }
-
-  async function depositToGoal(id, amount) {
-    if (!amount || amount <= 0) {
-      return { ok: false, error: "Jumlah harus lebih dari 0." };
-    }
-    const totalSaved = goals.reduce(
-      (s, g) => s + Number(g.saved_amount || 0),
-      0,
-    );
-    const available = saldo - totalSaved;
-    if (amount > available) {
-      return {
-        ok: false,
-        error: `Saldo yang bisa disisihkan cuma ${rupiah(available)}.`,
-      };
-    }
-    const goal = goals.find((g) => g.id === id);
-    if (!goal) return { ok: false, error: "Target tidak ditemukan." };
-    const newSaved = Number(goal.saved_amount || 0) + amount;
-    const { error } = await supabase
-      .from("savings_goals")
-      .update({ saved_amount: newSaved })
-      .eq("id", id)
-      .eq("owner_id", user.id);
-    if (error) return { ok: false, error: "Gagal menyimpan, coba lagi." };
-    await fetchGoals();
-    return { ok: true };
-  }
-
-  async function withdrawFromGoal(id, amount) {
-    if (!amount || amount <= 0) {
-      return { ok: false, error: "Jumlah harus lebih dari 0." };
-    }
-    const goal = goals.find((g) => g.id === id);
-    if (!goal) return { ok: false, error: "Target tidak ditemukan." };
-    const currentSaved = Number(goal.saved_amount || 0);
-    if (amount > currentSaved) {
-      return {
-        ok: false,
-        error: `Yang sudah disisihkan cuma ${rupiah(currentSaved)}.`,
-      };
-    }
-    const newSaved = currentSaved - amount;
-    const { error } = await supabase
-      .from("savings_goals")
-      .update({ saved_amount: newSaved })
-      .eq("id", id)
-      .eq("owner_id", user.id);
-    if (error) return { ok: false, error: "Gagal menyimpan, coba lagi." };
-    await fetchGoals();
-    return { ok: true };
   }
 
   const totalIn = transactions
@@ -383,11 +229,6 @@ export default function ChildDashboard({ user, onLogout }) {
   const avgOutPerDay = Math.round(
     totalOutThisMonth / daysBetween(`${currentMonthKey}-01`, todayISO()),
   );
-  const totalSavedInGoals = goals.reduce(
-    (s, g) => s + Number(g.saved_amount || 0),
-    0,
-  );
-  const availableToAllocate = saldo - totalSavedInGoals;
 
   const availableMonths = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
@@ -479,60 +320,26 @@ export default function ChildDashboard({ user, onLogout }) {
           </div>
         </div>
 
-        {isLinked === false && (
-          <div
-            className="flex items-center justify-between gap-3 mb-5 sm:mb-6 px-4 py-3 rounded-2xl"
-            style={{ background: "#F6C4531F" }}>
-            <div className="flex items-center gap-2.5 min-w-0">
-              <span className="flex-shrink-0">👀</span>
-              <p
-                className="text-[12.5px] font-semibold min-w-0"
-                style={{ color: C.ink }}>
-                Belum Terhubung Ke Akun Orang Tua.
-              </p>
-            </div>
-            <button
-              onClick={() => setShowLinkModal(true)}
-              className="text-[12px] font-semibold px-3 py-1.5 rounded-xl flex-shrink-0"
-              style={{ background: C.amberDeep, color: "#FFFFFF" }}>
-              Hubungkan
-            </button>
-          </div>
-        )}
-
         {showReminder && (
           <div
-            className="fixed inset-0 z-50 flex items-center justify-center px-4"
-            style={{ background: "rgba(70,63,92,0.45)" }}>
-            <div
-              className="w-full sm:max-w-sm bg-white rounded-[28px] px-6 pt-8 pb-7 text-center"
-              style={{ boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)" }}>
-              <div
-                className="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-[22px] mb-4"
-                style={{ background: "#F6C4531F" }}>
-                👀
-              </div>
-              <h3
-                style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-                className="text-[19px] sm:text-[20px] font-semibold leading-snug">
-                Belum Ada Catatan Hari Ini
-              </h3>
-              <p
-                className="text-[13px] sm:text-[13.5px] mt-2"
-                style={{ color: C.inkFaint }}>
-                Yuk catat dulu transaksinya biar rapi.
-              </p>
-              <button
-                onClick={() => setReminderDismissed(true)}
-                className="w-full mt-6 py-3.5 rounded-2xl font-bold text-[14px] sm:text-[15px]"
-                style={{
-                  background: "linear-gradient(135deg, #D89B2E, #F6C453)",
-                  color: "#FFFFFF",
-                  boxShadow: "0 14px 28px -14px rgba(216,155,46,0.6)",
-                }}>
-                Siap, dicatat!
-              </button>
-            </div>
+            className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mb-4 sm:mb-5"
+            style={{
+              background: "#F6C4531F",
+              border: `1.5px solid #F6C45355`,
+            }}>
+            <span className="text-[18px] flex-shrink-0">👀</span>
+            <p
+              className="text-[12.5px] sm:text-[13px] font-semibold flex-1"
+              style={{ color: C.amberDeep }}>
+              Belum ada catatan transaksi hari ini, yuk catat dulu!
+            </p>
+            <button
+              onClick={() => setReminderDismissed(true)}
+              aria-label="Tutup"
+              className="w-6 h-6 rounded-full flex items-center justify-center text-[12px] flex-shrink-0"
+              style={{ background: "#463F5C0f", color: C.amberDeep }}>
+              ✕
+            </button>
           </div>
         )}
 
@@ -543,8 +350,8 @@ export default function ChildDashboard({ user, onLogout }) {
             Memuat...
           </p>
         ) : (
-          <div className="lg:grid lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-6 lg:items-stretch">
-            <div className="lg:sticky lg:top-8 flex flex-col gap-4 lg:self-start">
+          <div className="lg:grid lg:grid-cols-[minmax(0,340px)_1fr] lg:gap-6 lg:items-start">
+            <div className="lg:sticky lg:top-8 flex flex-col gap-4">
               <div
                 className="rounded-[32px] p-6 sm:p-8 relative overflow-hidden"
                 style={{
@@ -756,12 +563,8 @@ export default function ChildDashboard({ user, onLogout }) {
                       <SavingsGoalItem
                         key={g.id}
                         goal={g}
-                        editable
+                        saldo={saldo}
                         onDelete={deleteGoal}
-                        onEdit={updateGoal}
-                        onDeposit={depositToGoal}
-                        onWithdraw={withdrawFromGoal}
-                        availableToAllocate={availableToAllocate}
                       />
                     ))}
                   </div>
@@ -781,8 +584,8 @@ export default function ChildDashboard({ user, onLogout }) {
               </button>
             </div>
 
-            <div className="mt-4 lg:mt-0 lg:flex lg:flex-col lg:h-full">
-              <Card className="lg:flex lg:flex-col lg:h-full">
+            <div className="mt-4 lg:mt-0">
+              <Card>
                 <div className="flex items-start justify-between gap-2 mb-2">
                   <div className="min-w-0">
                     <h3
@@ -822,7 +625,7 @@ export default function ChildDashboard({ user, onLogout }) {
                     </span>
                   </div>
                 </div>
-                <div className="mt-1 max-h-[26rem] lg:max-h-none lg:flex-1 overflow-y-auto pr-1">
+                <div className="mt-1 max-h-[26rem] lg:max-h-[34rem] overflow-y-auto pr-1">
                   {transactions.length === 0 && (
                     <div className="py-10 sm:py-12 text-center">
                       <div
@@ -983,108 +786,6 @@ export default function ChildDashboard({ user, onLogout }) {
           user={user}
           onClose={() => setShowChangePassword(false)}
         />
-      )}
-
-      {showLinkModal && (
-        <div
-          className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
-          style={{ background: "rgba(70,63,92,0.4)" }}
-          onClick={() => setShowLinkModal(false)}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
-            style={{
-              background: "#FFFFFF",
-              boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
-            }}>
-            <p
-              className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
-              style={{ color: C.lavender }}>
-              Belum Terhubung
-            </p>
-            <h3
-              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-              className="text-[18px] font-semibold mb-2">
-              Sambungkan ke Orang Tua
-            </h3>
-            <p className="text-[13px] mb-5" style={{ color: C.inkFaint }}>
-              Buat kode undangan di bawah, terus kasih kodenya ke orang tua kamu
-              supaya dia bisa masukin pas login/daftar.
-            </p>
-
-            {inviteCode ? (
-              <>
-                <div
-                  className="text-center text-[26px] font-semibold tracking-[0.3em] py-4 rounded-2xl mb-3"
-                  style={{
-                    background: "#463F5C08",
-                    color: C.ink,
-                    fontFamily: "'Fraunces', serif",
-                  }}>
-                  {inviteCode}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleCopyInviteCode}
-                  className="w-full py-2.5 rounded-2xl font-semibold text-[13px] mb-3 transition-colors"
-                  style={{
-                    background: codeCopied ? "#3F9E7C1F" : "#463F5C0d",
-                    color: codeCopied ? C.mintDeep : C.ink,
-                  }}>
-                  {codeCopied ? "✓ Kode disalin" : "Salin Kode"}
-                </button>
-                {inviteExpiresAt && (
-                  <p
-                    className="text-center text-[11.5px] mb-5"
-                    style={{ color: C.inkFaint }}>
-                    Berlaku sampai{" "}
-                    {new Date(inviteExpiresAt).toLocaleString("id-ID", {
-                      day: "numeric",
-                      month: "short",
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-                )}
-              </>
-            ) : (
-              <p className="text-[12.5px] mb-5" style={{ color: C.inkFaint }}>
-                Belum ada kode aktif.
-              </p>
-            )}
-
-            {codeError && (
-              <div
-                className="flex items-center gap-2 text-[12px] mb-4 px-3.5 py-2.5 rounded-xl font-medium"
-                style={{ background: "#D9607A14", color: C.roseDeep }}>
-                <span className="flex-shrink-0">⚠️</span>
-                <span>{codeError}</span>
-              </div>
-            )}
-
-            <button
-              onClick={generateInviteCode}
-              disabled={generatingCode}
-              className="w-full py-3 rounded-2xl text-sm font-semibold disabled:opacity-50"
-              style={{
-                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
-                color: "#fff",
-              }}>
-              {generatingCode
-                ? "Memproses..."
-                : inviteCode
-                  ? "Buat Kode Baru"
-                  : "Buat Kode Undangan"}
-            </button>
-
-            <button
-              onClick={() => setShowLinkModal(false)}
-              className="w-full mt-2.5 py-3 rounded-2xl text-[13px] font-semibold"
-              style={{ background: "#463F5C0f", color: C.ink }}>
-              Tutup
-            </button>
-          </div>
-        </div>
       )}
     </div>
   );

@@ -1,7 +1,7 @@
 import { useState } from "react";
-import { supabase } from "../supabaseClient";
-import { C } from "./theme";
-import PasswordField from "./PasswordField";
+import { supabase } from "../../supabaseClient";
+import { C } from "../../shared/theme";
+import PasswordField from "../../shared/ui/PasswordField";
 
 export default function ResetChildPasswordModal({ user, childName, onClose }) {
   const [parentPassword, setParentPassword] = useState("");

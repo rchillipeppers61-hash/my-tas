@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
-import { C } from "./component/theme";
-import Login from "./component/Login";
-import SignUp from "./component/SignUp";
-import ChildDashboard from "./component/ChildDashboard";
-import ParentDashboard from "./component/ParentDashboard";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { C } from "./shared/theme";
+import Login from "./shared/auth/Login";
+import AppShell from "./layout/AppShell";
+import HomePage from "./layout/HomePage";
+import WalletPage from "./modules/wallet/WalletPage";
 
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [showSignUp, setShowSignUp] = useState(false);
 
   useEffect(() => {
     const saved =
@@ -31,20 +31,6 @@ export default function App() {
     setUser(null);
   }
 
-  // Dipanggil dari SignUp setelah akun berhasil dibuat (baik langsung
-  // ke-link via kode, maupun belum). Persist ke localStorage sama
-  // kayak "Ingat saya" dicentang di Login, biar ga perlu login ulang.
-  function handleSignUpSuccess(newUser) {
-    if (!newUser) {
-      setShowSignUp(false);
-      return;
-    }
-    sessionStorage.removeItem("mywallet_user");
-    localStorage.setItem("mywallet_user", JSON.stringify(newUser));
-    setUser(newUser);
-    setShowSignUp(false);
-  }
-
   if (loading) {
     return (
       <div
@@ -56,25 +42,24 @@ export default function App() {
   }
 
   if (!user) {
-    if (showSignUp) {
-      return (
-        <SignUp
-          onSignUpSuccess={handleSignUpSuccess}
-          onBackToLogin={() => setShowSignUp(false)}
-        />
-      );
-    }
-    return (
-      <Login
-        onLoginSuccess={setUser}
-        onSignUpClick={() => setShowSignUp(true)}
-      />
-    );
+    return <Login onLoginSuccess={setUser} />;
   }
 
-  if (user.role === "orang_tua") {
-    return <ParentDashboard user={user} onLogout={handleLogout} />;
-  }
-
-  return <ChildDashboard user={user} onLogout={handleLogout} />;
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<AppShell user={user} onLogout={handleLogout} />}>
+          <Route index element={<Navigate to="/wallet" replace />} />
+          <Route path="home" element={<HomePage user={user} />} />
+          <Route
+            path="wallet"
+            element={<WalletPage user={user} onLogout={handleLogout} />}
+          />
+          {/* Modul baru nanti nambah <Route> di sini, contoh:
+          <Route path="akademik" element={<AkademikPage user={user} />} /> */}
+        </Route>
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </BrowserRouter>
+  );
 }
