@@ -76,7 +76,7 @@ export default function AkademikPage({ user }) {
         sampai catatan.
       </p>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3.5 sm:gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4">
         {MENU_ITEMS.map((item) => (
           <MenuCard key={item.to} {...item} />
         ))}
@@ -88,7 +88,7 @@ export default function AkademikPage({ user }) {
 function MenuCard({ to, icon, title, desc, accent, tint, active }) {
   const content = (
     <div
-      className="relative overflow-hidden rounded-3xl p-5 sm:p-6 h-full transition-transform"
+      className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 h-full transition-transform"
       style={{
         background: active ? tint : "#463F5C0a",
         boxShadow: active
@@ -102,15 +102,15 @@ function MenuCard({ to, icon, title, desc, accent, tint, active }) {
         />
       )}
 
-      <div className="flex items-start justify-between gap-2 mb-3">
+      <div className="flex items-start justify-between gap-1.5 mb-2.5 sm:mb-3">
         <div
-          className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center text-[20px] sm:text-[22px] flex-shrink-0"
+          className="w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-[16px] sm:text-[20px] lg:text-[22px] flex-shrink-0"
           style={{ background: active ? "#FFFFFF" : "#463F5C10" }}>
           {icon}
         </div>
         {!active && (
           <span
-            className="text-[10px] font-bold px-2.5 py-1 rounded-full flex-shrink-0"
+            className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex-shrink-0"
             style={{ background: "#463F5C14", color: C.inkFaint }}>
             Segera
           </span>
@@ -122,18 +122,18 @@ function MenuCard({ to, icon, title, desc, accent, tint, active }) {
           fontFamily: "'Fraunces', serif",
           color: active ? C.ink : C.inkFaint,
         }}
-        className="text-[16px] sm:text-[17px] font-semibold mb-1">
+        className="text-[13.5px] sm:text-[16px] lg:text-[17px] font-semibold mb-1 leading-snug">
         {title}
       </h3>
       <p
-        className="text-[12.5px] leading-relaxed"
+        className="text-[11px] sm:text-[12.5px] leading-relaxed line-clamp-3 sm:line-clamp-none"
         style={{ color: active ? C.inkSoft : C.inkFaint }}>
         {desc}
       </p>
 
       {active && (
         <span
-          className="inline-flex items-center gap-1 mt-3.5 text-[12px] font-semibold"
+          className="inline-flex items-center gap-1 mt-2.5 sm:mt-3.5 text-[11px] sm:text-[12px] font-semibold"
           style={{ color: accent }}>
           Buka →
         </span>
