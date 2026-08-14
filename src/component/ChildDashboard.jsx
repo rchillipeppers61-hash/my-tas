@@ -59,6 +59,17 @@ export default function ChildDashboard({ user, onLogout }) {
   const [inviteExpiresAt, setInviteExpiresAt] = useState(null);
   const [generatingCode, setGeneratingCode] = useState(false);
   const [codeError, setCodeError] = useState("");
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  async function handleCopyInviteCode() {
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      // Clipboard API gagal -- diemin aja, user masih bisa select manual.
+    }
+  }
 
   const displayName = user.nama_lengkap || capitalize(user.username) || "Kamu";
 
@@ -1012,6 +1023,16 @@ export default function ChildDashboard({ user, onLogout }) {
                   }}>
                   {inviteCode}
                 </div>
+                <button
+                  type="button"
+                  onClick={handleCopyInviteCode}
+                  className="w-full py-2.5 rounded-2xl font-semibold text-[13px] mb-3 transition-colors"
+                  style={{
+                    background: codeCopied ? "#3F9E7C1F" : "#463F5C0d",
+                    color: codeCopied ? C.mintDeep : C.ink,
+                  }}>
+                  {codeCopied ? "✓ Kode disalin" : "Salin Kode"}
+                </button>
                 {inviteExpiresAt && (
                   <p
                     className="text-center text-[11.5px] mb-5"

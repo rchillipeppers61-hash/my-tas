@@ -35,6 +35,18 @@ export default function SignUp({ onSignUpSuccess, onBackToLogin }) {
   // Disimpen biar pas klik "Lanjut ke aplikasi" di layar kode,
   // data user yang baru dibuat tetep ke-pass ke onSignUpSuccess.
   const [pendingUser, setPendingUser] = useState(null);
+  const [copied, setCopied] = useState(false);
+
+  async function handleCopyCode() {
+    try {
+      await navigator.clipboard.writeText(generatedCode);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Clipboard API gagal (misal browser lama/permission) -- diemin aja,
+      // user masih bisa select-copy manual dari teks yang tampil.
+    }
+  }
 
   async function handleSignUp(e) {
     e.preventDefault();
@@ -221,7 +233,7 @@ export default function SignUp({ onSignUpSuccess, onBackToLogin }) {
           </p>
 
           <div
-            className="text-[32px] font-semibold tracking-[0.3em] py-4 rounded-2xl mb-6"
+            className="text-[32px] font-semibold tracking-[0.3em] py-4 rounded-2xl mb-3"
             style={{
               background: "#463F5C08",
               color: C.ink,
@@ -229,6 +241,17 @@ export default function SignUp({ onSignUpSuccess, onBackToLogin }) {
             }}>
             {generatedCode}
           </div>
+
+          <button
+            type="button"
+            onClick={handleCopyCode}
+            className="w-full py-2.5 rounded-2xl font-semibold text-[13px] mb-6 transition-colors"
+            style={{
+              background: copied ? "#3F9E7C1F" : "#463F5C0d",
+              color: copied ? C.mintDeep : C.ink,
+            }}>
+            {copied ? "✓ Kode disalin" : "Salin Kode"}
+          </button>
 
           <button
             type="button"
