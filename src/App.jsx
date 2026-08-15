@@ -10,6 +10,8 @@ import JadwalPage from "./pages/akademik/JadwalPage";
 import JadwalFormPage from "./pages/akademik/JadwalFormPage";
 import TugasPage from "./pages/akademik/TugasPage";
 import TugasFormPage from "./pages/akademik/TugasFormPage";
+import CatatanPage from "./pages/catatan/CatatanPage";
+import CatatanDetailPage from "./pages/catatan/CatatanDetailPage";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -102,6 +104,16 @@ export default function App() {
           <Route
             path="akademik/tugas/tambah"
             element={<TugasFormPage user={user} />}
+          />
+
+          {/* Modul Catatan Kuliah -- landing (list mata kuliah) + detail
+              per mata kuliah (list catatan, rekam/ketik, auto-save).
+              Path pakai "journal" biar nyambung sama NAV_ITEMS di
+              Sidebar.jsx & Layout.jsx (folder kode tetap "catatan"). */}
+          <Route path="journal" element={<CatatanPage user={user} />} />
+          <Route
+            path="journal/:mataKuliahId"
+            element={<CatatanDetailPage user={user} />}
           />
 
           {/* Modul baru nanti nambah <Route> di sini, contoh:
