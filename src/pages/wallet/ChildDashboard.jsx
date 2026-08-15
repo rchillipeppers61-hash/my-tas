@@ -51,6 +51,23 @@ export default function ChildDashboard({ user }) {
   const [goalError, setGoalError] = useState("");
   const [goalToast, setGoalToast] = useState("");
   const [reminderDismissed, setReminderDismissed] = useState(false);
+  const [isLinked, setIsLinked] = useState(null); // null = belum dicek
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [inviteCode, setInviteCode] = useState(null);
+  const [inviteExpiresAt, setInviteExpiresAt] = useState(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [codeError, setCodeError] = useState("");
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  async function handleCopyInviteCode() {
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      // Clipboard API gagal -- diemin aja, user masih bisa select manual.
+    }
+  }
 
   const displayName = user.nama_lengkap || capitalize(user.username) || "Kamu";
 
@@ -75,9 +92,82 @@ export default function ChildDashboard({ user }) {
     if (!error) setGoals(data || []);
   }
 
+  // Anak gak punya kolom "linked" di row-nya sendiri -- status link
+  // ditentuin dari SISI ORTU: ada gak akun orang_tua yang
+  // linked_child_id-nya nunjuk ke id anak ini.
+  async function checkLinkStatus() {
+    const { data } = await supabase
+      .from("users")
+      .select("id")
+      .eq("role", "orang_tua")
+      .eq("linked_child_id", user.id)
+      .maybeSingle();
+
+    setIsLinked(!!data);
+
+    if (!data) {
+      loadActiveInviteCode();
+    }
+  }
+
+  async function loadActiveInviteCode() {
+    const { data } = await supabase
+      .from("invite_codes")
+      .select("code, expires_at")
+      .eq("user_id", user.id)
+      .is("used_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setInviteCode(data.code);
+      setInviteExpiresAt(data.expires_at);
+    }
+  }
+
+  async function generateInviteCode() {
+    setGeneratingCode(true);
+    setCodeError("");
+
+    // Invalidate semua kode lama yang belum kepake punya user ini dulu,
+    // biar cuma ada 1 kode aktif setiap saat.
+    await supabase
+      .from("invite_codes")
+      .update({ used_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .is("used_at", null);
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 6; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error } = await supabase.from("invite_codes").insert({
+      code,
+      user_id: user.id,
+      expires_at: expiresAt,
+    });
+
+    setGeneratingCode(false);
+
+    if (error) {
+      setCodeError("Gagal membuat kode. Coba lagi.");
+      return;
+    }
+
+    setInviteCode(code);
+    setInviteExpiresAt(expiresAt);
+  }
+
   useEffect(() => {
     fetchTransactions();
     fetchGoals();
+    checkLinkStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -182,6 +272,7 @@ export default function ChildDashboard({ user }) {
       owner_id: user.id,
       title: goalTitle.trim(),
       target_amount: amt,
+      saved_amount: 0,
     });
     setGoalSaving(false);
     if (!error) {
@@ -209,6 +300,75 @@ export default function ChildDashboard({ user }) {
       setGoalError("Gagal menghapus target, coba lagi.");
       setTimeout(() => setGoalError(""), 3000);
     }
+  }
+
+  async function updateGoal(id, { title, target_amount }) {
+    const { error } = await supabase
+      .from("savings_goals")
+      .update({ title, target_amount })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (!error) {
+      await fetchGoals();
+      return true;
+    }
+    return false;
+  }
+
+  // Setor/tarik cuma mindah "label" saved_amount, TIDAK bikin
+  // transaction baru -- saldo asli tetap dihitung murni dari
+  // transactions, biar laporan pengeluaran gak keganggu aktivitas
+  // nabung ini.
+  async function depositToGoal(id, amount) {
+    if (!amount || amount <= 0) {
+      return { ok: false, error: "Jumlah harus lebih dari 0." };
+    }
+    const totalSaved = goals.reduce(
+      (s, g) => s + Number(g.saved_amount || 0),
+      0,
+    );
+    const available = saldo - totalSaved;
+    if (amount > available) {
+      return {
+        ok: false,
+        error: `Saldo yang bisa disisihkan cuma ${rupiah(available)}.`,
+      };
+    }
+    const goal = goals.find((g) => g.id === id);
+    if (!goal) return { ok: false, error: "Target tidak ditemukan." };
+    const newSaved = Number(goal.saved_amount || 0) + amount;
+    const { error } = await supabase
+      .from("savings_goals")
+      .update({ saved_amount: newSaved })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (error) return { ok: false, error: "Gagal menyimpan, coba lagi." };
+    await fetchGoals();
+    return { ok: true };
+  }
+
+  async function withdrawFromGoal(id, amount) {
+    if (!amount || amount <= 0) {
+      return { ok: false, error: "Jumlah harus lebih dari 0." };
+    }
+    const goal = goals.find((g) => g.id === id);
+    if (!goal) return { ok: false, error: "Target tidak ditemukan." };
+    const currentSaved = Number(goal.saved_amount || 0);
+    if (amount > currentSaved) {
+      return {
+        ok: false,
+        error: `Yang sudah disisihkan cuma ${rupiah(currentSaved)}.`,
+      };
+    }
+    const newSaved = currentSaved - amount;
+    const { error } = await supabase
+      .from("savings_goals")
+      .update({ saved_amount: newSaved })
+      .eq("id", id)
+      .eq("owner_id", user.id);
+    if (error) return { ok: false, error: "Gagal menyimpan, coba lagi." };
+    await fetchGoals();
+    return { ok: true };
   }
 
   const totalIn = transactions
@@ -302,6 +462,27 @@ export default function ChildDashboard({ user }) {
             </div>
           </div>
         </div>
+
+        {isLinked === false && (
+          <div
+            className="flex items-center justify-between gap-3 mb-5 sm:mb-6 px-4 py-3 rounded-2xl"
+            style={{ background: "#F6C4531F" }}>
+            <div className="flex items-center gap-2.5 min-w-0">
+              <span className="flex-shrink-0">👀</span>
+              <p
+                className="text-[12.5px] font-semibold min-w-0"
+                style={{ color: C.ink }}>
+                Belum Terhubung Ke Akun Orang Tua.
+              </p>
+            </div>
+            <button
+              onClick={() => setShowLinkModal(true)}
+              className="text-[12px] font-semibold px-3 py-1.5 rounded-xl flex-shrink-0"
+              style={{ background: C.amberDeep, color: "#FFFFFF" }}>
+              Hubungkan
+            </button>
+          </div>
+        )}
 
         {showReminder && (
           <div
@@ -770,6 +951,108 @@ export default function ChildDashboard({ user }) {
             setEditingTx(null);
           }}
         />
+      )}
+
+      {showLinkModal && (
+        <div
+          className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
+          style={{ background: "rgba(70,63,92,0.4)" }}
+          onClick={() => setShowLinkModal(false)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
+            style={{
+              background: "#FFFFFF",
+              boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
+            }}>
+            <p
+              className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
+              style={{ color: C.lavender }}>
+              Belum Terhubung
+            </p>
+            <h3
+              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+              className="text-[18px] font-semibold mb-2">
+              Sambungkan ke Orang Tua
+            </h3>
+            <p className="text-[13px] mb-5" style={{ color: C.inkFaint }}>
+              Buat kode undangan di bawah, terus kasih kodenya ke orang tua kamu
+              supaya dia bisa masukin pas login/daftar.
+            </p>
+
+            {inviteCode ? (
+              <>
+                <div
+                  className="text-center text-[26px] font-semibold tracking-[0.3em] py-4 rounded-2xl mb-3"
+                  style={{
+                    background: "#463F5C08",
+                    color: C.ink,
+                    fontFamily: "'Fraunces', serif",
+                  }}>
+                  {inviteCode}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyInviteCode}
+                  className="w-full py-2.5 rounded-2xl font-semibold text-[13px] mb-3 transition-colors"
+                  style={{
+                    background: codeCopied ? "#3F9E7C1F" : "#463F5C0d",
+                    color: codeCopied ? C.mintDeep : C.ink,
+                  }}>
+                  {codeCopied ? "✓ Kode disalin" : "Salin Kode"}
+                </button>
+                {inviteExpiresAt && (
+                  <p
+                    className="text-center text-[11.5px] mb-5"
+                    style={{ color: C.inkFaint }}>
+                    Berlaku sampai{" "}
+                    {new Date(inviteExpiresAt).toLocaleString("id-ID", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-[12.5px] mb-5" style={{ color: C.inkFaint }}>
+                Belum ada kode aktif.
+              </p>
+            )}
+
+            {codeError && (
+              <div
+                className="flex items-center gap-2 text-[12px] mb-4 px-3.5 py-2.5 rounded-xl font-medium"
+                style={{ background: "#D9607A14", color: C.roseDeep }}>
+                <span className="flex-shrink-0">⚠️</span>
+                <span>{codeError}</span>
+              </div>
+            )}
+
+            <button
+              onClick={generateInviteCode}
+              disabled={generatingCode}
+              className="w-full py-3 rounded-2xl text-sm font-semibold disabled:opacity-50"
+              style={{
+                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+                color: "#fff",
+              }}>
+              {generatingCode
+                ? "Memproses..."
+                : inviteCode
+                  ? "Buat Kode Baru"
+                  : "Buat Kode Undangan"}
+            </button>
+
+            <button
+              onClick={() => setShowLinkModal(false)}
+              className="w-full mt-2.5 py-3 rounded-2xl text-[13px] font-semibold"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Tutup
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
