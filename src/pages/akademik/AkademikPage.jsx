@@ -31,13 +31,13 @@ const MENU_ITEMS = [
     active: true,
   },
   {
-    to: "/akademik/catatan",
+    to: "/journal",
     icon: "📝",
     title: "Catatan Kuliah",
     desc: "Simpen rangkuman materi per mata kuliah.",
     accent: C.skyDeep,
     tint: "#9FCBF01F",
-    active: false,
+    active: true,
   },
   {
     to: "/akademik/ipk",

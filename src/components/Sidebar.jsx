@@ -8,7 +8,6 @@ const NAV_ITEMS = [
   { to: "/home", label: "Beranda", icon: "🏠" },
   { to: "/wallet", label: "Wallet", icon: "💰" },
   { to: "/akademik", label: "Akademik", icon: "🎓" },
-  { to: "/journal", label: "Jurnal", icon: "📝" },
 ];
 
 export default function Sidebar({ user, onLogout, onAccountClick }) {

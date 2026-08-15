@@ -10,7 +10,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { supabase } from "../../supabaseClient";
+import { supabase } from "../../../supabaseClient";
 import RecorderWidget from "./RecorderWidget";
 
 const AUTO_SAVE_DELAY_MS = 1200;

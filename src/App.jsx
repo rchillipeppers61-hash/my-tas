@@ -10,8 +10,8 @@ import JadwalPage from "./pages/akademik/JadwalPage";
 import JadwalFormPage from "./pages/akademik/JadwalFormPage";
 import TugasPage from "./pages/akademik/TugasPage";
 import TugasFormPage from "./pages/akademik/TugasFormPage";
-import CatatanPage from "./pages/catatan/CatatanPage";
-import CatatanDetailPage from "./pages/catatan/CatatanDetailPage";
+import CatatanPage from "./pages/akademik/catatan/CatatanPage";
+import CatatanDetailPage from "./pages/akademik/catatan/CatatanDetailPage";
 
 export default function App() {
   const [user, setUser] = useState(null);
