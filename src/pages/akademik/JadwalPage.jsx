@@ -5,6 +5,36 @@ import { C, FONT_IMPORT } from "../../lib/theme";
 import { Card } from "../../components/ui";
 import { HARI_LIST, hariIndex } from "./constants";
 
+// Dipanggil tiap kali 1 jadwal dihapus. Kalau itu jadwal terakhir yang
+// masih nempel ke mata kuliah tsb, mata kuliahnya dianggap "yatim" dan
+// ikut dibersihkan -- termasuk tugas & catatan yang masih nempel di situ,
+// biar gak nyangkut data orphan di Catatan/Tugas.
+async function cleanupOrphanMataKuliah(mataKuliahId, userId) {
+  const { count } = await supabase
+    .from("jadwal")
+    .select("id", { count: "exact", head: true })
+    .eq("mata_kuliah_id", mataKuliahId)
+    .eq("user_id", userId);
+
+  if (count) return; // masih dipakai jadwal lain, biarin
+
+  await supabase
+    .from("tugas")
+    .delete()
+    .eq("mata_kuliah_id", mataKuliahId)
+    .eq("user_id", userId);
+  await supabase
+    .from("catatan")
+    .delete()
+    .eq("mata_kuliah_id", mataKuliahId)
+    .eq("user_id", userId);
+  await supabase
+    .from("mata_kuliah")
+    .delete()
+    .eq("id", mataKuliahId)
+    .eq("user_id", userId);
+}
+
 // ============================================================
 // JadwalPage — daftar jadwal kuliah dikelompokkan per hari
 // (Senin -> Minggu). Tap kartu buat edit, FAB buat tambah baru.
@@ -44,11 +74,20 @@ export default function JadwalPage({ user }) {
       return;
     }
     setDeletingId(id);
+
+    const target = jadwal.find((j) => j.id === id);
+    const mataKuliahId = target?.mata_kuliah_id;
+
     const { error } = await supabase
       .from("jadwal")
       .delete()
       .eq("id", id)
       .eq("user_id", user.id);
+
+    if (!error && mataKuliahId) {
+      await cleanupOrphanMataKuliah(mataKuliahId, user.id);
+    }
+
     setDeletingId(null);
     setConfirmDeleteId(null);
     if (!error) await fetchJadwal();
@@ -72,11 +111,6 @@ export default function JadwalPage({ user }) {
 
       <div className="flex items-center justify-between mb-6">
         <div>
-          <p
-            className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
-            style={{ color: C.lavender }}>
-            Akademik
-          </p>
           <h1
             style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
             className="text-[22px] sm:text-[24px] font-semibold">
@@ -156,7 +190,7 @@ export default function JadwalPage({ user }) {
           {grouped.map(([hari, items]) => (
             <div key={hari}>
               <span
-                className="inline-flex items-center px-3 py-1 rounded-full text-[11px] sm:text-[12px] font-semibold mb-2.5"
+                className="inline-flex items-center px-3 py-1 rounded-full text-[11px] sm:text-[12px] font-bold mb-2.5"
                 style={{ background: "#8B72C41A", color: C.lavender }}>
                 {hari}
               </span>
@@ -165,7 +199,7 @@ export default function JadwalPage({ user }) {
                   const mk = j.mata_kuliah || {};
                   const isConfirming = confirmDeleteId === j.id;
                   return (
-                    <Card key={j.id} className="!p-4" accent={mk.warna}>
+                    <Card key={j.id} className="!p-4" border accent={mk.warna}>
                       <div className="flex items-start justify-between gap-3">
                         <button
                           onClick={() =>
@@ -191,16 +225,19 @@ export default function JadwalPage({ user }) {
                         <button
                           onClick={() => handleDelete(j.id)}
                           disabled={deletingId === j.id}
+                          aria-label="Hapus jadwal"
                           className="flex-shrink-0 min-w-[44px] min-h-[44px] text-[11px] font-semibold px-3 rounded-full disabled:opacity-50 flex items-center justify-center"
                           style={{
-                            background: isConfirming ? C.roseDeep : "#463F5C0f",
-                            color: isConfirming ? "#FFFFFF" : C.inkFaint,
+                            background: isConfirming ? C.roseDeep : "#D9607A17",
+                            color: isConfirming ? "#FFFFFF" : C.roseDeep,
                           }}>
-                          {deletingId === j.id
-                            ? "..."
-                            : isConfirming
-                              ? "Yakin?"
-                              : "🗑️"}
+                          {deletingId === j.id ? (
+                            "..."
+                          ) : isConfirming ? (
+                            "Yakin?"
+                          ) : (
+                            <TrashIcon />
+                          )}
                         </button>
                       </div>
                     </Card>
@@ -224,5 +261,25 @@ export default function JadwalPage({ user }) {
         +
       </button>
     </div>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 6V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
   );
 }

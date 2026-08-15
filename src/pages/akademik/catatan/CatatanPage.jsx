@@ -21,6 +21,8 @@ export default function CatatanPage({ user }) {
   const [mataKuliahList, setMataKuliahList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [deletingId, setDeletingId] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
 
   useEffect(() => {
     if (!user?.id) return;
@@ -75,20 +77,38 @@ export default function CatatanPage({ user }) {
     }
   }
 
+  async function handleDeleteMataKuliah(id) {
+    if (confirmDeleteId !== id) {
+      setConfirmDeleteId(id);
+      return;
+    }
+    setDeletingId(id);
+    try {
+      const { error: deleteError } = await supabase
+        .from("mata_kuliah")
+        .delete()
+        .eq("id", id)
+        .eq("user_id", user.id);
+      if (deleteError) throw deleteError;
+      setMataKuliahList((prev) => prev.filter((mk) => mk.id !== id));
+    } catch (err) {
+      console.error(err);
+      alert(
+        "Gagal menghapus mata kuliah. Mungkin masih dipakai di jadwal/tugas lain.",
+      );
+    } finally {
+      setDeletingId(null);
+      setConfirmDeleteId(null);
+    }
+  }
+
   return (
     <div className="min-h-screen bg-violet-50 px-5 py-8 md:px-10 md:py-12">
       <div className="mx-auto max-w-5xl">
         {/* Header */}
-        <p className="text-xs font-semibold tracking-widest text-violet-600">
-          CATATAN
-        </p>
-        <h1 className="mt-1 font-serif text-3xl font-bold text-slate-900 md:text-4xl">
-          Catatan Kuliah{user?.username ? `, ${user.username}` : ""} 📝
+        <h1 className="font-serif text-xl font-bold text-slate-900 md:text-2xl">
+          Catatan Kuliah 📝
         </h1>
-        <p className="mt-3 max-w-xl text-slate-600">
-          Rangkuman materi tiap mata kuliah, dari yang ditulis manual sampai
-          hasil rekaman kelas.
-        </p>
 
         {/* Content */}
         <div className="mt-8">
@@ -107,6 +127,9 @@ export default function CatatanPage({ user }) {
                   key={mk.id}
                   mataKuliah={mk}
                   onClick={() => navigate(`/journal/${mk.id}`)}
+                  onDelete={() => handleDeleteMataKuliah(mk.id)}
+                  deleting={deletingId === mk.id}
+                  confirming={confirmDeleteId === mk.id}
                 />
               ))}
             </div>
@@ -117,39 +140,86 @@ export default function CatatanPage({ user }) {
   );
 }
 
-function MataKuliahCard({ mataKuliah, onClick }) {
+function MataKuliahCard({
+  mataKuliah,
+  onClick,
+  onDelete,
+  deleting,
+  confirming,
+}) {
   const { nama, dosen, warna, jumlahCatatan, lastUpdated } = mataKuliah;
   const accent = warna || "#7c3aed"; // fallback violet-600
 
   return (
-    <button
-      onClick={onClick}
-      className="group flex w-full flex-col rounded-2xl border-t-4 bg-white p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500"
-      style={{ borderTopColor: accent }}>
-      <div className="flex items-start justify-between gap-2">
-        <h2 className="font-serif text-lg font-bold text-slate-900">{nama}</h2>
-        <span
-          className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
-          style={{ backgroundColor: `${accent}1a`, color: accent }}>
-          {jumlahCatatan} catatan
-        </span>
-      </div>
+    <div
+      className="group relative flex w-full flex-col rounded-2xl bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+      style={{ border: `2px solid ${accent}80` }}>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onDelete();
+        }}
+        disabled={deleting}
+        aria-label="Hapus mata kuliah"
+        className="absolute right-3 top-3 z-10 flex min-h-[36px] min-w-[36px] items-center justify-center rounded-full px-2.5 text-[11px] font-semibold transition-colors disabled:opacity-50"
+        style={{
+          background: confirming ? "#D9607A" : "#D9607A17",
+          color: confirming ? "#FFFFFF" : "#D9607A",
+        }}>
+        {deleting ? "..." : confirming ? "Yakin?" : <TrashIcon />}
+      </button>
 
-      {dosen && <p className="mt-1 text-sm text-slate-500">{dosen}</p>}
+      <button
+        onClick={onClick}
+        className="flex flex-1 flex-col text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 rounded-xl">
+        <div className="flex items-start justify-between gap-2 pr-9">
+          <h2 className="font-serif text-lg font-bold text-slate-900">
+            {nama}
+          </h2>
+          <span
+            className="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
+            style={{ backgroundColor: `${accent}1a`, color: accent }}>
+            {jumlahCatatan} catatan
+          </span>
+        </div>
 
-      <div className="mt-4 flex items-center justify-between text-sm">
-        <span className="text-slate-400">
-          {lastUpdated
-            ? `Terakhir diedit ${formatRelativeDate(lastUpdated)}`
-            : "Belum ada catatan"}
-        </span>
-        <span
-          className="font-semibold opacity-0 transition group-hover:opacity-100"
-          style={{ color: accent }}>
-          Buka →
-        </span>
-      </div>
-    </button>
+        {dosen && <p className="mt-1 text-sm text-slate-500">{dosen}</p>}
+
+        <div className="mt-4 flex items-center justify-between text-sm">
+          <span className="text-slate-400">
+            {lastUpdated
+              ? `Terakhir diedit ${formatRelativeDate(lastUpdated)}`
+              : "Belum ada catatan"}
+          </span>
+          <span
+            className="font-semibold opacity-0 transition group-hover:opacity-100"
+            style={{ color: accent }}>
+            Buka →
+          </span>
+        </div>
+      </button>
+    </div>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 6V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
   );
 }
 
@@ -168,7 +238,9 @@ function LoadingGrid() {
 
 function EmptyState() {
   return (
-    <div className="rounded-2xl border-2 border-dashed border-violet-200 bg-white/50 px-6 py-14 text-center">
+    <div
+      className="rounded-2xl bg-white px-6 py-14 text-center"
+      style={{ border: "2px dashed #C4B5FD" }}>
       <p className="text-4xl">📚</p>
       <h3 className="mt-3 font-serif text-lg font-bold text-slate-900">
         Belum ada mata kuliah
@@ -183,7 +255,9 @@ function EmptyState() {
 
 function ErrorState({ message, onRetry }) {
   return (
-    <div className="rounded-2xl border border-red-200 bg-red-50 px-6 py-8 text-center">
+    <div
+      className="rounded-2xl bg-red-50 px-6 py-8 text-center"
+      style={{ border: "2px solid #FECACA" }}>
       <p className="font-semibold text-red-700">{message}</p>
       <button
         onClick={onRetry}

@@ -15,9 +15,22 @@ const NAV_ITEMS = [
   { to: "/akademik", label: "Akademik", icon: "🎓" },
 ];
 
-// Judul top bar mobile ngikutin path aktif -- prefix match ke NAV_ITEMS
-// jadi sub-halaman kayak /akademik/tugas tetep kebaca "Akademik".
+// Judul spesifik buat path yang gak nyambung langsung ke NAV_ITEMS
+// (contoh: /journal itu top-level, bukan turunan /akademik). Dicek
+// dulu sebelum fallback ke NAV_ITEMS biasa.
+const SUB_PAGE_TITLES = [
+  { to: "/journal", label: "Catatan Kuliah" },
+  { to: "/akademik/jadwal", label: "Jadwal Kuliah" },
+  { to: "/akademik/tugas", label: "Tugas & Deadline" },
+  { to: "/akademik/ipk", label: "IPK Tracker" },
+];
+
+// Judul top bar mobile ngikutin path aktif -- cek SUB_PAGE_TITLES dulu
+// (lebih spesifik), baru fallback ke NAV_ITEMS.
 function pageTitle(pathname) {
+  const subMatch = SUB_PAGE_TITLES.find((item) => pathname.startsWith(item.to));
+  if (subMatch) return subMatch.label;
+
   const match = NAV_ITEMS.find((item) => pathname.startsWith(item.to));
   return match?.label || "Beranda";
 }

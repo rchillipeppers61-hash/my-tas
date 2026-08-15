@@ -4,6 +4,35 @@ import { supabase } from "../../supabaseClient";
 import { C, FONT_IMPORT } from "../../lib/theme";
 import { HARI_LIST, WARNA_MK } from "./constants";
 
+// Sama kayak yang di JadwalPage.jsx: kalau jadwal yang dihapus itu
+// jadwal terakhir buat mata kuliah tsb, mata kuliahnya ikut dibersihkan
+// -- termasuk tugas & catatan yang masih nempel di situ.
+async function cleanupOrphanMataKuliah(mataKuliahId, userId) {
+  const { count } = await supabase
+    .from("jadwal")
+    .select("id", { count: "exact", head: true })
+    .eq("mata_kuliah_id", mataKuliahId)
+    .eq("user_id", userId);
+
+  if (count) return; // masih dipakai jadwal lain, biarin
+
+  await supabase
+    .from("tugas")
+    .delete()
+    .eq("mata_kuliah_id", mataKuliahId)
+    .eq("user_id", userId);
+  await supabase
+    .from("catatan")
+    .delete()
+    .eq("mata_kuliah_id", mataKuliahId)
+    .eq("user_id", userId);
+  await supabase
+    .from("mata_kuliah")
+    .delete()
+    .eq("id", mataKuliahId)
+    .eq("user_id", userId);
+}
+
 const inputClass =
   "w-full mt-1.5 mb-3.5 px-3.5 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]";
 const inputStyle = {
@@ -178,6 +207,11 @@ export default function JadwalFormPage({ user }) {
       .delete()
       .eq("id", editing.id)
       .eq("user_id", targetId);
+
+    if (!deleteError && editing.mata_kuliah_id) {
+      await cleanupOrphanMataKuliah(editing.mata_kuliah_id, targetId);
+    }
+
     setDeleting(false);
     if (!deleteError) {
       navigate("/akademik/jadwal");

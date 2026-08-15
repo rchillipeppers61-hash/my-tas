@@ -400,7 +400,7 @@ export default function IpkPage({ user }) {
       </p>
       <h1
         style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-        className="text-[24px] font-semibold mb-2">
+        className="text-[21px] font-semibold mb-2">
         {isParent
           ? `IPK ${capitalize(childName) || "Anak"} 📊`
           : "Perkembangan IPK Kamu 📊"}
@@ -408,7 +408,7 @@ export default function IpkPage({ user }) {
       <p
         className="text-[13.5px] leading-relaxed mb-6"
         style={{ color: C.inkFaint }}>
-        Pantau IPK kumulatif & nilai tiap semester di sini.
+        Pantau IPK Kumulatif & Nilai Tiap Semester
       </p>
 
       {error && (

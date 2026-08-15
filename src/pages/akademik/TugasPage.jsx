@@ -112,17 +112,12 @@ export default function TugasPage({ user }) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <style>{FONT_IMPORT}</style>
-        <p
-          className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
-          style={{ color: C.roseDeep }}>
-          Akademik
-        </p>
         <h1
           style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
           className="text-[22px] sm:text-[24px] font-semibold mb-4">
           Tugas & Deadline
         </h1>
-        <Card>
+        <Card border>
           <p style={{ color: C.ink }}>
             Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
             <code>linked_child_id</code>.
@@ -134,17 +129,12 @@ export default function TugasPage({ user }) {
 
   return (
     <div
-      className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-28 lg:pb-10"
+      className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-7 pb-28 lg:pb-10"
       style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
       <div className="flex items-center justify-between mb-4">
         <div>
-          <p
-            className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
-            style={{ color: C.roseDeep }}>
-            Akademik
-          </p>
           <h1
             style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
             className="text-[22px] sm:text-[24px] font-semibold">
@@ -162,7 +152,17 @@ export default function TugasPage({ user }) {
         </button>
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto pb-1 mb-5">
+      <div
+        className="filter-scroll flex gap-1.5 overflow-x-auto pb-3 mb-5"
+        style={{
+          scrollbarWidth: "thin",
+          scrollbarColor: "#463F5C2E transparent",
+        }}>
+        <style>{`
+          .filter-scroll::-webkit-scrollbar { height: 3px; }
+          .filter-scroll::-webkit-scrollbar-track { background: transparent; }
+          .filter-scroll::-webkit-scrollbar-thumb { background: #463F5C2E; border-radius: 9999px; }
+        `}</style>
         <FilterChip
           active={filter === "semua"}
           onClick={() => setFilter("semua")}
@@ -212,7 +212,7 @@ export default function TugasPage({ user }) {
           <span className="sr-only">Memuat tugas...</span>
         </div>
       ) : filtered.length === 0 ? (
-        <Card className="text-center py-10">
+        <Card border className="text-center py-10">
           <div
             className="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-[26px] mb-3"
             style={{ background: "#F4A6B71F" }}>
@@ -246,6 +246,7 @@ export default function TugasPage({ user }) {
               <Card
                 key={item.id}
                 className="!p-4"
+                border
                 accent={course ? courseColor(item) : null}>
                 <div className="flex items-start gap-3">
                   <button
@@ -305,16 +306,19 @@ export default function TugasPage({ user }) {
                   <button
                     onClick={() => handleDelete(item.id)}
                     disabled={deletingId === item.id}
+                    aria-label="Hapus tugas"
                     className="flex-shrink-0 min-w-[44px] min-h-[44px] text-[11px] font-semibold px-3 rounded-full disabled:opacity-50 flex items-center justify-center"
                     style={{
-                      background: isConfirming ? C.roseDeep : "#463F5C0f",
-                      color: isConfirming ? "#FFFFFF" : C.inkFaint,
+                      background: isConfirming ? C.roseDeep : "#D9607A17",
+                      color: isConfirming ? "#FFFFFF" : C.roseDeep,
                     }}>
-                    {deletingId === item.id
-                      ? "..."
-                      : isConfirming
-                        ? "Yakin?"
-                        : "🗑️"}
+                    {deletingId === item.id ? (
+                      "..."
+                    ) : isConfirming ? (
+                      "Yakin?"
+                    ) : (
+                      <TrashIcon />
+                    )}
                   </button>
                 </div>
               </Card>
@@ -335,6 +339,26 @@ export default function TugasPage({ user }) {
         +
       </button>
     </div>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round">
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 6V4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2" />
+      <line x1="10" y1="11" x2="10" y2="17" />
+      <line x1="14" y1="11" x2="14" y2="17" />
+    </svg>
   );
 }
 
