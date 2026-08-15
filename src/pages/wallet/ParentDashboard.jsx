@@ -197,7 +197,8 @@ export default function ParentDashboard({ user }) {
     }
 
     const wb = new ExcelJS.Workbook();
-    wb.creator = "My Wallet";
+    wb.creator =
+      user?.nama_lengkap || capitalize(user?.username) || "Orang Tua";
     wb.created = new Date();
 
     const ws = wb.addWorksheet(monthLabel(month));

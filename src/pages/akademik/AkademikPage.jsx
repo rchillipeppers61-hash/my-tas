@@ -51,7 +51,7 @@ const MENU_ITEMS = [
 ];
 
 export default function AkademikPage({ user }) {
-  const name = capitalize(user?.username) || "Kamu";
+  const name = capitalize(user?.nama_lengkap) || "Kamu";
 
   return (
     <div

@@ -24,7 +24,7 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
 
     const { data, error: dbError } = await supabase
       .from("users")
-      .select("id, username, password, role, linked_child_id")
+      .select("id, username, password, role, linked_child_id, nama_lengkap")
       .eq("username", u)
       .single();
 
@@ -45,6 +45,7 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
       username: data.username,
       role: data.role,
       linked_child_id: data.linked_child_id,
+      nama_lengkap: data.nama_lengkap,
     };
 
     // "Ingat saya" checked -> persist across browser restarts (localStorage).

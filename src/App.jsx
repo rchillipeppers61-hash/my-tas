@@ -50,6 +50,7 @@ export default function App() {
       username: newUser.username,
       role: newUser.role,
       linked_child_id: newUser.linked_child_id,
+      nama_lengkap: newUser.nama_lengkap,
     };
     sessionStorage.removeItem("mywallet_user");
     localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));

@@ -2,9 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { C, FONT_IMPORT } from "../lib/theme";
-import { capitalize, rupiah } from "../lib/format";
+import { capitalize } from "../lib/format";
 import { Card } from "../components/ui";
-import { LOW_BALANCE_LIMIT } from "./wallet/constants";
 import {
   HARI_LIST,
   statusMeta,
@@ -23,7 +22,7 @@ function todayHari() {
 }
 
 export default function HomePage({ user }) {
-  const name = capitalize(user?.username) || "Kamu";
+  const name = capitalize(user?.nama_lengkap) || "Kamu";
   const isParent = user?.role === "orang_tua";
 
   // Akademik (jadwal/tugas) & Wallet dua-duanya diarahin ke data ANAK
@@ -35,8 +34,6 @@ export default function HomePage({ user }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Wallet
-  const [saldo, setSaldo] = useState(0);
   const [childName, setChildName] = useState("");
 
   // Jadwal
@@ -154,12 +151,7 @@ export default function HomePage({ user }) {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([
-        loadChildName(),
-        loadWallet(),
-        loadJadwal(),
-        loadTugas(),
-      ]);
+      await Promise.all([loadChildName(), loadJadwal(), loadTugas()]);
     } catch (err) {
       setError("Gagal memuat data. Cek koneksi kamu, terus coba lagi.");
     }
@@ -174,25 +166,6 @@ export default function HomePage({ user }) {
       .eq("id", targetId)
       .single();
     if (data) setChildName(data.nama_lengkap || data.username);
-  }
-
-  async function loadWallet() {
-    const { data, error } = await supabase
-      .from("transactions")
-      .select("type, amount")
-      .eq("owner_id", targetId)
-      .is("deleted_at", null);
-
-    if (error) throw error;
-    if (data) {
-      const totalIn = data
-        .filter((t) => t.type === "in")
-        .reduce((s, t) => s + Number(t.amount), 0);
-      const totalOut = data
-        .filter((t) => t.type === "out")
-        .reduce((s, t) => s + Number(t.amount), 0);
-      setSaldo(totalIn - totalOut);
-    }
   }
 
   async function loadJadwal() {
@@ -245,41 +218,6 @@ export default function HomePage({ user }) {
     () => tugasList.filter((t) => daysUntil(t.deadline) <= URGENT_DAYS_LIMIT),
     [tugasList],
   );
-
-  // Reminder terpenting -- murni dari tugas, maksimal 2 baris.
-  // Buat orang tua, teksnya disesuaikan biar jelas ini soal anaknya
-  // (dan jadi bahan buat WA manual kalau perlu).
-  const reminders = useMemo(() => {
-    const list = [];
-    const overdue = tugasUrgent.filter((t) => daysUntil(t.deadline) < 0);
-    const upcoming = tugasUrgent
-      .filter((t) => daysUntil(t.deadline) >= 0)
-      .sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-
-    const subject = isParent ? `${capitalize(childName) || "Anak"}` : "Kamu";
-
-    if (overdue.length > 0) {
-      list.push({
-        icon: "⚠️",
-        text:
-          overdue.length === 1
-            ? `Tugas "${overdue[0].judul}" ${isParent ? `punya ${subject} ` : ""}udah lewat deadline!`
-            : `${subject} punya ${overdue.length} tugas yang udah lewat deadline.`,
-      });
-    }
-
-    if (upcoming.length > 0 && list.length < 2) {
-      const t = upcoming[0];
-      list.push({
-        icon: "⏰",
-        text: `Tugas "${t.judul}" ${isParent ? `${subject} ` : ""}deadline ${deadlineLabel(t.deadline).toLowerCase()}.`,
-      });
-    }
-
-    return list.slice(0, 2);
-  }, [tugasUrgent, isParent, childName]);
-
-  const isLowBalance = saldo < LOW_BALANCE_LIMIT;
 
   if (!targetLinked) {
     return (
@@ -382,64 +320,6 @@ export default function HomePage({ user }) {
         </div>
       ) : (
         <div className="space-y-4">
-          {/* Reminder terpenting -- muncul cuma kalau ada tugas urgent/overdue. */}
-          {reminders.map((r, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-2.5 rounded-2xl px-4 py-3"
-              style={{
-                background: "#F4A6B71F",
-                border: "1.5px solid #F4A6B755",
-              }}>
-              <span className="text-[18px] flex-shrink-0">{r.icon}</span>
-              <p
-                className="text-[12.5px] sm:text-[13px] font-semibold"
-                style={{ color: C.roseDeep }}>
-                {r.text}
-              </p>
-            </div>
-          ))}
-
-          {/* Card Wallet */}
-          <Link to="/wallet" className="block">
-            <div
-              className="rounded-[28px] p-5 sm:p-6 relative overflow-hidden"
-              style={{
-                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
-                boxShadow: "0 20px 40px -18px rgba(70,63,92,0.5)",
-              }}>
-              <div
-                className="absolute -top-8 -right-8 w-32 h-32 rounded-full"
-                style={{ background: "rgba(255,255,255,0.12)" }}
-              />
-              <div className="relative z-10">
-                <p
-                  className="text-[10.5px] sm:text-[11px] uppercase tracking-[0.2em] font-semibold"
-                  style={{ color: "rgba(255,255,255,0.75)" }}>
-                  {isParent
-                    ? `Saldo ${capitalize(childName) || "Anak"}`
-                    : "Saldo Kamu"}
-                </p>
-                <p
-                  style={{ fontFamily: "'Fraunces', serif", color: "#FFFFFF" }}
-                  className="mt-1 text-[28px] sm:text-[32px] font-semibold leading-none">
-                  {rupiah(saldo)}
-                </p>
-                <span
-                  className="inline-flex items-center gap-1.5 mt-3 px-3 py-1.5 rounded-full text-[11px] font-semibold"
-                  style={{
-                    background: "rgba(255,255,255,0.18)",
-                    color: "#FFFFFF",
-                    border: "1px solid rgba(255,255,255,0.3)",
-                  }}>
-                  {isLowBalance
-                    ? "⚠️ Saldo mulai menipis"
-                    : "🌱 Saldo dalam kondisi aman"}
-                </span>
-              </div>
-            </div>
-          </Link>
-
           {/* Jadwal & Tugas: numpuk 1 kolom di HP/tablet portrait, 2 kolom mulai laptop */}
           <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:items-start">
             {/* Card Jadwal Hari Ini */}
