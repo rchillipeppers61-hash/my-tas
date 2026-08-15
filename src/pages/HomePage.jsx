@@ -65,18 +65,20 @@ export default function HomePage({ user }) {
 
   // Anak gak punya kolom "linked" di row-nya sendiri -- status link
   // ditentuin dari SISI ORTU: ada gak akun orang_tua yang
-  // linked_child_id-nya nunjuk ke id anak ini.
+  // linked_child_id-nya nunjuk ke id anak ini. Bisa lebih dari satu
+  // orang tua (misal ayah & ibu), makanya query-nya gak pakai
+  // .single()/.maybeSingle() -- cukup cek apakah hasilnya kosong atau ada.
   async function checkLinkStatus() {
     const { data } = await supabase
       .from("users")
       .select("id")
       .eq("role", "orang_tua")
-      .eq("linked_child_id", user.id)
-      .maybeSingle();
+      .eq("linked_child_id", user.id);
 
-    setIsLinked(!!data);
+    const linked = (data?.length || 0) > 0;
+    setIsLinked(linked);
 
-    if (!data) {
+    if (!linked) {
       loadActiveInviteCode();
     }
   }

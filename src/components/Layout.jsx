@@ -208,11 +208,11 @@ function MobileTopBar({ title, onLogoutClick }) {
     <header
       className="lg:hidden sticky top-0 z-30 flex items-center justify-between gap-2 px-4 py-3"
       style={{
-        background: "#FFFFFF",
-        borderBottom: "1px solid #463F5C14",
+        background: `linear-gradient(135deg, ${C.lavender} 0%, ${C.skyDeep} 100%)`,
+        boxShadow: "0 4px 16px -8px rgba(70,63,92,0.35)",
       }}>
       <h2
-        style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+        style={{ fontFamily: "'Fraunces', serif", color: "#FFFFFF" }}
         className="text-[17px] font-semibold truncate min-w-0">
         {title}
       </h2>
@@ -221,12 +221,12 @@ function MobileTopBar({ title, onLogoutClick }) {
         <div className="text-right leading-tight">
           <p
             className="text-[14px] font-bold tabular-nums whitespace-nowrap"
-            style={{ color: C.ink, fontFamily: "'Fraunces', serif" }}>
+            style={{ color: "#FFFFFF", fontFamily: "'Fraunces', serif" }}>
             {formatClock(now)}
           </p>
           <p
             className="text-[10.5px] font-medium whitespace-nowrap"
-            style={{ color: C.inkFaint }}>
+            style={{ color: "#FFFFFFCC" }}>
             {formatDayDate(now)}
           </p>
         </div>

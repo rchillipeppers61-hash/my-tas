@@ -46,7 +46,7 @@ const MENU_ITEMS = [
     desc: "Pantau perkembangan IPK tiap semester.",
     accent: C.amberDeep,
     tint: "#F6C4531F",
-    active: false,
+    active: true,
   },
 ];
 

@@ -10,6 +10,7 @@ import JadwalPage from "./pages/akademik/JadwalPage";
 import JadwalFormPage from "./pages/akademik/JadwalFormPage";
 import TugasPage from "./pages/akademik/TugasPage";
 import TugasFormPage from "./pages/akademik/TugasFormPage";
+import IpkPage from "./pages/akademik/IpkPage";
 import CatatanPage from "./pages/akademik/catatan/CatatanPage";
 import CatatanDetailPage from "./pages/akademik/catatan/CatatanDetailPage";
 
@@ -106,6 +107,7 @@ export default function App() {
             path="akademik/tugas/tambah"
             element={<TugasFormPage user={user} />}
           />
+          <Route path="akademik/ipk" element={<IpkPage user={user} />} />
 
           {/* Modul Catatan Kuliah -- landing (list mata kuliah) + detail
               per mata kuliah (list catatan, rekam/ketik, auto-save).
