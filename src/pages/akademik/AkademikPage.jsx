@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom";
 import { C, FONT_IMPORT } from "../../lib/theme";
-import { capitalize } from "../../lib/format";
 
 // ============================================================
 // AkademikPage — landing card menu buat modul Akademik.
@@ -50,31 +49,18 @@ const MENU_ITEMS = [
   },
 ];
 
-export default function AkademikPage({ user }) {
-  const name = capitalize(user?.nama_lengkap) || "Kamu";
-
+export default function AkademikPage() {
   return (
     <div
       className="max-w-2xl lg:max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10"
       style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
-      <p
-        className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
-        style={{ color: C.lavender }}>
-        Akademik
-      </p>
       <h1
         style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-        className="text-[24px] font-semibold mb-2">
-        Urusan Kuliah, {name} 🎓
+        className="text-[18px] sm:text-[24px] font-semibold mb-6 sm:mb-8 leading-snug">
+        Jadwal, Tugas & Catatan Kuliah 🎓
       </h1>
-      <p
-        className="text-[13.5px] leading-relaxed mb-6 sm:mb-8"
-        style={{ color: C.inkFaint }}>
-        Semua yang berhubungan sama kuliah kesimpen di sini -- jadwal, tugas,
-        sampai catatan.
-      </p>
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5 lg:gap-4">
         {MENU_ITEMS.map((item) => (
@@ -88,10 +74,10 @@ export default function AkademikPage({ user }) {
 function MenuCard({ to, icon, title, desc, accent, tint, active }) {
   const content = (
     <div
-      className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 h-full transition-transform border"
+      className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 h-full transition-transform border-2"
       style={{
         background: active ? tint : "#463F5C0a",
-        borderColor: active ? `${accent}40` : "#463F5C1F",
+        borderColor: active ? `${accent}80` : "#463F5C26",
         boxShadow: active
           ? "0 1px 0 rgba(70,63,92,0.04), 0 12px 28px -16px rgba(70,63,92,0.22)"
           : "none",

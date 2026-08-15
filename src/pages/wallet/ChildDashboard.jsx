@@ -8,7 +8,6 @@ import {
   todayISO,
   formatDay,
   daysBetween,
-  capitalize,
   monthLabel,
   formatThousands,
   stripThousands,
@@ -28,15 +27,6 @@ function getCategoryMeta(cat) {
   return CATEGORY_META[cat] || CATEGORY_META.lainnya;
 }
 
-function getInitials(name) {
-  if (!name) return "?";
-  const parts = name.trim().split(/\s+/);
-  return parts
-    .slice(0, 2)
-    .map((p) => p[0]?.toUpperCase())
-    .join("");
-}
-
 export default function ChildDashboard({ user }) {
   const [transactions, setTransactions] = useState([]);
   const [showForm, setShowForm] = useState(false);
@@ -51,8 +41,6 @@ export default function ChildDashboard({ user }) {
   const [goalError, setGoalError] = useState("");
   const [goalToast, setGoalToast] = useState("");
   const [reminderDismissed, setReminderDismissed] = useState(false);
-
-  const displayName = user.nama_lengkap || capitalize(user.username) || "Kamu";
 
   async function fetchTransactions() {
     setLoading(true);
@@ -352,32 +340,6 @@ export default function ChildDashboard({ user }) {
       </div>
 
       <div className="relative max-w-md sm:max-w-xl lg:max-w-5xl mx-auto px-4 sm:px-6 pt-6 sm:pt-10 pb-28 lg:pb-16">
-        <div className="flex items-center justify-between mb-5 sm:mb-8">
-          <div className="flex items-center gap-3 min-w-0">
-            <div
-              className="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl flex items-center justify-center font-semibold text-[14px] sm:text-[15px] flex-shrink-0"
-              style={{
-                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
-                color: "#FFFFFF",
-                fontFamily: "'Fraunces', serif",
-              }}>
-              {getInitials(displayName)}
-            </div>
-            <div className="min-w-0">
-              <p
-                className="text-[11px] tracking-[0.2em] uppercase font-semibold"
-                style={{ color: C.lavender }}>
-                TAS
-              </p>
-              <h1
-                style={{ fontFamily: "'Fraunces', serif" }}
-                className="text-[19px] sm:text-[25px] font-semibold leading-tight truncate">
-                Halo, {displayName} 👋
-              </h1>
-            </div>
-          </div>
-        </div>
-
         {loading ? (
           <p
             className="text-[13px] text-center py-10"

@@ -236,7 +236,7 @@ export default function HomePage({ user }) {
         <p
           className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
           style={{ color: C.lavender }}>
-          Beranda
+          Selamat Datang
         </p>
         <h1
           style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
@@ -262,7 +262,7 @@ export default function HomePage({ user }) {
       <p
         className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
         style={{ color: C.lavender }}>
-        Beranda
+        Selamat Datang
       </p>
       <h1
         style={{ fontFamily: "'Fraunces', serif", color: C.ink }}

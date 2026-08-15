@@ -5,7 +5,15 @@ import { C } from "../lib/theme";
 // Card — kotak konten generik dipakai di berbagai halaman
 // (dashboard wallet, dsb).
 // ============================================================
-export function Card({ children, title, sub, className = "", accent, tint }) {
+export function Card({
+  children,
+  title,
+  sub,
+  className = "",
+  accent,
+  tint,
+  border = false,
+}) {
   return (
     <div
       className={`relative overflow-hidden rounded-3xl p-5 sm:p-6 ${className}`}
@@ -13,6 +21,9 @@ export function Card({ children, title, sub, className = "", accent, tint }) {
         background: tint || C.card,
         boxShadow:
           "0 1px 0 rgba(70,63,92,0.04), 0 12px 28px -16px rgba(70,63,92,0.22)",
+        border: border
+          ? `2px solid ${accent ? `${accent}80` : "#463F5C33"}`
+          : undefined,
       }}>
       {accent && (
         <div

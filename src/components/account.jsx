@@ -41,7 +41,7 @@ export function AccountModal({
 
     const { data: me } = await supabase
       .from("users")
-      .select("id, nama_lengkap, username, role, linked_child_id")
+      .select("id, nama_lengkap, username, role, linked_child_id, prodi")
       .eq("id", user.id)
       .single();
 
@@ -88,14 +88,15 @@ export function AccountModal({
 
   return (
     <div
-      className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
+      className="fixed inset-0 flex items-center justify-center z-50 px-4"
       style={{ background: "rgba(70,63,92,0.4)" }}
       onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
+        className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7 relative overflow-hidden"
         style={{
-          background: "#FFFFFF",
+          background: "#EAF3FC",
+          border: `1.5px solid ${C.sky}`,
           boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
         }}>
         {loading ? (
@@ -156,18 +157,30 @@ export function AccountModal({
                     )}
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1.5">
-                    <p
-                      style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-                      className="text-[16px] font-semibold truncate">
-                      {profile?.nama_lengkap || profile?.username}
-                    </p>
-                    <button
-                      onClick={startEditing}
-                      aria-label="Edit nama"
-                      className="flex-shrink-0 text-[12px] opacity-70">
-                      ✏️
-                    </button>
+                  <div>
+                    <div className="flex items-center gap-1.5">
+                      <p
+                        style={{
+                          fontFamily: "'Fraunces', serif",
+                          color: C.ink,
+                        }}
+                        className="text-[16px] font-semibold truncate">
+                        {profile?.nama_lengkap || profile?.username}
+                      </p>
+                      <button
+                        onClick={startEditing}
+                        aria-label="Edit nama"
+                        className="flex-shrink-0 text-[12px] opacity-70">
+                        ✏️
+                      </button>
+                    </div>
+                    {profile?.role === "anak" && profile?.prodi && (
+                      <p
+                        className="text-[12.5px] font-medium mt-0.5 truncate"
+                        style={{ color: C.inkSoft }}>
+                        {profile.prodi}
+                      </p>
+                    )}
                   </div>
                 )}
               </div>
@@ -269,14 +282,15 @@ export function ChangePasswordModal({ user, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
+      className="fixed inset-0 flex items-center justify-center z-50 px-4"
       style={{ background: "rgba(70,63,92,0.4)" }}
       onClick={onClose}>
       <div
         onClick={(e) => e.stopPropagation()}
-        className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
+        className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7 relative overflow-hidden"
         style={{
-          background: "#FFFFFF",
+          background: "#EAF3FC",
+          border: `1.5px solid ${C.sky}`,
           boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
         }}>
         {success ? (
