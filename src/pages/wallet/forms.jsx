@@ -275,15 +275,124 @@ export function TransactionForm({ transaction, onSave, onDelete, onClose }) {
 }
 
 // ============================================================
-// SavingsGoalItem — baris progress satu target nabung (dipakai
-// di ChildDashboard & ParentDashboard).
+// SavingsGoalItem — baris progress satu target nabung.
+//
+// Dua mode:
+// - Read-only (dipakai di ParentDashboard): cuma `goal`, gak ada
+//   tombol aksi. Progress bar berdasar goal.saved_amount vs
+//   goal.target_amount.
+// - Editable (dipakai di ChildDashboard): pass `editable` + handler
+//   onEdit/onDeposit/onWithdraw/onDelete. Munculin tombol Setor,
+//   Tarik, Edit, Hapus -- masing-masing buka form inline kecil.
+//
+// PENTING soal konsep: `saved_amount` itu alokasi mental per-goal,
+// TERPISAH dari `saldo` (yang dihitung dari total transaksi). Setor
+// / tarik ke goal TIDAK bikin record transaksi baru -- itu cuma
+// mindah "label" dari saldo yang sama, bukan pemasukan/pengeluaran
+// beneran. Makanya laporan pengeluaran gak keganggu sama aktivitas
+// nabung ini.
 // ============================================================
-export function SavingsGoalItem({ goal, saldo, onDelete }) {
+const smallInputClass =
+  "w-full px-3 py-2.5 rounded-xl text-[13px] outline-none border-[1.5px]";
+const smallInputStyle = {
+  background: "#463F5C08",
+  color: C.ink,
+  borderColor: "#463F5C1F",
+};
+
+export function SavingsGoalItem({
+  goal,
+  editable = false,
+  onDelete,
+  onEdit,
+  onDeposit,
+  onWithdraw,
+  availableToAllocate = 0,
+}) {
+  const [mode, setMode] = useState(null); // null | "deposit" | "withdraw" | "edit"
+  const [amount, setAmount] = useState("");
+  const [editTitle, setEditTitle] = useState(goal.title);
+  const [editTarget, setEditTarget] = useState(String(goal.target_amount));
+  const [error, setError] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+
+  const saved = Number(goal.saved_amount || 0);
   const pct = Math.max(
     0,
-    Math.min(100, Math.round((saldo / goal.target_amount) * 100)),
+    Math.min(100, Math.round((saved / goal.target_amount) * 100)),
   );
-  const achieved = saldo >= goal.target_amount;
+  const achieved = saved >= goal.target_amount;
+
+  function closeMode() {
+    setMode(null);
+    setAmount("");
+    setError("");
+    setEditTitle(goal.title);
+    setEditTarget(String(goal.target_amount));
+  }
+
+  async function handleDeposit() {
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) {
+      setError("Isi jumlah dulu ya.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    const result = await onDeposit(goal.id, amt);
+    setSaving(false);
+    if (result?.ok) {
+      closeMode();
+    } else {
+      setError(result?.error || "Gagal menyimpan, coba lagi.");
+    }
+  }
+
+  async function handleWithdraw() {
+    const amt = parseFloat(amount);
+    if (!amt || amt <= 0) {
+      setError("Isi jumlah dulu ya.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    const result = await onWithdraw(goal.id, amt);
+    setSaving(false);
+    if (result?.ok) {
+      closeMode();
+    } else {
+      setError(result?.error || "Gagal menyimpan, coba lagi.");
+    }
+  }
+
+  async function handleEditSave() {
+    const target = parseFloat(editTarget);
+    if (!editTitle.trim() || !target || target <= 0) {
+      setError("Isi nama & target dengan benar ya.");
+      return;
+    }
+    setError("");
+    setSaving(true);
+    const ok = await onEdit(goal.id, {
+      title: editTitle.trim(),
+      target_amount: target,
+    });
+    setSaving(false);
+    if (ok) {
+      closeMode();
+    } else {
+      setError("Gagal menyimpan perubahan, coba lagi.");
+    }
+  }
+
+  async function handleDeleteClick() {
+    if (!confirmDelete) {
+      setConfirmDelete(true);
+      return;
+    }
+    await onDelete(goal.id);
+  }
 
   return (
     <div>
@@ -293,21 +402,10 @@ export function SavingsGoalItem({ goal, saldo, onDelete }) {
           style={{ color: C.ink }}>
           {achieved ? "🏆" : "🎯"} {goal.title}
         </span>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <span style={{ color: C.inkFaint }}>
-            {rupiah(Math.min(saldo, goal.target_amount))} /{" "}
-            {rupiah(goal.target_amount)}
-          </span>
-          {onDelete && (
-            <button
-              onClick={() => onDelete(goal.id)}
-              aria-label="Hapus target"
-              className="text-[11px] w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-              style={{ background: "#463F5C0f", color: C.inkFaint }}>
-              ✕
-            </button>
-          )}
-        </div>
+        <span style={{ color: C.inkFaint }}>
+          {rupiah(Math.min(saved, goal.target_amount))} /{" "}
+          {rupiah(goal.target_amount)}
+        </span>
       </div>
       <div
         className="h-2.5 rounded-full overflow-hidden"
@@ -328,6 +426,135 @@ export function SavingsGoalItem({ goal, saldo, onDelete }) {
           style={{ color: C.mintDeep }}>
           🎉 Target tercapai!
         </p>
+      )}
+
+      {editable && mode === null && (
+        <div className="flex items-center gap-1.5 mt-2.5 flex-wrap">
+          <button
+            onClick={() => setMode("deposit")}
+            className="text-[11px] font-bold px-2.5 py-2 rounded-lg min-h-[36px]"
+            style={{ background: "#8B72C41A", color: C.lavender }}>
+            💰 Setor
+          </button>
+          <button
+            onClick={() => setMode("withdraw")}
+            disabled={saved <= 0}
+            className="text-[11px] font-bold px-2.5 py-2 rounded-lg min-h-[36px] disabled:opacity-40"
+            style={{ background: "#9FCBF02A", color: C.skyDeep }}>
+            💸 Tarik
+          </button>
+          <button
+            onClick={() => setMode("edit")}
+            className="text-[11px] font-bold px-2.5 py-2 rounded-lg min-h-[36px]"
+            style={{ background: "#463F5C0f", color: C.ink }}>
+            ✏️ Edit
+          </button>
+          <button
+            onClick={handleDeleteClick}
+            className="text-[11px] font-bold px-2.5 py-2 rounded-lg min-h-[36px] ml-auto"
+            style={{
+              background: confirmDelete ? C.roseDeep : "#463F5C0f",
+              color: confirmDelete ? "#FFFFFF" : C.roseDeep,
+            }}>
+            {confirmDelete ? "Yakin?" : "🗑️"}
+          </button>
+        </div>
+      )}
+
+      {editable && (mode === "deposit" || mode === "withdraw") && (
+        <div className="mt-2.5 space-y-2">
+          {mode === "deposit" && (
+            <p className="text-[11px]" style={{ color: C.inkFaint }}>
+              Bisa disisihkan: {rupiah(Math.max(0, availableToAllocate))}
+            </p>
+          )}
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={formatThousands(amount)}
+            onChange={(e) => setAmount(stripThousands(e.target.value))}
+            placeholder="Jumlah (Rp)"
+            className={smallInputClass}
+            style={smallInputStyle}
+          />
+          {error && (
+            <div
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-[11.5px] font-medium"
+              style={{ background: "#F4A6B71F", color: C.roseDeep }}>
+              ⚠️ {error}
+            </div>
+          )}
+          <div className="flex gap-1.5">
+            <button
+              onClick={mode === "deposit" ? handleDeposit : handleWithdraw}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl font-bold text-[13px] disabled:opacity-50"
+              style={{
+                background:
+                  mode === "deposit"
+                    ? `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`
+                    : `linear-gradient(135deg, ${C.skyDeep}, ${C.sky})`,
+                color: "#FFFFFF",
+              }}>
+              {saving ? "Menyimpan..." : mode === "deposit" ? "Setor" : "Tarik"}
+            </button>
+            <button
+              onClick={closeMode}
+              className="px-4 py-2.5 rounded-xl font-bold text-[13px]"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Batal
+            </button>
+          </div>
+        </div>
+      )}
+
+      {editable && mode === "edit" && (
+        <div className="mt-2.5 space-y-2">
+          <input
+            type="text"
+            value={editTitle}
+            onChange={(e) => setEditTitle(e.target.value)}
+            placeholder="Nama target"
+            className={smallInputClass}
+            style={smallInputStyle}
+          />
+          <input
+            type="text"
+            inputMode="numeric"
+            autoComplete="off"
+            value={formatThousands(editTarget)}
+            onChange={(e) => setEditTarget(stripThousands(e.target.value))}
+            placeholder="Target (Rp)"
+            className={smallInputClass}
+            style={smallInputStyle}
+          />
+          {error && (
+            <div
+              className="flex items-center gap-2 rounded-xl px-3 py-2 text-[11.5px] font-medium"
+              style={{ background: "#F4A6B71F", color: C.roseDeep }}>
+              ⚠️ {error}
+            </div>
+          )}
+          <div className="flex gap-1.5">
+            <button
+              onClick={handleEditSave}
+              disabled={saving}
+              className="flex-1 py-2.5 rounded-xl font-bold text-[13px] disabled:opacity-50"
+              style={{
+                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+                color: "#FFFFFF",
+              }}>
+              {saving ? "Menyimpan..." : "Simpan"}
+            </button>
+            <button
+              onClick={closeMode}
+              className="px-4 py-2.5 rounded-xl font-bold text-[13px]"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Batal
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );

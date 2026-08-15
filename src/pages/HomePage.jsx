@@ -46,12 +46,107 @@ export default function HomePage({ user }) {
   const [tugasList, setTugasList] = useState([]);
   const [updatingTugasId, setUpdatingTugasId] = useState(null);
 
+  // Status hubung ke akun ortu -- cuma relevan buat sisi ANAK.
+  // Ortu punya cek koneksi versi sendiri lewat `targetLinked` di atas.
+  const [isLinked, setIsLinked] = useState(null); // null = belum dicek
+  const [showLinkModal, setShowLinkModal] = useState(false);
+  const [inviteCode, setInviteCode] = useState(null);
+  const [inviteExpiresAt, setInviteExpiresAt] = useState(null);
+  const [generatingCode, setGeneratingCode] = useState(false);
+  const [codeError, setCodeError] = useState("");
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  async function handleCopyInviteCode() {
+    try {
+      await navigator.clipboard.writeText(inviteCode);
+      setCodeCopied(true);
+      setTimeout(() => setCodeCopied(false), 2000);
+    } catch {
+      // Clipboard API gagal -- diemin aja, user masih bisa select manual.
+    }
+  }
+
+  // Anak gak punya kolom "linked" di row-nya sendiri -- status link
+  // ditentuin dari SISI ORTU: ada gak akun orang_tua yang
+  // linked_child_id-nya nunjuk ke id anak ini.
+  async function checkLinkStatus() {
+    const { data } = await supabase
+      .from("users")
+      .select("id")
+      .eq("role", "orang_tua")
+      .eq("linked_child_id", user.id)
+      .maybeSingle();
+
+    setIsLinked(!!data);
+
+    if (!data) {
+      loadActiveInviteCode();
+    }
+  }
+
+  async function loadActiveInviteCode() {
+    const { data } = await supabase
+      .from("invite_codes")
+      .select("code, expires_at")
+      .eq("user_id", user.id)
+      .is("used_at", null)
+      .gt("expires_at", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (data) {
+      setInviteCode(data.code);
+      setInviteExpiresAt(data.expires_at);
+    }
+  }
+
+  async function generateInviteCode() {
+    setGeneratingCode(true);
+    setCodeError("");
+
+    // Invalidate semua kode lama yang belum kepake punya user ini dulu,
+    // biar cuma ada 1 kode aktif setiap saat.
+    await supabase
+      .from("invite_codes")
+      .update({ used_at: new Date().toISOString() })
+      .eq("user_id", user.id)
+      .is("used_at", null);
+
+    const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+    let code = "";
+    for (let i = 0; i < 6; i++) {
+      code += chars[Math.floor(Math.random() * chars.length)];
+    }
+
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+
+    const { error: codeInsertError } = await supabase
+      .from("invite_codes")
+      .insert({ code, user_id: user.id, expires_at: expiresAt });
+
+    setGeneratingCode(false);
+
+    if (codeInsertError) {
+      setCodeError("Gagal membuat kode. Coba lagi.");
+      return;
+    }
+
+    setInviteCode(code);
+    setInviteExpiresAt(expiresAt);
+  }
+
   useEffect(() => {
     if (targetLinked) {
       loadAll();
     } else {
       setLoading(false);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!isParent) checkLinkStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -226,6 +321,27 @@ export default function HomePage({ user }) {
         className="text-[24px] sm:text-[26px] font-semibold mb-6 sm:mb-8">
         Halo, {name} 👋
       </h1>
+
+      {!isParent && isLinked === false && (
+        <div
+          className="flex items-center justify-between gap-3 mb-5 sm:mb-6 px-4 py-3 rounded-2xl"
+          style={{ background: "#F6C4531F" }}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="flex-shrink-0">👀</span>
+            <p
+              className="text-[12.5px] font-semibold min-w-0"
+              style={{ color: C.ink }}>
+              Belum Terhubung Ke Akun Orang Tua.
+            </p>
+          </div>
+          <button
+            onClick={() => setShowLinkModal(true)}
+            className="text-[12px] font-semibold px-3 py-1.5 rounded-xl flex-shrink-0"
+            style={{ background: C.amberDeep, color: "#FFFFFF" }}>
+            Hubungkan
+          </button>
+        </div>
+      )}
 
       {!loading && error && (
         <div
@@ -459,6 +575,108 @@ export default function HomePage({ user }) {
                 </Link>
               )}
             </Card>
+          </div>
+        </div>
+      )}
+
+      {showLinkModal && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 px-4"
+          style={{ background: "rgba(70,63,92,0.4)" }}
+          onClick={() => setShowLinkModal(false)}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
+            style={{
+              background: "#FFFFFF",
+              boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
+            }}>
+            <p
+              className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
+              style={{ color: C.lavender }}>
+              Belum Terhubung
+            </p>
+            <h3
+              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+              className="text-[18px] font-semibold mb-2">
+              Sambungkan ke Orang Tua
+            </h3>
+            <p className="text-[13px] mb-5" style={{ color: C.inkFaint }}>
+              Buat kode undangan di bawah, terus kasih kodenya ke orang tua kamu
+              supaya dia bisa masukin pas login/daftar.
+            </p>
+
+            {inviteCode ? (
+              <>
+                <div
+                  className="text-center text-[26px] font-semibold tracking-[0.3em] py-4 rounded-2xl mb-3"
+                  style={{
+                    background: "#463F5C08",
+                    color: C.ink,
+                    fontFamily: "'Fraunces', serif",
+                  }}>
+                  {inviteCode}
+                </div>
+                <button
+                  type="button"
+                  onClick={handleCopyInviteCode}
+                  className="w-full py-2.5 rounded-2xl font-semibold text-[13px] mb-3 transition-colors"
+                  style={{
+                    background: codeCopied ? "#3F9E7C1F" : "#463F5C0d",
+                    color: codeCopied ? C.mintDeep : C.ink,
+                  }}>
+                  {codeCopied ? "✓ Kode disalin" : "Salin Kode"}
+                </button>
+                {inviteExpiresAt && (
+                  <p
+                    className="text-center text-[11.5px] mb-5"
+                    style={{ color: C.inkFaint }}>
+                    Berlaku sampai{" "}
+                    {new Date(inviteExpiresAt).toLocaleString("id-ID", {
+                      day: "numeric",
+                      month: "short",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                )}
+              </>
+            ) : (
+              <p className="text-[12.5px] mb-5" style={{ color: C.inkFaint }}>
+                Belum ada kode aktif.
+              </p>
+            )}
+
+            {codeError && (
+              <div
+                className="flex items-center gap-2 text-[12px] mb-4 px-3.5 py-2.5 rounded-xl font-medium"
+                style={{ background: "#D9607A14", color: C.roseDeep }}>
+                <span className="flex-shrink-0">⚠️</span>
+                <span>{codeError}</span>
+              </div>
+            )}
+
+            <button
+              onClick={generateInviteCode}
+              disabled={generatingCode}
+              className="w-full py-3 rounded-2xl text-sm font-semibold disabled:opacity-50"
+              style={{
+                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+                color: "#fff",
+              }}>
+              {generatingCode
+                ? "Memproses..."
+                : inviteCode
+                  ? "Buat Kode Baru"
+                  : "Buat Kode Undangan"}
+            </button>
+
+            <button
+              onClick={() => setShowLinkModal(false)}
+              className="w-full mt-2.5 py-3 rounded-2xl text-[13px] font-semibold"
+              style={{ background: "#463F5C0f", color: C.ink }}>
+              Tutup
+            </button>
           </div>
         </div>
       )}
