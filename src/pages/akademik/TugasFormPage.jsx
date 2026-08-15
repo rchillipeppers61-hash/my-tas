@@ -37,6 +37,8 @@ export default function TugasFormPage({ user }) {
   const location = useLocation();
   const editing = location.state?.tugas || null;
   const isEditing = Boolean(editing);
+  const isParent = user.role === "orang_tua";
+  const targetId = isParent ? user.linked_child_id : user.id;
 
   const existingSplit = splitCatatan(editing?.catatan);
 
@@ -69,7 +71,7 @@ export default function TugasFormPage({ user }) {
       const { data, error: fetchError } = await supabase
         .from("mata_kuliah")
         .select("id, nama")
-        .eq("user_id", user.id)
+        .eq("user_id", targetId)
         .order("nama", { ascending: true });
       if (!fetchError) setMataKuliahList(data || []);
       setLoadingMk(false);
@@ -114,7 +116,7 @@ export default function TugasFormPage({ user }) {
         : catatan.trim() || null;
 
     const payload = {
-      user_id: user.id,
+      user_id: targetId,
       mata_kuliah_id: mode === "dropdown" ? selectedMkId : null,
       judul: judul.trim(),
       deadline: new Date(deadline).toISOString(),
@@ -128,7 +130,7 @@ export default function TugasFormPage({ user }) {
           .from("tugas")
           .update(payload)
           .eq("id", editing.id)
-          .eq("user_id", user.id)
+          .eq("user_id", targetId)
       : await supabase.from("tugas").insert(payload);
 
     setSaving(false);
@@ -151,7 +153,7 @@ export default function TugasFormPage({ user }) {
       .from("tugas")
       .delete()
       .eq("id", editing.id)
-      .eq("user_id", user.id);
+      .eq("user_id", targetId);
     setDeleting(false);
     if (!deleteError) {
       navigate("/akademik/tugas");
@@ -213,7 +215,7 @@ export default function TugasFormPage({ user }) {
             key={opt.key}
             type="button"
             onClick={() => setMode(opt.key)}
-            className="flex-1 py-3 rounded-xl text-[12.5px] font-bold transition-all"
+            className="flex-1 py-3 rounded-xl text-[12px] sm:text-[12.5px] font-bold transition-all text-center leading-tight px-1"
             style={{
               background: mode === opt.key ? C.roseDeep : "transparent",
               color: mode === opt.key ? "#FFFFFF" : C.inkSoft,

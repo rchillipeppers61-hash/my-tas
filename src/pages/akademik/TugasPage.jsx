@@ -21,6 +21,10 @@ import {
 // ============================================================
 export default function TugasPage({ user }) {
   const navigate = useNavigate();
+  const isParent = user.role === "orang_tua";
+  const targetId = isParent ? user.linked_child_id : user.id;
+  const targetLinked = isParent ? Boolean(user.linked_child_id) : true;
+
   const [tugas, setTugas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -35,7 +39,7 @@ export default function TugasPage({ user }) {
     const { data, error: fetchError } = await supabase
       .from("tugas")
       .select("*, mata_kuliah(id, nama, warna)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .order("deadline", { ascending: true });
     if (fetchError) {
       setError("Gagal memuat tugas. Cek koneksi kamu, terus coba lagi.");
@@ -46,7 +50,11 @@ export default function TugasPage({ user }) {
   }
 
   useEffect(() => {
-    fetchTugas();
+    if (targetLinked) {
+      fetchTugas();
+    } else {
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -57,7 +65,7 @@ export default function TugasPage({ user }) {
       .from("tugas")
       .update({ status: newStatus })
       .eq("id", item.id)
-      .eq("user_id", user.id);
+      .eq("user_id", targetId);
     setUpdatingId(null);
     if (!error) {
       setTugas((prev) =>
@@ -76,7 +84,7 @@ export default function TugasPage({ user }) {
       .from("tugas")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", targetId);
     setDeletingId(null);
     setConfirmDeleteId(null);
     if (!error) await fetchTugas();
@@ -100,6 +108,30 @@ export default function TugasPage({ user }) {
     return item.mata_kuliah?.warna || C.inkFaint;
   }
 
+  if (!targetLinked) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <style>{FONT_IMPORT}</style>
+        <p
+          className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
+          style={{ color: C.roseDeep }}>
+          Akademik
+        </p>
+        <h1
+          style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+          className="text-[22px] sm:text-[24px] font-semibold mb-4">
+          Tugas & Deadline
+        </h1>
+        <Card>
+          <p style={{ color: C.ink }}>
+            Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
+            <code>linked_child_id</code>.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div
       className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-28 lg:pb-10"
@@ -116,7 +148,7 @@ export default function TugasPage({ user }) {
           <h1
             style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
             className="text-[22px] sm:text-[24px] font-semibold">
-            Tugas & Deadline
+            {isParent ? "Tugas & Deadline Anak" : "Tugas & Deadline"}
           </h1>
         </div>
         <button
@@ -193,7 +225,9 @@ export default function TugasPage({ user }) {
           </p>
           <p className="text-[12px]" style={{ color: C.inkFaint }}>
             {filter === "semua"
-              ? "Catat tugas kuliah biar gak ada yang kelewat."
+              ? isParent
+                ? "Belum ada tugas anak. Yuk catat biar gak kelewat."
+                : "Catat tugas kuliah biar gak ada yang kelewat."
               : "Coba pilih filter lain."}
           </p>
         </Card>

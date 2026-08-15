@@ -24,6 +24,8 @@ export default function JadwalFormPage({ user }) {
   const location = useLocation();
   const editing = location.state?.jadwal || null;
   const isEditing = Boolean(editing);
+  const isParent = user.role === "orang_tua";
+  const targetId = isParent ? user.linked_child_id : user.id;
 
   const [mataKuliahList, setMataKuliahList] = useState([]);
   const [loadingMk, setLoadingMk] = useState(true);
@@ -67,7 +69,7 @@ export default function JadwalFormPage({ user }) {
       const { data, error: fetchError } = await supabase
         .from("mata_kuliah")
         .select("id, nama, dosen, sks, warna")
-        .eq("user_id", user.id)
+        .eq("user_id", targetId)
         .order("nama", { ascending: true });
       if (!fetchError) setMataKuliahList(data || []);
       setLoadingMk(false);
@@ -103,7 +105,7 @@ export default function JadwalFormPage({ user }) {
     // Mode "baru" -- insert / update record mata_kuliah dulu.
     if (mode === "baru") {
       const mkPayload = {
-        user_id: user.id,
+        user_id: targetId,
         nama: nama.trim(),
         dosen: dosen.trim() || null,
         sks: sks ? parseInt(sks, 10) : null,
@@ -116,7 +118,7 @@ export default function JadwalFormPage({ user }) {
           .from("mata_kuliah")
           .update(mkPayload)
           .eq("id", editing.mata_kuliah_id)
-          .eq("user_id", user.id);
+          .eq("user_id", targetId);
         if (mkError) {
           setSaving(false);
           setError("Gagal menyimpan data mata kuliah.");
@@ -139,7 +141,7 @@ export default function JadwalFormPage({ user }) {
     }
 
     const jadwalPayload = {
-      user_id: user.id,
+      user_id: targetId,
       mata_kuliah_id: mataKuliahId,
       hari,
       jam_mulai: jamMulai,
@@ -152,7 +154,7 @@ export default function JadwalFormPage({ user }) {
           .from("jadwal")
           .update(jadwalPayload)
           .eq("id", editing.id)
-          .eq("user_id", user.id)
+          .eq("user_id", targetId)
       : await supabase.from("jadwal").insert(jadwalPayload);
 
     setSaving(false);
@@ -175,7 +177,7 @@ export default function JadwalFormPage({ user }) {
       .from("jadwal")
       .delete()
       .eq("id", editing.id)
-      .eq("user_id", user.id);
+      .eq("user_id", targetId);
     setDeleting(false);
     if (!deleteError) {
       navigate("/akademik/jadwal");
@@ -220,7 +222,7 @@ export default function JadwalFormPage({ user }) {
             key={opt.key}
             type="button"
             onClick={() => setMode(opt.key)}
-            className="flex-1 py-3 rounded-xl text-[12.5px] font-bold transition-all"
+            className="flex-1 py-3 rounded-xl text-[12px] sm:text-[12.5px] font-bold transition-all text-center leading-tight px-1"
             style={{
               background: mode === opt.key ? C.lavender : "transparent",
               color: mode === opt.key ? "#FFFFFF" : C.inkSoft,
@@ -297,24 +299,20 @@ export default function JadwalFormPage({ user }) {
             style={inputStyle}
           />
 
-          <div className="grid grid-cols-3 gap-3">
-            <div>
-              <label
-                className="text-[11px] uppercase tracking-wide font-bold"
-                style={{ color: C.inkFaint }}>
-                SKS
-              </label>
-              <input
-                type="number"
-                value={sks}
-                onChange={(e) => setSks(e.target.value)}
-                min="1"
-                max="6"
-                className={inputClass}
-                style={inputStyle}
-              />
-            </div>
-          </div>
+          <label
+            className="text-[11px] uppercase tracking-wide font-bold"
+            style={{ color: C.inkFaint }}>
+            SKS
+          </label>
+          <input
+            type="number"
+            value={sks}
+            onChange={(e) => setSks(e.target.value)}
+            min="1"
+            max="6"
+            className={`${inputClass} max-w-[110px]`}
+            style={inputStyle}
+          />
 
           <label
             className="text-[11px] uppercase tracking-wide font-bold"

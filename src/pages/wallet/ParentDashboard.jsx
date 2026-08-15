@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { supabase } from "../../supabaseClient";
 import { C, FONT_IMPORT } from "../../lib/theme";
 import { Card } from "../../components/ui";
@@ -12,6 +13,20 @@ import {
   todayISO,
 } from "../../lib/format";
 import { CATEGORIES, categoryLabel, LOW_BALANCE_LIMIT } from "./constants";
+import {
+  HARI_LIST,
+  statusMeta,
+  prioritasMeta,
+  deadlineLabel,
+  formatDeadline,
+  daysUntil,
+  URGENT_DAYS_LIMIT,
+} from "../akademik/constants";
+
+// Hari ini dalam format HARI_LIST -- sama kayak helper di HomePage.jsx.
+function todayHari() {
+  return HARI_LIST[(new Date().getDay() + 6) % 7];
+}
 
 const CATEGORY_META = {
   makan: { icon: "🍜", bg: "#8FD8BE2A", solid: C.mintDeep },
@@ -46,6 +61,8 @@ export default function ParentDashboard({ user }) {
   const [logs, setLogs] = useState([]);
   const [goals, setGoals] = useState([]);
   const [expandedLogTx, setExpandedLogTx] = useState(null);
+  const [jadwalHariIni, setJadwalHariIni] = useState([]);
+  const [tugasList, setTugasList] = useState([]);
 
   useEffect(() => {
     loadData();
@@ -93,12 +110,35 @@ export default function ParentDashboard({ user }) {
 
     setGoals(goalData || []);
 
+    const { data: jadwalData } = await supabase
+      .from("jadwal")
+      .select("*, mata_kuliah(nama, dosen, warna)")
+      .eq("user_id", user.linked_child_id)
+      .eq("hari", todayHari())
+      .order("jam_mulai", { ascending: true });
+
+    setJadwalHariIni(jadwalData || []);
+
+    const { data: tugasData } = await supabase
+      .from("tugas")
+      .select("*, mata_kuliah(nama, warna)")
+      .eq("user_id", user.linked_child_id)
+      .neq("status", "selesai")
+      .order("deadline", { ascending: true });
+
+    setTugasList(tugasData || []);
+
     setLoading(false);
   }
 
   const activeTransactions = useMemo(
     () => transactions.filter((t) => !t.deleted_at),
     [transactions],
+  );
+
+  const tugasUrgent = useMemo(
+    () => tugasList.filter((t) => daysUntil(t.deadline) <= URGENT_DAYS_LIMIT),
+    [tugasList],
   );
 
   const summary = useMemo(() => {
@@ -566,6 +606,120 @@ export default function ParentDashboard({ user }) {
           </Card>
         )}
 
+        <div className="grid sm:grid-cols-2 gap-4 mb-4">
+          <Card
+            title={`Jadwal ${capitalize(childName) || "Anak"} Hari Ini`}
+            sub={todayHari()}
+            accent={C.lavender}>
+            {jadwalHariIni.length === 0 ? (
+              <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
+                Gak ada jadwal kuliah hari ini.
+              </p>
+            ) : (
+              <div className="space-y-2.5">
+                {jadwalHariIni.map((j) => {
+                  const mk = j.mata_kuliah || {};
+                  return (
+                    <div
+                      key={j.id}
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
+                      style={{ background: "#463F5C08" }}>
+                      <div
+                        className="w-1.5 h-9 rounded-full flex-shrink-0"
+                        style={{ background: mk.warna || C.lavender }}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="text-[13.5px] font-semibold truncate"
+                          style={{ color: C.ink }}>
+                          {mk.nama || "Tanpa nama"}
+                        </p>
+                        <p
+                          className="text-[11.5px]"
+                          style={{ color: C.inkFaint }}>
+                          {j.jam_mulai?.slice(0, 5)}–
+                          {j.jam_selesai?.slice(0, 5)}
+                          {j.ruangan ? ` · ${j.ruangan}` : ""}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <Link
+              to="/akademik/jadwal"
+              className="inline-block mt-3.5 -mx-1 px-1 py-2 text-[12px] font-semibold"
+              style={{ color: C.lavender }}>
+              Lihat semua jadwal →
+            </Link>
+          </Card>
+
+          <Card
+            title={`Tugas ${capitalize(childName) || "Anak"} Mendekati Deadline`}
+            sub={`${URGENT_DAYS_LIMIT} hari ke depan`}
+            accent={C.roseDeep}>
+            {tugasUrgent.length === 0 ? (
+              <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
+                Gak ada tugas yang mendesak. Aman! ✅
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {tugasUrgent.map((item) => {
+                  const meta = statusMeta(item.status);
+                  const prio = prioritasMeta(item.prioritas);
+                  const overdue = daysUntil(item.deadline) < 0;
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
+                      style={{
+                        background: overdue ? "#F4A6B71A" : "#463F5C08",
+                      }}>
+                      <span
+                        className="flex-shrink-0 w-11 h-11 rounded-full flex items-center justify-center text-[16px]"
+                        style={{ background: meta.bg }}>
+                        {meta.icon}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <p
+                          className="text-[13.5px] font-semibold truncate"
+                          style={{ color: C.ink }}>
+                          {item.judul}
+                        </p>
+                        <div className="flex items-center flex-wrap gap-1.5 mt-1">
+                          <span
+                            className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
+                            style={{
+                              background: prio.bg,
+                              color: prio.color,
+                            }}>
+                            {prio.label}
+                          </span>
+                          <span
+                            className="text-[10.5px] font-semibold"
+                            style={{
+                              color: overdue ? C.roseDeep : C.inkFaint,
+                            }}>
+                            {deadlineLabel(item.deadline)} ·{" "}
+                            {formatDeadline(item.deadline)}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            <Link
+              to="/akademik/tugas"
+              className="inline-block mt-3.5 -mx-1 px-1 py-2 text-[12px] font-semibold"
+              style={{ color: C.roseDeep }}>
+              Lihat semua tugas →
+            </Link>
+          </Card>
+        </div>
+
         <Card
           title="Pengeluaran per Kategori"
           accent={C.lavender}
@@ -697,7 +851,7 @@ export default function ParentDashboard({ user }) {
                                   {t.note || categoryLabel(t.category)}
                                 </p>
                                 <p
-                                  className="text-[11px] flex items-center gap-1.5 flex-wrap"
+                                  className="text-[11.5px] flex items-center gap-1.5 flex-wrap"
                                   style={{ color: C.inkFaint }}>
                                   {t.type === "out"
                                     ? categoryLabel(t.category)
@@ -761,7 +915,7 @@ export default function ParentDashboard({ user }) {
                                   log.new_data,
                                 );
                                 return (
-                                  <div key={log.id} className="text-[11.5px]">
+                                  <div key={log.id} className="text-[12.5px]">
                                     <p
                                       className="font-semibold mb-1"
                                       style={{ color: C.inkSoft }}>
@@ -780,7 +934,7 @@ export default function ParentDashboard({ user }) {
                                       )}
                                     </p>
                                     {log.action === "delete" ? (
-                                      <p style={{ color: C.inkFaint }}>
+                                      <p style={{ color: C.inkSoft }}>
                                         Nilai terakhir sebelum dihapus:{" "}
                                         {rupiah(log.old_data.amount)} —{" "}
                                         {log.old_data.note || "-"}
@@ -790,7 +944,7 @@ export default function ParentDashboard({ user }) {
                                         {changes.map((c, i) => (
                                           <li
                                             key={i}
-                                            style={{ color: C.inkFaint }}>
+                                            style={{ color: C.inkSoft }}>
                                             {c.field}:{" "}
                                             <span
                                               style={{
@@ -810,7 +964,7 @@ export default function ParentDashboard({ user }) {
                                         ))}
                                       </ul>
                                     ) : (
-                                      <p style={{ color: C.inkFaint }}>
+                                      <p style={{ color: C.inkSoft }}>
                                         Tidak ada perubahan nilai.
                                       </p>
                                     )}
