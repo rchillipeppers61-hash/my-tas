@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { Outlet, NavLink, useLocation } from "react-router-dom";
 import { C } from "../lib/theme";
-import { ChangePasswordModal, ResetChildPasswordModal } from "./account";
+import {
+  AccountModal,
+  ChangePasswordModal,
+  ResetChildPasswordModal,
+} from "./account";
 import Sidebar from "./Sidebar";
 
 // Sinkronin manual sama NAV_ITEMS di Sidebar.jsx kalau nambah modul.
@@ -46,8 +50,6 @@ export default function AppShell({ user, onLogout }) {
   const [showResetChildPassword, setShowResetChildPassword] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
 
-  const isParent = user?.role === "orang_tua";
-
   return (
     <div className="min-h-screen w-full flex" style={{ background: C.bg }}>
       <Sidebar
@@ -67,52 +69,18 @@ export default function AppShell({ user, onLogout }) {
       <BottomNav onAccountClick={() => setShowAccountMenu(true)} />
 
       {showAccountMenu && (
-        <div
-          className="fixed inset-0 flex items-end sm:items-center justify-center z-50 px-4 pb-4 sm:pb-4"
-          style={{ background: "rgba(70,63,92,0.4)" }}
-          onClick={() => setShowAccountMenu(false)}>
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="w-full sm:max-w-sm rounded-[28px] p-6 sm:p-7"
-            style={{
-              background: "#FFFFFF",
-              boxShadow: "0 24px 56px -20px rgba(70,63,92,0.35)",
-            }}>
-            <h3
-              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-              className="text-[18px] font-semibold mb-4">
-              Akun
-            </h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => {
-                  setShowAccountMenu(false);
-                  setShowChangePassword(true);
-                }}
-                className="w-full text-left px-4 py-3 rounded-2xl text-[13.5px] font-medium"
-                style={{ background: "#463F5C0a", color: C.ink }}>
-                Ganti Password Saya
-              </button>
-              {isParent && (
-                <button
-                  onClick={() => {
-                    setShowAccountMenu(false);
-                    setShowResetChildPassword(true);
-                  }}
-                  className="w-full text-left px-4 py-3 rounded-2xl text-[13.5px] font-medium"
-                  style={{ background: "#463F5C0a", color: C.ink }}>
-                  Ganti Password Anak
-                </button>
-              )}
-            </div>
-            <button
-              onClick={() => setShowAccountMenu(false)}
-              className="w-full mt-4 py-3 rounded-2xl text-[13px] font-semibold"
-              style={{ background: "#463F5C0f", color: C.ink }}>
-              Tutup
-            </button>
-          </div>
-        </div>
+        <AccountModal
+          user={user}
+          onClose={() => setShowAccountMenu(false)}
+          onOpenChangePassword={() => {
+            setShowAccountMenu(false);
+            setShowChangePassword(true);
+          }}
+          onOpenResetChildPassword={() => {
+            setShowAccountMenu(false);
+            setShowResetChildPassword(true);
+          }}
+        />
       )}
 
       {showChangePassword && (
@@ -265,18 +233,21 @@ function MobileTopBar({ title, onLogoutClick }) {
 function BottomNav({ onAccountClick }) {
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 flex items-stretch justify-around z-40"
+      className="lg:hidden fixed bottom-0 inset-x-0 flex items-stretch overflow-x-auto z-40"
       style={{
         background: "#FFFFFF",
         borderTop: "1px solid #463F5C14",
         boxShadow: "0 -8px 24px -16px rgba(70,63,92,0.25)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        scrollbarWidth: "none",
+        WebkitOverflowScrolling: "touch",
       }}>
+      <style>{`nav::-webkit-scrollbar { display: none; }`}</style>
       {NAV_ITEMS.map((item) => (
         <NavLink
           key={item.to}
           to={item.to}
-          className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[13px] font-semibold"
+          className="flex-1 min-w-[76px] flex-shrink-0 flex flex-col items-center justify-center gap-1 py-3 text-[13px] font-semibold whitespace-nowrap"
           style={({ isActive }) => ({
             color: isActive ? C.lavender : C.inkFaint,
           })}>
@@ -287,7 +258,7 @@ function BottomNav({ onAccountClick }) {
       <button
         type="button"
         onClick={onAccountClick}
-        className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-[13px] font-semibold"
+        className="flex-1 min-w-[76px] flex-shrink-0 flex flex-col items-center justify-center gap-1 py-3 text-[13px] font-semibold whitespace-nowrap"
         style={{ color: C.inkFaint }}>
         <span className="text-[24px] leading-none">🔒</span>
         Akun
