@@ -24,7 +24,9 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
 
     const { data, error: dbError } = await supabase
       .from("users")
-      .select("id, username, password, role, linked_child_id, nama_lengkap")
+      .select(
+        "id, username, password, role, linked_child_id, nama_lengkap, prodi",
+      )
       .eq("username", u)
       .single();
 
@@ -46,6 +48,7 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
       role: data.role,
       linked_child_id: data.linked_child_id,
       nama_lengkap: data.nama_lengkap,
+      prodi: data.prodi,
     };
 
     // "Ingat saya" checked -> persist across browser restarts (localStorage).
@@ -325,6 +328,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
   const [role, setRole] = useState("anak"); // "anak" | "orang_tua"
   const [username, setUsername] = useState("");
   const [namaLengkap, setNamaLengkap] = useState("");
+  const [prodi, setProdi] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -395,9 +399,10 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
         password, // NOTE: sama seperti pola project sekarang (plaintext).
         role,
         nama_lengkap: nama,
+        prodi: role === "anak" && prodi.trim() ? prodi.trim() : null,
         linked_child_id: null,
       })
-      .select("id, username, role, linked_child_id, nama_lengkap")
+      .select("id, username, role, linked_child_id, nama_lengkap, prodi")
       .single();
 
     if (insertError || !newUser) {
@@ -643,6 +648,35 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
             borderColor: "#463F5C1F",
           }}
         />
+
+        {/* Prodi -- cuma relevan buat Anak, dan opsional. Kalau dikosongin,
+            gak muncul sama sekali di HomePage (bukan nampilin teks kosong). */}
+        {role === "anak" && (
+          <>
+            <label
+              className="text-[11px] uppercase tracking-wide font-medium"
+              style={{ color: C.inkFaint }}>
+              Program Studi{" "}
+              <span
+                className="normal-case font-normal"
+                style={{ color: C.inkFaint }}>
+                (opsional)
+              </span>
+            </label>
+            <input
+              type="text"
+              value={prodi}
+              onChange={(e) => setProdi(e.target.value)}
+              placeholder="Contoh: Pariwisata Bahari"
+              className="w-full mt-1.5 mb-4 px-3.5 py-3 rounded-2xl text-[15px] outline-none border-[1.5px] transition-shadow focus:ring-4 focus:ring-[#8B72C42A]"
+              style={{
+                background: "#463F5C08",
+                color: C.ink,
+                borderColor: "#463F5C1F",
+              }}
+            />
+          </>
+        )}
 
         {/* Username */}
         <label

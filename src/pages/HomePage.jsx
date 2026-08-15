@@ -35,6 +35,7 @@ export default function HomePage({ user }) {
   const [error, setError] = useState(null);
 
   const [childName, setChildName] = useState("");
+  const [childProdi, setChildProdi] = useState("");
 
   // Jadwal
   const [jadwalHariIni, setJadwalHariIni] = useState([]);
@@ -164,10 +165,13 @@ export default function HomePage({ user }) {
     if (!isParent) return;
     const { data } = await supabase
       .from("users")
-      .select("nama_lengkap, username")
+      .select("nama_lengkap, username, prodi")
       .eq("id", targetId)
       .single();
-    if (data) setChildName(data.nama_lengkap || data.username);
+    if (data) {
+      setChildName(data.nama_lengkap || data.username);
+      setChildProdi(data.prodi || "");
+    }
   }
 
   async function loadJadwal() {
@@ -221,6 +225,10 @@ export default function HomePage({ user }) {
     [tugasList],
   );
 
+  // Anak nampilin prodi dirinya sendiri (dari kolom users.prodi),
+  // ortu nampilin prodi anaknya (di-fetch bareng nama pas loadChildName).
+  const prodi = isParent ? childProdi : user?.prodi;
+
   if (!targetLinked) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
@@ -235,7 +243,7 @@ export default function HomePage({ user }) {
           className="text-[24px] font-semibold mb-4">
           Halo, {name} 👋
         </h1>
-        <Card>
+        <Card accent={C.skyDeep} tint={`${C.sky}22`} border>
           <p style={{ color: C.ink }}>
             Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
             <code>linked_child_id</code>.
@@ -247,7 +255,7 @@ export default function HomePage({ user }) {
 
   return (
     <div
-      className="max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-20 lg:pb-10"
+      className="max-w-2xl lg:max-w-5xl xl:max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 pb-20 lg:pb-10"
       style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
@@ -258,9 +266,18 @@ export default function HomePage({ user }) {
       </p>
       <h1
         style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-        className="text-[24px] sm:text-[26px] font-semibold mb-6 sm:mb-8">
+        className={`text-[24px] sm:text-[26px] font-semibold ${
+          prodi ? "mb-0.5" : "mb-6 sm:mb-8"
+        }`}>
         Halo, {name} 👋
       </h1>
+      {prodi && (
+        <p
+          className="text-[12.5px] sm:text-[13.5px] font-semibold mb-6 sm:mb-8"
+          style={{ color: C.inkSoft }}>
+          {prodi}
+        </p>
+      )}
 
       {!isParent && isLinked === false && (
         <div
@@ -324,7 +341,7 @@ export default function HomePage({ user }) {
         <div className="space-y-4">
           {/* Jadwal & Tugas: numpuk 1 kolom di HP/tablet portrait, 2 kolom mulai laptop */}
           <div className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:items-start">
-            {/* Card Jadwal Hari Ini */}
+            {/* Card Jadwal Hari Ini -- pastel lavender biar senada sama accent-nya */}
             <Card
               title={
                 isParent
@@ -332,7 +349,9 @@ export default function HomePage({ user }) {
                   : "Jadwal Hari Ini"
               }
               sub={todayHari()}
-              accent={C.lavender}>
+              accent={C.lavender}
+              tint={`${C.lavender}20`}
+              border>
               {jadwalHariIni.length === 0 ? (
                 <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
                   {isParent
@@ -347,7 +366,7 @@ export default function HomePage({ user }) {
                       <div
                         key={j.id}
                         className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
-                        style={{ background: "#463F5C08" }}>
+                        style={{ background: "#FFFFFF9E" }}>
                         <div
                           className="w-1.5 h-9 rounded-full flex-shrink-0"
                           style={{ background: mk.warna || C.lavender }}
@@ -381,7 +400,7 @@ export default function HomePage({ user }) {
               )}
             </Card>
 
-            {/* Card Tugas Mendekati Deadline */}
+            {/* Card Tugas Mendekati Deadline -- pastel rose biar senada sama accent-nya */}
             <Card
               title={
                 isParent
@@ -389,7 +408,9 @@ export default function HomePage({ user }) {
                   : "Tugas Mendekati Deadline"
               }
               sub={`${URGENT_DAYS_LIMIT} hari ke depan`}
-              accent={C.roseDeep}>
+              accent={C.roseDeep}
+              tint={`${C.rose}22`}
+              border>
               {tugasUrgent.length === 0 ? (
                 <p className="text-[12.5px]" style={{ color: C.inkFaint }}>
                   Gak ada tugas yang mendesak. Aman! ✅
@@ -405,7 +426,7 @@ export default function HomePage({ user }) {
                         key={item.id}
                         className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
                         style={{
-                          background: overdue ? "#F4A6B71A" : "#463F5C08",
+                          background: overdue ? "#F4A6B733" : "#FFFFFF9E",
                         }}>
                         <button
                           onClick={() => handleToggleStatus(item)}
