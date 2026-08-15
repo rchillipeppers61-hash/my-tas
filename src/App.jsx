@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { C } from "./lib/theme";
-import { Login } from "./components/auth";
+import { Login, SignUp } from "./components/auth";
 import AppShell from "./components/Layout";
 import HomePage from "./pages/HomePage";
 import WalletPage from "./pages/wallet/WalletPage";
@@ -14,6 +14,9 @@ import TugasFormPage from "./pages/akademik/TugasFormPage";
 export default function App() {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  // "login" | "signup" -- cuma relevan pas belum ada user. Reset balik
+  // ke "login" tiap kali logout, biar gak nyangkut di form daftar.
+  const [authView, setAuthView] = useState("login");
 
   useEffect(() => {
     const saved =
@@ -34,6 +37,21 @@ export default function App() {
     localStorage.removeItem("mywallet_user");
     sessionStorage.removeItem("mywallet_user");
     setUser(null);
+    setAuthView("login");
+  }
+
+  // SignUp gak punya checkbox "Ingat saya" kayak Login -- akun baru
+  // default di-persist ke localStorage biar gak ke-logout pas refresh.
+  function handleSignUpSuccess(newUser) {
+    const loggedInUser = {
+      id: newUser.id,
+      username: newUser.username,
+      role: newUser.role,
+      linked_child_id: newUser.linked_child_id,
+    };
+    sessionStorage.removeItem("mywallet_user");
+    localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+    setUser(loggedInUser);
   }
 
   if (loading) {
@@ -47,7 +65,20 @@ export default function App() {
   }
 
   if (!user) {
-    return <Login onLoginSuccess={setUser} />;
+    if (authView === "signup") {
+      return (
+        <SignUp
+          onSignUpSuccess={handleSignUpSuccess}
+          onBackToLogin={() => setAuthView("login")}
+        />
+      );
+    }
+    return (
+      <Login
+        onLoginSuccess={setUser}
+        onSwitchToSignUp={() => setAuthView("signup")}
+      />
+    );
   }
 
   return (

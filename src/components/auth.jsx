@@ -5,7 +5,7 @@ import { C, FONT_IMPORT } from "../lib/theme";
 // ============================================================
 // Login
 // ============================================================
-export function Login({ onLoginSuccess }) {
+export function Login({ onLoginSuccess, onSwitchToSignUp }) {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -280,6 +280,14 @@ export function Login({ onLoginSuccess }) {
               "--tw-ring-color": C.lavender,
             }}>
             {loading ? "Memproses..." : "Masuk"}
+          </button>
+
+          <button
+            type="button"
+            onClick={onSwitchToSignUp}
+            className="w-full text-center mt-5 text-[12.5px] font-medium"
+            style={{ color: C.lavender }}>
+            Belum punya akun? Daftar
           </button>
 
           <p
@@ -581,7 +589,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
         <p
           className="text-center text-[11px] tracking-[0.2em] uppercase mb-1 font-semibold"
           style={{ color: C.lavender }}>
-          Gabung My Wallet
+          Gabung TAS
         </p>
         <h1
           style={{ fontFamily: "'Fraunces', serif", color: C.ink }}

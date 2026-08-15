@@ -10,6 +10,8 @@ import {
   daysBetween,
   capitalize,
   monthLabel,
+  formatThousands,
+  stripThousands,
 } from "../../lib/format";
 import { categoryLabel, LOW_BALANCE_LIMIT } from "./constants";
 
@@ -290,7 +292,7 @@ export default function ChildDashboard({ user }) {
               <p
                 className="text-[11px] tracking-[0.2em] uppercase font-semibold"
                 style={{ color: C.lavender }}>
-                My Wallet
+                TAS
               </p>
               <h1
                 style={{ fontFamily: "'Fraunces', serif" }}
@@ -495,10 +497,14 @@ export default function ChildDashboard({ user }) {
                       }}
                     />
                     <input
-                      type="number"
-                      value={goalAmount}
-                      onChange={(e) => setGoalAmount(e.target.value)}
-                      placeholder="Target (Rp) contoh: 500000"
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="off"
+                      value={formatThousands(goalAmount)}
+                      onChange={(e) =>
+                        setGoalAmount(stripThousands(e.target.value))
+                      }
+                      placeholder="Target (Rp) contoh: 500.000"
                       className="w-full px-3 py-2.5 rounded-xl text-[13px] outline-none border-[1.5px]"
                       style={{
                         background: "#463F5C08",

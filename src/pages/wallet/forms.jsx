@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { C } from "../../lib/theme";
-import { rupiah } from "../../lib/format";
+import { rupiah, formatThousands, stripThousands } from "../../lib/format";
 import { CATEGORIES } from "./constants";
 
 // ============================================================
@@ -161,10 +161,14 @@ export function TransactionForm({ transaction, onSave, onDelete, onClose }) {
           Jumlah (Rp)
         </label>
         <input
-          type="number"
-          value={form.amount}
-          onChange={(e) => setForm((f) => ({ ...f, amount: e.target.value }))}
-          placeholder="25000"
+          type="text"
+          inputMode="numeric"
+          autoComplete="off"
+          value={formatThousands(form.amount)}
+          onChange={(e) =>
+            setForm((f) => ({ ...f, amount: stripThousands(e.target.value) }))
+          }
+          placeholder="25.000"
           className={inputClass}
           style={{
             background: "#463F5C08",

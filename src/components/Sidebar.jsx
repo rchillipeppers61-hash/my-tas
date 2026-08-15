@@ -22,7 +22,7 @@ export default function Sidebar({ user, onLogout, onAccountClick }) {
         <p
           className="text-[11px] tracking-[0.2em] uppercase font-semibold"
           style={{ color: C.lavender }}>
-          My Wallet
+          TAS
         </p>
         <p
           style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
