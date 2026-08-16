@@ -7,14 +7,8 @@ import { HARI_LIST, hariIndex } from "./constants";
 
 // Dipanggil tiap kali 1 jadwal dihapus. Kalau itu jadwal terakhir yang
 // masih nempel ke mata kuliah tsb, mata kuliahnya dianggap "yatim" dan
-// ikut dibersihkan -- termasuk tugas & catatan yang masih nempel di situ,
-// biar gak nyangkut data orphan di Catatan/Tugas.
-//
-// NOTE(Persiapan Kuliah): pas tabel `study_packs` udah beneran dibikin
-// (Fase 2+), tambahin `.delete().eq("mata_kuliah_id", ...)` buat tabel
-// itu juga di sini -- SENGAJA belum ditambahin sekarang karena tabelnya
-// belum ada, kalau ditambah sekarang query ini bakal error "relation
-// does not exist" dan bikin proses hapus jadwal ikut gagal.
+// ikut dibersihkan -- termasuk tugas, catatan, & study_packs yang masih
+// nempel di situ, biar gak nyangkut data orphan.
 async function cleanupOrphanMataKuliah(mataKuliahId, userId) {
   const { count } = await supabase
     .from("jadwal")
@@ -34,6 +28,10 @@ async function cleanupOrphanMataKuliah(mataKuliahId, userId) {
     .delete()
     .eq("mata_kuliah_id", mataKuliahId)
     .eq("user_id", userId);
+  // study_packs gak punya kolom mata_kuliah_id (nama mata kuliah
+  // disimpen sebagai teks bebas di kolom `mata_kuliah`, bukan FK) --
+  // jadi sengaja gak ikut dibersihkan di sini. Riwayat Study Pack lama
+  // tetap valid walau mata kuliahnya udah dihapus/berubah nama.
   await supabase
     .from("mata_kuliah")
     .delete()

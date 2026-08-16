@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "../supabaseClient";
 import { C, FONT_IMPORT } from "../lib/theme";
 import { capitalize } from "../lib/format";
@@ -19,6 +19,22 @@ import {
 // mulai dari Minggu=0, jadi digeser +6 mod 7 biar Senin=0.
 function todayHari() {
   return HARI_LIST[(new Date().getDay() + 6) % 7];
+}
+
+// Hari BESOK -- dipakai buat card "Persiapan Kuliah Besok". Sengaja
+// dibikin terpisah dari todayHari() (bukan cuma +1 index) biar wrap
+// Minggu -> Senin kehandle bener lewat modulo, bukan array out-of-range.
+function tomorrowHari() {
+  return HARI_LIST[(((new Date().getDay() + 6) % 7) + 1) % 7];
+}
+
+// Cocokin nama mata kuliah dari jadwal (`mata_kuliah.nama`) ke nama
+// mata kuliah yang kesimpen di study_packs (`study_packs.mata_kuliah`,
+// teks bebas -- BUKAN FK, lihat catatan di JadwalPage.jsx). Dibikin
+// case-insensitive + trim biar sedikit toleran beda kapitalisasi,
+// tapi tetep bisa meleset kalau namanya beda jauh pas diisi manual.
+function normalizeNama(s) {
+  return (s || "").trim().toLowerCase();
 }
 
 // Warna avatar konsisten per user (bukan random tiap render), diambil
@@ -227,6 +243,7 @@ function AvatarNeutral({ color }) {
 }
 
 export default function HomePage({ user }) {
+  const navigate = useNavigate();
   const name = capitalize(user?.nama_lengkap) || "Kamu";
   const isParent = user?.role === "orang_tua";
 
@@ -247,6 +264,10 @@ export default function HomePage({ user }) {
   // Tugas
   const [tugasList, setTugasList] = useState([]);
   const [updatingTugasId, setUpdatingTugasId] = useState(null);
+
+  // Persiapan Kuliah Besok (Fase 6) -- daftar mata kuliah yang ada
+  // jadwalnya BESOK, masing-masing ditandai udah/belum ada Study Pack.
+  const [persiapanBesok, setPersiapanBesok] = useState([]);
 
   // Status hubung ke akun ortu -- cuma relevan buat sisi ANAK.
   // Ortu punya cek koneksi versi sendiri lewat `targetLinked` di atas.
@@ -358,7 +379,12 @@ export default function HomePage({ user }) {
     setLoading(true);
     setError(null);
     try {
-      await Promise.all([loadChildName(), loadJadwal(), loadTugas()]);
+      await Promise.all([
+        loadChildName(),
+        loadJadwal(),
+        loadTugas(),
+        loadPersiapanBesok(),
+      ]);
     } catch (err) {
       setError("Gagal memuat data. Cek koneksi kamu, terus coba lagi.");
     }
@@ -399,6 +425,64 @@ export default function HomePage({ user }) {
     setTugasList(data || []);
   }
 
+  // Fase 6: ambil jadwal BESOK, terus tandain tiap mata kuliah udah
+  // punya Study Pack atau belum. study_packs gak punya mata_kuliah_id
+  // (nama disimpen sebagai teks bebas -- lihat catatan di JadwalPage.jsx
+  // & index.ts), jadi matching-nya lewat nama, case-insensitive + trim
+  // biar sedikit toleran beda kapitalisasi antara Jadwal & input manual.
+  async function loadPersiapanBesok() {
+    const besok = tomorrowHari();
+
+    const { data: jadwalBesok, error: jadwalError } = await supabase
+      .from("jadwal")
+      .select("id, jam_mulai, mata_kuliah(id, nama, warna)")
+      .eq("user_id", targetId)
+      .eq("hari", besok)
+      .order("jam_mulai", { ascending: true });
+    if (jadwalError) throw jadwalError;
+
+    // Dedupe per mata kuliah -- kalau 1 matkul kebetulan ada 2 jadwal
+    // di hari yang sama (kelas + praktikum misalnya), cukup 1 baris
+    // di card ini, bukan dobel.
+    const seen = new Set();
+    const matkulBesok = [];
+    for (const j of jadwalBesok || []) {
+      const mk = j.mata_kuliah;
+      if (!mk?.nama) continue;
+      const key = normalizeNama(mk.nama);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      matkulBesok.push({
+        id: mk.id,
+        nama: mk.nama,
+        warna: mk.warna,
+        jamMulai: j.jam_mulai,
+      });
+    }
+
+    if (matkulBesok.length === 0) {
+      setPersiapanBesok([]);
+      return;
+    }
+
+    const { data: packs, error: packsError } = await supabase
+      .from("study_packs")
+      .select("mata_kuliah")
+      .eq("user_id", targetId);
+    if (packsError) throw packsError;
+
+    const sudahDipersiapkan = new Set(
+      (packs || []).map((p) => normalizeNama(p.mata_kuliah)),
+    );
+
+    setPersiapanBesok(
+      matkulBesok.map((mk) => ({
+        ...mk,
+        sudah: sudahDipersiapkan.has(normalizeNama(mk.nama)),
+      })),
+    );
+  }
+
   async function handleToggleStatus(item) {
     // Orang tua cuma liat, bukan yang ngerjain -- toggle status dari
     // Home cuma aktif buat anak (ngerjain tugasnya sendiri).
@@ -421,6 +505,12 @@ export default function HomePage({ user }) {
         );
       }
     }
+  }
+
+  function handleMulaiPersiapan(mk) {
+    navigate("/akademik/persiapan/tambah", {
+      state: { mataKuliah: { id: mk.id, nama: mk.nama } },
+    });
   }
 
   const tugasUrgent = useMemo(
@@ -712,6 +802,79 @@ export default function HomePage({ user }) {
               )}
             </Card>
           </div>
+
+          {/* Card Persiapan Kuliah Besok (Fase 6) -- pastel mint, senada
+              sama accent "Persiapan Kuliah" di AkademikPage.jsx. Cuma
+              muncul kalau BESOK ada jadwal kuliah -- gak maksa nampilin
+              state kosong yang gak berguna. */}
+          {persiapanBesok.length > 0 && (
+            <Card
+              title={
+                isParent
+                  ? `Persiapan Kuliah ${capitalize(childName) || "Anak"} Besok`
+                  : "Persiapan Kuliah Besok"
+              }
+              sub={tomorrowHari()}
+              accent={C.mintDeep}
+              tint="#8FD8BE22"
+              border>
+              <div className="space-y-2.5">
+                {persiapanBesok.map((mk) => (
+                  <div
+                    key={mk.id || mk.nama}
+                    className="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl"
+                    style={{ background: "#FFFFFF9E" }}>
+                    <div
+                      className="w-1.5 h-9 rounded-full flex-shrink-0"
+                      style={{ background: mk.warna || C.mintDeep }}
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p
+                        className="text-[13.5px] font-semibold truncate"
+                        style={{ color: C.ink }}>
+                        {mk.nama}
+                      </p>
+                      <div className="flex items-center gap-1.5 mt-1">
+                        {mk.jamMulai && (
+                          <span
+                            className="text-[11px]"
+                            style={{ color: C.inkFaint }}>
+                            {mk.jamMulai.slice(0, 5)} ·{" "}
+                          </span>
+                        )}
+                        <span
+                          className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
+                          style={{
+                            background: mk.sudah ? "#8FD8BE22" : "#F6C4531F",
+                            color: mk.sudah ? C.mintDeep : C.amberDeep,
+                          }}>
+                          {mk.sudah
+                            ? "✅ Sudah dipersiapkan"
+                            : "Belum dipersiapkan"}
+                        </span>
+                      </div>
+                    </div>
+                    {!isParent && !mk.sudah && (
+                      <button
+                        onClick={() => handleMulaiPersiapan(mk)}
+                        className="flex-shrink-0 text-[11.5px] font-bold px-3 py-2 rounded-xl"
+                        style={{ background: C.mintDeep, color: "#FFFFFF" }}>
+                        ✨ Mulai
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {!isParent && (
+                <Link
+                  to="/akademik/persiapan"
+                  className="inline-block mt-3.5 -mx-1 px-1 py-2 text-[12px] font-semibold"
+                  style={{ color: C.mintDeep }}>
+                  Lihat semua persiapan →
+                </Link>
+              )}
+            </Card>
+          )}
         </div>
       )}
 

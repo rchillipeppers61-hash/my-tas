@@ -25,11 +25,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-// Jumlah soal quiz & sub-materi disesuaikan kedalaman.
+// Jumlah soal quiz, sub-materi, & pertanyaan Uji Pemahaman disesuaikan
+// kedalaman. ujiPemahamanCount ditambahin karena sebelumnya gak ada
+// target eksplisit di prompt -- AI jadi suka asal nentuin sendiri
+// (pernah cuma bikin 1 pertanyaan buat kedalaman "mendalam").
 const KEDALAMAN_CONFIG = {
-  ringkas: { quizCount: 5, materiSections: 2 },
-  standar: { quizCount: 7, materiSections: 3 },
-  mendalam: { quizCount: 10, materiSections: 4 },
+  ringkas: { quizCount: 5, materiSections: 2, ujiPemahamanCount: 2 },
+  standar: { quizCount: 7, materiSections: 3, ujiPemahamanCount: 3 },
+  mendalam: { quizCount: 10, materiSections: 4, ujiPemahamanCount: 4 },
 };
 
 function buildSystemPrompt() {
@@ -51,7 +54,7 @@ function buildUserPrompt({ mataKuliah, topik, cakupan, kedalaman }) {
 Mata Kuliah: ${mataKuliah}
 Topik/Materi: ${topik}
 Cakupan (dari mahasiswa, opsional): ${cakupan || "(tidak diisi, gunakan pengetahuan umum tentang topik ini)"}
-Kedalaman: ${kedalaman} (buat ${cfg.materiSections} bagian materi, ${cfg.quizCount} soal quiz)
+Kedalaman: ${kedalaman} (buat ${cfg.materiSections} bagian materi, ${cfg.quizCount} soal quiz, ${cfg.ujiPemahamanCount} pertanyaan uji pemahaman)
 
 Kembalikan JSON PERSIS dengan struktur ini (isi semua field, jangan kosong):
 
@@ -70,7 +73,8 @@ Kembalikan JSON PERSIS dengan struktur ini (isi semua field, jangan kosong):
   ]
 }
 
-Buat tepat ${cfg.quizCount} soal di "quiz". "correctIndex" HARUS berupa angka 0-3 yang valid sesuai jumlah "options" (selalu 4 opsi per soal).`;
+Buat tepat ${cfg.quizCount} soal di "quiz". "correctIndex" HARUS berupa angka 0-3 yang valid sesuai jumlah "options" (selalu 4 opsi per soal).
+Buat tepat ${cfg.ujiPemahamanCount} pertanyaan di "ujiPemahaman" (id berurutan: u1, u2, dst), masing-masing pertanyaan terbuka yang beda sudut pandang (bukan cuma variasi kalimat dari pertanyaan yang sama), supaya mahasiswa latihan jelasin materi dengan kata-kata sendiri dari berbagai sisi.`;
 }
 
 async function callGroq(mataKuliah, topik, cakupan, kedalaman) {

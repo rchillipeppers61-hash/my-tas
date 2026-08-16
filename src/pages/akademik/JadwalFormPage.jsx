@@ -6,7 +6,10 @@ import { HARI_LIST, WARNA_MK } from "./constants";
 
 // Sama kayak yang di JadwalPage.jsx: kalau jadwal yang dihapus itu
 // jadwal terakhir buat mata kuliah tsb, mata kuliahnya ikut dibersihkan
-// -- termasuk tugas & catatan yang masih nempel di situ.
+// -- termasuk tugas & catatan yang masih nempel di situ. study_packs
+// gak ikut, karena kolomnya nyimpen nama mata kuliah sebagai teks
+// bebas (bukan FK ke mata_kuliah_id), jadi riwayat Study Pack lama
+// tetap valid walau mata kuliahnya udah dihapus.
 async function cleanupOrphanMataKuliah(mataKuliahId, userId) {
   const { count } = await supabase
     .from("jadwal")

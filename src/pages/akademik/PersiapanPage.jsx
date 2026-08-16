@@ -1,22 +1,71 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "../../supabaseClient";
 import { C, FONT_IMPORT } from "../../lib/theme";
 import { Card } from "../../components/ui";
 import { kedalamanMeta } from "./constants";
-import { CONTOH_STUDY_PACKS } from "./persiapanDummy";
 
 // ============================================================
 // PersiapanPage — landing "Persiapan Kuliah" (AI Study Preparation).
-// FASE 1: belum nyambung Supabase, riwayat masih data contoh dari
-// persiapanDummy.js. Fase 2 nanti tabel `study_packs` dibikin & data
-// beneran diambil dari situ, struktur halaman ini gak berubah.
+// Riwayat diambil dari tabel `study_packs` beneran (bukan dummy lagi).
+// Kolom DB snake_case di-convert ke camelCase di sini -- pola yang
+// sama bakal dipakai lagi pas Edge Function generate-study-pack
+// (Fase 4) ngebalikin hasil generate AI beneran.
+//
+// Konten Study Pack itu sendiri MASIH dummy (lihat PersiapanFormPage.jsx
+// -> generateDummyStudyPack()) -- yang udah "real" di sini baru
+// persistence-nya (nyimpen & baca dari Supabase), bukan AI-nya.
 // ============================================================
 export default function PersiapanPage({ user }) {
   const navigate = useNavigate();
   const isParent = user?.role === "orang_tua";
+  const targetId = isParent ? user.linked_child_id : user?.id;
+  const targetLinked = isParent ? Boolean(user.linked_child_id) : true;
 
-  // TODO(Fase 2): ganti CONTOH_STUDY_PACKS dengan fetch ke tabel
-  // `study_packs` (pakai pola isParent/targetId sama kayak TugasPage).
-  const studyPacks = CONTOH_STUDY_PACKS;
+  const [studyPacks, setStudyPacks] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!targetLinked || !targetId) {
+      setLoading(false);
+      return;
+    }
+    (async () => {
+      const { data, error } = await supabase
+        .from("study_packs")
+        .select("*")
+        .eq("user_id", targetId)
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Gagal fetch study_packs:", error);
+        setStudyPacks([]);
+      } else {
+        // Convert snake_case (kolom DB) -> camelCase, sama kayak yang
+        // dilakuin Edge Function pas ngebalikin hasil generate baru.
+        setStudyPacks(
+          (data || []).map((row) => ({
+            id: row.id,
+            mataKuliah: row.mata_kuliah,
+            topik: row.topik,
+            cakupan: row.cakupan,
+            kedalaman: row.kedalaman,
+            createdAt: row.created_at,
+            objectives: row.objectives,
+            materi: row.materi,
+            keyConcepts: row.key_concepts,
+            contohKasus: row.contoh_kasus,
+            pertanyaanDosen: row.pertanyaan_dosen,
+            quickReview: row.quick_review,
+            quiz: row.quiz,
+            ujiPemahaman: row.uji_pemahaman,
+            disclaimer: row.disclaimer,
+          })),
+        );
+      }
+      setLoading(false);
+    })();
+  }, [targetId, targetLinked]);
 
   return (
     <div
@@ -31,7 +80,9 @@ export default function PersiapanPage({ user }) {
             className="text-[22px] sm:text-[24px] font-semibold">
             {isParent ? "Persiapan Kuliah Anak" : "Persiapan Kuliah"}
           </h1>
-          <p className="text-[12px] sm:text-[13px] mt-1" style={{ color: C.inkFaint }}>
+          <p
+            className="text-[12px] sm:text-[13px] mt-1"
+            style={{ color: C.inkFaint }}>
             Study Pack dibuat AI buat bantu belajar sebelum kelas.
           </p>
         </div>
@@ -46,24 +97,22 @@ export default function PersiapanPage({ user }) {
         </button>
       </div>
 
-      <div
-        className="flex items-center gap-2.5 rounded-2xl px-4 py-3 mt-5 mb-5"
-        style={{ background: "#8FD8BE1F", border: "1.5px solid #8FD8BE55" }}>
-        <span className="text-[16px] flex-shrink-0">🧪</span>
-        <p className="text-[12px] font-medium" style={{ color: C.mintDeep }}>
-          Preview Fase 1 — hasil Study Pack di bawah masih contoh, belum
-          dari AI beneran.
-        </p>
-      </div>
-
-      {studyPacks.length === 0 ? (
+      {loading ? (
+        <Card border className="text-center py-10">
+          <p className="text-[13px]" style={{ color: C.inkFaint }}>
+            Memuat riwayat Study Pack...
+          </p>
+        </Card>
+      ) : studyPacks.length === 0 ? (
         <Card border className="text-center py-10">
           <div
             className="w-14 h-14 mx-auto rounded-full flex items-center justify-center text-[26px] mb-3"
             style={{ background: "#8FD8BE22" }}>
             ✨
           </div>
-          <p className="text-[13.5px] font-medium mb-1" style={{ color: C.ink }}>
+          <p
+            className="text-[13.5px] font-medium mb-1"
+            style={{ color: C.ink }}>
             Belum ada persiapan
           </p>
           <p className="text-[12px]" style={{ color: C.inkFaint }}>
@@ -77,7 +126,9 @@ export default function PersiapanPage({ user }) {
               key={sp.id}
               studyPack={sp}
               onClick={() =>
-                navigate("/akademik/persiapan/detail", { state: { studyPack: sp } })
+                navigate("/akademik/persiapan/detail", {
+                  state: { studyPack: sp },
+                })
               }
             />
           ))}
@@ -102,14 +153,20 @@ export default function PersiapanPage({ user }) {
 function StudyPackCard({ studyPack, onClick }) {
   const k = kedalamanMeta(studyPack.kedalaman);
   return (
-    <button onClick={onClick} className="w-full text-left active:scale-[0.99] transition-transform">
+    <button
+      onClick={onClick}
+      className="w-full text-left active:scale-[0.99] transition-transform">
       <Card className="!p-4" border accent={C.mintDeep}>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold mb-0.5" style={{ color: C.mintDeep }}>
+            <p
+              className="text-[11px] font-semibold mb-0.5"
+              style={{ color: C.mintDeep }}>
               {studyPack.mataKuliah}
             </p>
-            <p className="text-[14.5px] font-semibold truncate" style={{ color: C.ink }}>
+            <p
+              className="text-[14.5px] font-semibold truncate"
+              style={{ color: C.ink }}>
               {studyPack.topik}
             </p>
             <div className="flex items-center gap-1.5 mt-2">
@@ -118,12 +175,16 @@ function StudyPackCard({ studyPack, onClick }) {
                 style={{ background: "#8FD8BE22", color: C.mintDeep }}>
                 {k.icon} {k.label}
               </span>
-              <span className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full" style={{ background: "#463F5C0f", color: C.inkFaint }}>
+              <span
+                className="text-[10.5px] font-semibold px-2 py-0.5 rounded-full"
+                style={{ background: "#463F5C0f", color: C.inkFaint }}>
                 ✅ Selesai
               </span>
             </div>
           </div>
-          <span className="text-[18px] flex-shrink-0" style={{ color: C.mintDeep }}>
+          <span
+            className="text-[18px] flex-shrink-0"
+            style={{ color: C.mintDeep }}>
             →
           </span>
         </div>
