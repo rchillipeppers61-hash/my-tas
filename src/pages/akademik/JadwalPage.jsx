@@ -9,6 +9,12 @@ import { HARI_LIST, hariIndex } from "./constants";
 // masih nempel ke mata kuliah tsb, mata kuliahnya dianggap "yatim" dan
 // ikut dibersihkan -- termasuk tugas & catatan yang masih nempel di situ,
 // biar gak nyangkut data orphan di Catatan/Tugas.
+//
+// NOTE(Persiapan Kuliah): pas tabel `study_packs` udah beneran dibikin
+// (Fase 2+), tambahin `.delete().eq("mata_kuliah_id", ...)` buat tabel
+// itu juga di sini -- SENGAJA belum ditambahin sekarang karena tabelnya
+// belum ada, kalau ditambah sekarang query ini bakal error "relation
+// does not exist" dan bikin proses hapus jadwal ikut gagal.
 async function cleanupOrphanMataKuliah(mataKuliahId, userId) {
   const { count } = await supabase
     .from("jadwal")
@@ -38,9 +44,18 @@ async function cleanupOrphanMataKuliah(mataKuliahId, userId) {
 // ============================================================
 // JadwalPage — daftar jadwal kuliah dikelompokkan per hari
 // (Senin -> Minggu). Tap kartu buat edit, FAB buat tambah baru.
+//
+// UPDATE: sekarang pakai pola isParent/targetId sama kayak
+// TugasPage.jsx -- sebelumnya halaman ini query pakai user.id
+// langsung, jadi kalau parent login, dia lihat jadwal akunnya
+// sendiri (kosong), bukan punya anak yang di-link.
 // ============================================================
 export default function JadwalPage({ user }) {
   const navigate = useNavigate();
+  const isParent = user.role === "orang_tua";
+  const targetId = isParent ? user.linked_child_id : user.id;
+  const targetLinked = isParent ? Boolean(user.linked_child_id) : true;
+
   const [jadwal, setJadwal] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -53,7 +68,7 @@ export default function JadwalPage({ user }) {
     const { data, error: fetchError } = await supabase
       .from("jadwal")
       .select("*, mata_kuliah(id, nama, kode, dosen, sks, warna)")
-      .eq("user_id", user.id)
+      .eq("user_id", targetId)
       .order("jam_mulai", { ascending: true });
     if (fetchError) {
       setError("Gagal memuat jadwal. Cek koneksi kamu, terus coba lagi.");
@@ -64,7 +79,11 @@ export default function JadwalPage({ user }) {
   }
 
   useEffect(() => {
-    fetchJadwal();
+    if (targetLinked) {
+      fetchJadwal();
+    } else {
+      setLoading(false);
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -82,15 +101,19 @@ export default function JadwalPage({ user }) {
       .from("jadwal")
       .delete()
       .eq("id", id)
-      .eq("user_id", user.id);
+      .eq("user_id", targetId);
 
     if (!error && mataKuliahId) {
-      await cleanupOrphanMataKuliah(mataKuliahId, user.id);
+      await cleanupOrphanMataKuliah(mataKuliahId, targetId);
     }
 
     setDeletingId(null);
     setConfirmDeleteId(null);
     if (!error) await fetchJadwal();
+  }
+
+  function handlePersiapkan(mk) {
+    navigate("/akademik/persiapan/tambah", { state: { mataKuliah: mk } });
   }
 
   const grouped = useMemo(() => {
@@ -103,6 +126,25 @@ export default function JadwalPage({ user }) {
     );
   }, [jadwal]);
 
+  if (!targetLinked) {
+    return (
+      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
+        <style>{FONT_IMPORT}</style>
+        <h1
+          style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+          className="text-[22px] sm:text-[24px] font-semibold mb-4">
+          Jadwal Kuliah
+        </h1>
+        <Card border>
+          <p style={{ color: C.ink }}>
+            Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
+            <code>linked_child_id</code>.
+          </p>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div
       className="max-w-2xl lg:max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pb-28 lg:pb-10"
@@ -114,7 +156,7 @@ export default function JadwalPage({ user }) {
           <h1
             style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
             className="text-[22px] sm:text-[24px] font-semibold">
-            Jadwal Kuliah
+            {isParent ? "Jadwal Kuliah Anak" : "Jadwal Kuliah"}
           </h1>
         </div>
         <button
@@ -247,6 +289,18 @@ export default function JadwalPage({ user }) {
                           )}
                         </button>
                       </div>
+
+                      {mk.id && (
+                        <button
+                          onClick={() => handlePersiapkan(mk)}
+                          className="w-full mt-3 py-2.5 rounded-xl text-[12px] font-bold flex items-center justify-center gap-1.5"
+                          style={{
+                            background: "#8FD8BE1F",
+                            color: C.mintDeep,
+                          }}>
+                          ✨ Persiapkan Kuliah
+                        </button>
+                      )}
                     </Card>
                   );
                 })}

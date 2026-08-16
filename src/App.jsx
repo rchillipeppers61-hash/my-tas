@@ -13,6 +13,9 @@ import TugasFormPage from "./pages/akademik/TugasFormPage";
 import IpkPage from "./pages/akademik/IpkPage";
 import CatatanPage from "./pages/akademik/catatan/CatatanPage";
 import CatatanDetailPage from "./pages/akademik/catatan/CatatanDetailPage";
+import PersiapanPage from "./pages/akademik/PersiapanPage";
+import PersiapanFormPage from "./pages/akademik/PersiapanFormPage";
+import StudyPackDetailPage from "./pages/akademik/StudyPackDetailPage";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -108,6 +111,25 @@ export default function App() {
             element={<TugasFormPage user={user} />}
           />
           <Route path="akademik/ipk" element={<IpkPage user={user} />} />
+
+          {/* Modul Persiapan Kuliah (AI Study Preparation) -- Fase 1:
+              UI + flow + dummy data, belum nyambung Supabase/AI beneran.
+              Entry point dari kartu Jadwal ("✨ Persiapkan Kuliah") atau
+              langsung dari sini. Detail Study Pack dikirim lewat
+              navigate state, bukan dynamic :id, karena belum ada
+              persistensi (nunggu Fase 2/6). */}
+          <Route
+            path="akademik/persiapan"
+            element={<PersiapanPage user={user} />}
+          />
+          <Route
+            path="akademik/persiapan/tambah"
+            element={<PersiapanFormPage user={user} />}
+          />
+          <Route
+            path="akademik/persiapan/detail"
+            element={<StudyPackDetailPage user={user} />}
+          />
 
           {/* Modul Catatan Kuliah -- landing (list mata kuliah) + detail
               per mata kuliah (list catatan, rekam/ketik, auto-save).

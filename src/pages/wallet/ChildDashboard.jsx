@@ -16,7 +16,8 @@ import { categoryLabel, LOW_BALANCE_LIMIT } from "./constants";
 
 const CATEGORY_META = {
   makan: { icon: "🍜", bg: "#8FD8BE2A" },
-  jajan: { icon: "🍿", bg: "#F4A6B72A" },
+  jajan: { icon: "🍬", bg: "#F4A6B72A" },
+  hiburan: { icon: "🍿", bg: "#F4A6B72A" },
   transport: { icon: "🚌", bg: "#9FCBF02A" },
   kuliah: { icon: "📚", bg: "#8B72C42A" },
   pribadi: { icon: "🧴", bg: "#F6C4532A" },

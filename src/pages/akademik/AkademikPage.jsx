@@ -39,6 +39,15 @@ const MENU_ITEMS = [
     active: true,
   },
   {
+    to: "/akademik/persiapan",
+    icon: "✨",
+    title: "Persiapan Kuliah",
+    desc: "AI susunin Study Pack sebelum kelas: materi, quiz, uji pemahaman.",
+    accent: C.mintDeep,
+    tint: "#8FD8BE22",
+    active: true,
+  },
+  {
     to: "/akademik/ipk",
     icon: "📊",
     title: "IPK Tracker",

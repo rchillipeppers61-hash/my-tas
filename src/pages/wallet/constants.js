@@ -4,7 +4,8 @@
 
 export const CATEGORIES = [
   { value: "makan", label: "Makan" },
-  { value: "jajan", label: "Jajan / Hiburan" },
+  { value: "jajan", label: "Jajan" },
+  { value: "hiburan", label: "Hiburan" },
   { value: "transport", label: "Transport" },
   { value: "kuliah", label: "Kebutuhan Kuliah" },
   { value: "pribadi", label: "Kebutuhan Pribadi" },

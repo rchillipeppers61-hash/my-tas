@@ -126,3 +126,34 @@ export function deadlineLabel(deadlineISO) {
   if (diff === 1) return "Besok";
   return `${diff} hari lagi`;
 }
+
+// ------------------------------------------------------------
+// Persiapan Kuliah (AI Study Preparation)
+// -- Fase 1: cuma dipakai buat UI/flow, belum nyambung AI beneran.
+// ------------------------------------------------------------
+
+// Tingkat kedalaman Study Pack -- dipilih user di PersiapanFormPage,
+// nanti di Fase 4 dipake buat nentuin panjang/detail prompt ke AI.
+export const KEDALAMAN = [
+  {
+    value: "ringkas",
+    label: "Ringkas",
+    desc: "Poin-poin inti aja, buat baca cepet sebelum masuk kelas.",
+    icon: "⚡",
+  },
+  {
+    value: "standar",
+    label: "Standar",
+    desc: "Penjelasan lengkap dengan contoh, seimbang antara cepet & detail.",
+    icon: "📘",
+  },
+  {
+    value: "mendalam",
+    label: "Mendalam",
+    desc: "Materi paling detail + studi kasus, cocok buat persiapan matang.",
+    icon: "🔬",
+  },
+];
+
+export const kedalamanMeta = (v) =>
+  KEDALAMAN.find((k) => k.value === v) || KEDALAMAN[1];
