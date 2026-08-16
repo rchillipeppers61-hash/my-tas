@@ -25,7 +25,7 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
     const { data, error: dbError } = await supabase
       .from("users")
       .select(
-        "id, username, password, role, linked_child_id, nama_lengkap, prodi",
+        "id, username, password, role, linked_child_id, nama_lengkap, prodi, jenis_kelamin",
       )
       .eq("username", u)
       .single();
@@ -49,6 +49,7 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
       linked_child_id: data.linked_child_id,
       nama_lengkap: data.nama_lengkap,
       prodi: data.prodi,
+      jenis_kelamin: data.jenis_kelamin,
     };
 
     // "Ingat saya" checked -> persist across browser restarts (localStorage).
@@ -329,6 +330,7 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
   const [username, setUsername] = useState("");
   const [namaLengkap, setNamaLengkap] = useState("");
   const [prodi, setProdi] = useState("");
+  const [jenisKelamin, setJenisKelamin] = useState(""); // "" | "L" | "P"
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
@@ -400,9 +402,12 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
         role,
         nama_lengkap: nama,
         prodi: role === "anak" && prodi.trim() ? prodi.trim() : null,
+        jenis_kelamin: jenisKelamin || null,
         linked_child_id: null,
       })
-      .select("id, username, role, linked_child_id, nama_lengkap, prodi")
+      .select(
+        "id, username, role, linked_child_id, nama_lengkap, prodi, jenis_kelamin",
+      )
       .single();
 
     if (insertError || !newUser) {
@@ -677,6 +682,41 @@ export function SignUp({ onSignUpSuccess, onBackToLogin }) {
             />
           </>
         )}
+
+        {/* Jenis Kelamin -- opsional, dipakai buat pilih ilustrasi avatar
+            di Beranda. Kalau dikosongin, avatar fallback ke versi netral. */}
+        <label
+          className="text-[11px] uppercase tracking-wide font-medium"
+          style={{ color: C.inkFaint }}>
+          Jenis Kelamin{" "}
+          <span
+            className="normal-case font-normal"
+            style={{ color: C.inkFaint }}>
+            (opsional)
+          </span>
+        </label>
+        <div className="grid grid-cols-2 gap-2 mt-1.5 mb-4">
+          {[
+            { key: "P", label: "Perempuan" },
+            { key: "L", label: "Laki-laki" },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() =>
+                setJenisKelamin((v) => (v === opt.key ? "" : opt.key))
+              }
+              className="py-3 rounded-2xl text-[13.5px] font-semibold border-[1.5px] transition-colors"
+              style={{
+                background: jenisKelamin === opt.key ? C.lavender : "#463F5C08",
+                color: jenisKelamin === opt.key ? "#FFFFFF" : C.ink,
+                borderColor:
+                  jenisKelamin === opt.key ? C.lavender : "#463F5C1F",
+              }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
 
         {/* Username */}
         <label

@@ -21,6 +21,211 @@ function todayHari() {
   return HARI_LIST[(new Date().getDay() + 6) % 7];
 }
 
+// Warna avatar konsisten per user (bukan random tiap render), diambil
+// dari palet C yang udah ada. Hash sederhana dari string ID/nama.
+function getAvatarColor(seed) {
+  const palette = [C.lavender, C.skyDeep, C.roseDeep, C.mintDeep, C.amberDeep];
+  const str = String(seed || "x");
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return palette[Math.abs(hash) % palette.length];
+}
+
+// 3 varian ilustrasi avatar flat, dipilih berdasarkan kolom `jenis_kelamin`
+// di tabel users ("P" / "L"). Kalau kolom belum ada / kosong, fallback ke
+// avatar netral -- bukan foto asli, representasi visual generik aja.
+function AvatarIllustration({ color, jenisKelamin }) {
+  if (jenisKelamin === "P") return <AvatarFemale color={color} />;
+  if (jenisKelamin === "L") return <AvatarMale color={color} />;
+  return <AvatarNeutral color={color} />;
+}
+
+function AvatarFemale({ color }) {
+  return (
+    <svg viewBox="0 0 64 64" className="w-full h-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="hijabShade" x1="0" y1="0" x2="0.3" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.8" />
+        </linearGradient>
+      </defs>
+
+      {/* Hijab -- drape menutupi kepala & bahu, sedikit lebih membulat & lembut */}
+      <path
+        d="M32 4.5c-12 0-19.5 8.8-19.5 19.5v6.2c0 3.3 1.1 6.4 3.3 8.7l-5.6 12.6c-1.3 2.9 1 6 4.2 6h35.2c3.2 0 5.5-3.1 4.2-6l-5.6-12.6c2.2-2.3 3.3-5.4 3.3-8.7v-6.2c0-10.7-7.5-19.5-19.5-19.5z"
+        fill="url(#hijabShade)"
+      />
+
+      {/* Highlight kain -- kesan lipatan lembut di sisi kiri hijab */}
+      <path
+        d="M16 22c1.5-7 6.5-12.5 13-13.8-6.5 2.6-10.5 9-10.8 17.3-0.2 5-0.1 9 0.3 12.4-2-2.2-2.8-5-2.8-8.1v-6c0-0.6 0.1-1.2 0.3-1.8z"
+        fill="#FFFFFF"
+        opacity="0.16"
+      />
+
+      {/* Wajah -- oval lebih halus & sedikit lebih ramping di dagu */}
+      <path
+        d="M32 17.2c7 0 12 5.7 12 13.3 0 8.2-5.2 14.8-12 14.8s-12-6.6-12-14.8c0-7.6 5-13.3 12-13.3z"
+        fill="#F5D5B4"
+      />
+
+      {/* Bayangan lembut bawah dagu, kasih dimensi tanpa keliatan kotor */}
+      <ellipse
+        cx="32"
+        cy="42.5"
+        rx="7"
+        ry="2.2"
+        fill="#E8B98D"
+        opacity="0.25"
+      />
+
+      {/* Poni/bagian hijab depan yang nutupin dahi, lengkung lebih natural */}
+      <path
+        d="M18.3 25.5c0.4-9 6-14.8 13.7-14.8s13.3 5.8 13.7 14.8c-3.5-2.7-8.4-4-13.7-4s-10.2 1.3-13.7 4z"
+        fill={color}
+      />
+
+      {/* Blush pipi -- lebih soft & natural, gradasi halus */}
+      <ellipse
+        cx="23.5"
+        cy="34.5"
+        rx="3.1"
+        ry="2"
+        fill="#EFA894"
+        opacity="0.4"
+      />
+      <ellipse
+        cx="40.5"
+        cy="34.5"
+        rx="3.1"
+        ry="2"
+        fill="#EFA894"
+        opacity="0.4"
+      />
+
+      {/* Alis -- lebih tipis & natural */}
+      <path
+        d="M23.5 27.3c1.4-1.1 3.6-1.1 4.9-0.3"
+        stroke="#7A5A45"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M35.6 27c1.3-0.8 3.5-0.8 4.9 0.3"
+        stroke="#7A5A45"
+        strokeWidth="1.2"
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* Mata -- bentuk almond kecil + highlight kilau + bulu mata */}
+      <ellipse cx="26.5" cy="31.8" rx="1.9" ry="2.1" fill="#463F5C" />
+      <ellipse cx="37.5" cy="31.8" rx="1.9" ry="2.1" fill="#463F5C" />
+      <circle cx="27.1" cy="31.1" r="0.55" fill="#FFFFFF" />
+      <circle cx="38.1" cy="31.1" r="0.55" fill="#FFFFFF" />
+      <path
+        d="M24.7 30.3c0.7-0.7 2.9-0.9 3.9-0.3"
+        stroke="#463F5C"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M35.4 30c1-0.6 3.2-0.4 3.9 0.3"
+        stroke="#463F5C"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        fill="none"
+      />
+
+      {/* Hidung -- sapuan sangat halus */}
+      <path
+        d="M32 33.5c-0.3 1.2-0.8 2-0.8 2.6 0 0.6 0.5 0.9 1 0.9"
+        stroke="#DDA47C"
+        strokeWidth="0.9"
+        strokeLinecap="round"
+        fill="none"
+        opacity="0.6"
+      />
+
+      {/* Bibir -- senyum tipis, gradasi warna lembut */}
+      <path
+        d="M27.3 37.8c1.8 1.9 7.6 1.9 9.4 0"
+        stroke="#C97C72"
+        strokeWidth="2"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+function AvatarMale({ color }) {
+  return (
+    <svg viewBox="0 0 64 64" className="w-full h-full" aria-hidden="true">
+      <defs>
+        <linearGradient id="collarShade" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="1" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.82" />
+        </linearGradient>
+      </defs>
+      {/* Bahu / kerah baju */}
+      <path
+        d="M10 58c0-9 8-14 22-14s22 5 22 14v2H10z"
+        fill="url(#collarShade)"
+      />
+      {/* Leher */}
+      <rect x="27" y="38" width="10" height="8" rx="3" fill="#F3D0B0" />
+      {/* Wajah */}
+      <ellipse cx="32" cy="27" rx="12" ry="12.5" fill="#F3D0B0" />
+      {/* Rambut pendek */}
+      <path
+        d="M20 26c-0.5-9 5-15.5 12-15.5s12.5 6.5 12 15.5c-1.3-1.6-2-4-2-6-2.8 1.7-6.4 2.6-10 2.6s-7.2-0.9-10-2.6c0 2-0.7 4.4-2 6z"
+        fill={color}
+      />
+      {/* Alis */}
+      <path
+        d="M24.5 24.5c1.2-0.9 3-0.9 4.2-0.2"
+        stroke="#6B4A38"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      <path
+        d="M35.3 24.3c1.2-0.7 3-0.7 4.2 0.2"
+        stroke="#6B4A38"
+        strokeWidth="1.3"
+        strokeLinecap="round"
+        fill="none"
+      />
+      {/* Mata */}
+      <circle cx="26.5" cy="28" r="1.6" fill="#463F5C" />
+      <circle cx="37.5" cy="28" r="1.6" fill="#463F5C" />
+      {/* Senyum */}
+      <path
+        d="M27 34c1.6 2 8.4 2 10 0"
+        stroke="#463F5C"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+        fill="none"
+      />
+    </svg>
+  );
+}
+
+// Avatar netral -- dipakai kalau `jenis_kelamin` belum keisi di database.
+function AvatarNeutral({ color }) {
+  return (
+    <svg viewBox="0 0 64 64" className="w-full h-full" aria-hidden="true">
+      <path d="M32 34c8 0 24 4 24 16v6H8v-6c0-12 16-16 24-16z" fill={color} />
+      <circle cx="32" cy="20" r="13" fill={color} opacity="0.85" />
+    </svg>
+  );
+}
+
 export default function HomePage({ user }) {
   const name = capitalize(user?.nama_lengkap) || "Kamu";
   const isParent = user?.role === "orang_tua";
@@ -233,16 +438,29 @@ export default function HomePage({ user }) {
     return (
       <div className="max-w-2xl mx-auto px-4 sm:px-6 py-8 sm:py-10">
         <style>{FONT_IMPORT}</style>
-        <p
-          className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
-          style={{ color: C.lavender }}>
-          Selamat Datang
-        </p>
-        <h1
-          style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-          className="text-[24px] font-semibold mb-4">
-          Halo, {name} 👋
-        </h1>
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div className="min-w-0">
+            <p
+              className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
+              style={{ color: C.lavender }}>
+              Selamat Datang
+            </p>
+            <h1
+              style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
+              className="text-[22px] font-semibold">
+              Halo, {name} 👋
+            </h1>
+          </div>
+          <div
+            className="flex-shrink-0 w-20 h-20 rounded-full overflow-hidden ring-2 ring-white shadow-sm"
+            style={{ background: "#F3D0B0" }}
+            aria-label={`Foto profil ${name}`}>
+            <AvatarIllustration
+              color={getAvatarColor(user?.id || name)}
+              jenisKelamin={user?.jenis_kelamin}
+            />
+          </div>
+        </div>
         <Card accent={C.skyDeep} tint={`${C.sky}22`} border>
           <p style={{ color: C.ink }}>
             Akun Ini Belum Terhubung Ke Akun Anak. Hubungi Admin Untuk Mengatur{" "}
@@ -259,25 +477,40 @@ export default function HomePage({ user }) {
       style={{ fontFamily: "'Inter', sans-serif" }}>
       <style>{FONT_IMPORT}</style>
 
-      <p
-        className="text-[12px] tracking-[0.2em] uppercase font-semibold mb-1"
-        style={{ color: C.lavender }}>
-        Selamat Datang
-      </p>
-      <h1
-        style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-        className={`text-[22px] sm:text-[26px] font-semibold ${
-          prodi ? "mb-0.5" : "mb-6 sm:mb-8"
-        }`}>
-        Halo, {name} 👋
-      </h1>
-      {prodi && (
-        <p
-          className="text-[12.5px] sm:text-[13.5px] font-semibold mb-6 sm:mb-8"
-          style={{ color: C.inkSoft }}>
-          {prodi}
-        </p>
-      )}
+      <div className="flex items-start justify-between gap-4 mb-0">
+        <div className="min-w-0">
+          <p
+            className="text-[14px] tracking-[0.2em] uppercase font-semibold mb-1"
+            style={{ color: C.lavender }}>
+            Selamat Datang
+          </p>
+          <h1
+            style={{ fontFamily: "'Inter', serif", color: C.ink }}
+            className={`text-[20px] sm:text-[26px] font-semibold ${
+              prodi ? "mb-0.5" : ""
+            }`}>
+            Halo, {name} 👋
+          </h1>
+          {prodi && (
+            <p
+              className="text-[15px] sm:text-[13.5px] font-semibold"
+              style={{ color: C.inkSoft }}>
+              {prodi}
+            </p>
+          )}
+        </div>
+
+        <div
+          className="flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden ring-2 ring-white shadow-sm"
+          style={{ background: "#F3D0B0" }}
+          aria-label={`Foto profil ${name}`}>
+          <AvatarIllustration
+            color={getAvatarColor(user?.id || name)}
+            jenisKelamin={user?.jenis_kelamin}
+          />
+        </div>
+      </div>
+      <div className="mb-6 sm:mb-8" />
 
       {!isParent && isLinked === false && (
         <div

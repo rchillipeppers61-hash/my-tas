@@ -145,7 +145,7 @@ export default function AppShell({ user, onLogout }) {
               Keluar dari Sistem?
             </h3>
             <p className="text-[13px] mb-6" style={{ color: C.inkFaint }}>
-              Kamu harus login lagi buat akses aplikasi ini.
+              Kamu Harus Login Lagi Buat Akses Aplikasi Ini.
             </p>
             <div className="flex gap-2.5">
               <button
@@ -193,7 +193,7 @@ function MobileTopBar({ title, onLogoutClick }) {
         boxShadow: "0 4px 16px -8px rgba(70,63,92,0.35)",
       }}>
       <h2
-        style={{ fontFamily: "'Fraunces', serif", color: "#FFFFFF" }}
+        style={{ fontFamily: "'Inter', serif", color: "#FFFFFF" }}
         className="text-[17px] font-semibold truncate min-w-0">
         {title}
       </h2>

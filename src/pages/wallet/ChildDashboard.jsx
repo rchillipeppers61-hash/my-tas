@@ -461,7 +461,7 @@ export default function ChildDashboard({ user }) {
                     <p
                       className="text-[19px] sm:text-[21px] font-semibold mt-0.5"
                       style={{
-                        fontFamily: "'Fraunces', serif",
+                        fontFamily: "'Inter', serif",
                         color: C.lavender,
                       }}>
                       {rupiah(avgOutPerDay)}
