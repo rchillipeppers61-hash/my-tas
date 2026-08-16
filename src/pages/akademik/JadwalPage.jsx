@@ -52,7 +52,7 @@ export default function JadwalPage({ user }) {
     setError(null);
     const { data, error: fetchError } = await supabase
       .from("jadwal")
-      .select("*, mata_kuliah(id, nama, dosen, sks, warna)")
+      .select("*, mata_kuliah(id, nama, kode, dosen, sks, warna)")
       .eq("user_id", user.id)
       .order("jam_mulai", { ascending: true });
     if (fetchError) {
@@ -213,6 +213,13 @@ export default function JadwalPage({ user }) {
                             style={{ color: C.ink }}>
                             {mk.nama || "Tanpa nama"}
                           </p>
+                          {mk.kode && (
+                            <p
+                              className="text-[11px] font-semibold mt-0.5"
+                              style={{ color: C.lavender }}>
+                              {mk.kode}
+                            </p>
+                          )}
                           <p
                             className="text-[12px] mt-0.5"
                             style={{ color: C.inkFaint }}>

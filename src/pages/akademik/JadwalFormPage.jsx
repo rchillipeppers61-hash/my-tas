@@ -61,6 +61,10 @@ export default function JadwalFormPage({ user }) {
   const [mode, setMode] = useState(
     editing?.mata_kuliah_id ? "existing" : "baru",
   );
+  // Edit selalu pakai field lengkap (nama, kode, dosen, SKS, warna)
+  // langsung ke mata kuliah yang bersangkutan -- toggle existing/baru
+  // cuma relevan pas bikin jadwal BARU, biar SKS dkk gak ilang pas edit.
+  const showFullFields = isEditing || mode === "baru";
 
   // Mata kuliah existing
   const [selectedMkId, setSelectedMkId] = useState(
@@ -69,6 +73,7 @@ export default function JadwalFormPage({ user }) {
 
   // Mata kuliah baru
   const [nama, setNama] = useState(editing?.mata_kuliah?.nama || "");
+  const [kode, setKode] = useState(editing?.mata_kuliah?.kode || "");
   const [dosen, setDosen] = useState(editing?.mata_kuliah?.dosen || "");
   const [sks, setSks] = useState(
     editing?.mata_kuliah?.sks != null ? String(editing.mata_kuliah.sks) : "3",
@@ -97,7 +102,7 @@ export default function JadwalFormPage({ user }) {
       setLoadingMk(true);
       const { data, error: fetchError } = await supabase
         .from("mata_kuliah")
-        .select("id, nama, dosen, sks, warna")
+        .select("id, nama, kode, dosen, sks, warna")
         .eq("user_id", targetId)
         .order("nama", { ascending: true });
       if (!fetchError) setMataKuliahList(data || []);
@@ -118,31 +123,34 @@ export default function JadwalFormPage({ user }) {
       setError("Jam selesai harus setelah jam mulai.");
       return;
     }
-    if (mode === "existing" && !selectedMkId) {
+    if (!showFullFields && !selectedMkId) {
       setError("Pilih mata kuliahnya dulu.");
       return;
     }
-    if (mode === "baru" && !nama.trim()) {
+    if (showFullFields && !nama.trim()) {
       setError("Isi nama mata kuliah dulu.");
       return;
     }
 
     setSaving(true);
 
-    let mataKuliahId = mode === "existing" ? selectedMkId : null;
+    let mataKuliahId = showFullFields ? null : selectedMkId;
 
-    // Mode "baru" -- insert / update record mata_kuliah dulu.
-    if (mode === "baru") {
+    // showFullFields -- insert / update record mata_kuliah dulu.
+    // Edit SELALU lewat jalur ini (update mata_kuliah_id yang sudah
+    // nempel di jadwal), bukan cuma pas mode "baru" pilihan create.
+    if (showFullFields) {
       const mkPayload = {
         user_id: targetId,
         nama: nama.trim(),
+        kode: kode.trim() || null,
         dosen: dosen.trim() || null,
         sks: sks ? parseInt(sks, 10) : null,
         warna,
       };
 
       if (isEditing && editing.mata_kuliah_id) {
-        // Edit jadwal yang mata kuliahnya juga mau diubah datanya.
+        // Edit jadwal -- update langsung data mata kuliah yang nempel.
         const { error: mkError } = await supabase
           .from("mata_kuliah")
           .update(mkPayload)
@@ -243,30 +251,33 @@ export default function JadwalFormPage({ user }) {
         Pilih mata kuliah yang udah ada, atau tambah baru sekalian sama jamnya.
       </p>
 
-      {/* Toggle mode -- disembunyikan pas edit tanpa mata_kuliah lama
-          biar gak bingung, tapi tetep boleh dipilih ulang. */}
-      <div
-        className="flex rounded-2xl p-1.5 mb-4 gap-1.5"
-        style={{ background: "#463F5C0d" }}>
-        {[
-          { key: "existing", label: "Mata Kuliah Ada" },
-          { key: "baru", label: "Mata Kuliah Baru" },
-        ].map((opt) => (
-          <button
-            key={opt.key}
-            type="button"
-            onClick={() => setMode(opt.key)}
-            className="flex-1 py-3 rounded-xl text-[12px] sm:text-[12.5px] font-bold transition-all text-center leading-tight px-1"
-            style={{
-              background: mode === opt.key ? C.lavender : "transparent",
-              color: mode === opt.key ? "#FFFFFF" : C.inkSoft,
-            }}>
-            {opt.label}
-          </button>
-        ))}
-      </div>
+      {/* Toggle mode -- cuma muncul pas BIKIN jadwal baru. Pas edit,
+          selalu pakai field lengkap langsung (lihat showFullFields),
+          jadi gak ada pilihan lagi di sini. */}
+      {!isEditing && (
+        <div
+          className="flex rounded-2xl p-1.5 mb-4 gap-1.5"
+          style={{ background: "#463F5C0d" }}>
+          {[
+            { key: "existing", label: "Mata Kuliah Ada" },
+            { key: "baru", label: "Mata Kuliah Baru" },
+          ].map((opt) => (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setMode(opt.key)}
+              className="flex-1 py-3 rounded-xl text-[12px] sm:text-[12.5px] font-bold transition-all text-center leading-tight px-1"
+              style={{
+                background: mode === opt.key ? C.lavender : "transparent",
+                color: mode === opt.key ? "#FFFFFF" : C.inkSoft,
+              }}>
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      )}
 
-      {mode === "existing" ? (
+      {!showFullFields ? (
         <>
           <label
             className="text-[11px] uppercase tracking-wide font-bold"
@@ -285,6 +296,7 @@ export default function JadwalFormPage({ user }) {
               </option>
               {mataKuliahList.map((mk) => (
                 <option key={mk.id} value={mk.id}>
+                  {mk.kode ? `[${mk.kode}] ` : ""}
                   {mk.nama} {mk.dosen ? `— ${mk.dosen}` : ""}
                 </option>
               ))}
@@ -315,6 +327,20 @@ export default function JadwalFormPage({ user }) {
             value={nama}
             onChange={(e) => setNama(e.target.value)}
             placeholder="Kalkulus I"
+            className={inputClass}
+            style={inputStyle}
+          />
+
+          <label
+            className="text-[11px] uppercase tracking-wide font-bold"
+            style={{ color: C.inkFaint }}>
+            Kode Mata Kuliah (opsional)
+          </label>
+          <input
+            type="text"
+            value={kode}
+            onChange={(e) => setKode(e.target.value)}
+            placeholder="Contoh: MAT101"
             className={inputClass}
             style={inputStyle}
           />
