@@ -32,6 +32,18 @@ function assertApiKey() {
   }
 }
 
+// Groq Whisper nebak format audio dari EKSTENSI nama file, jadi ekstensi ini
+// harus sesuai mime type asli blob-nya (mis. Safari/iOS ngerekam sebagai
+// audio/mp4, bukan audio/webm kayak Chrome/Android).
+function extensionFromMimeType(mimeType) {
+  if (!mimeType) return "webm";
+  if (mimeType.includes("mp4")) return "mp4";
+  if (mimeType.includes("aac")) return "aac";
+  if (mimeType.includes("ogg")) return "ogg";
+  if (mimeType.includes("wav")) return "wav";
+  return "webm";
+}
+
 /**
  * Transcribe audio blob jadi teks mentah pakai Groq Whisper.
  * @param {Blob} audioBlob - hasil rekaman (webm/mp3/wav/m4a)
@@ -40,8 +52,10 @@ function assertApiKey() {
 export async function transcribeAudio(audioBlob) {
   assertApiKey();
 
+  const ext = extensionFromMimeType(audioBlob.type);
+
   const formData = new FormData();
-  formData.append("file", audioBlob, "rekaman.webm");
+  formData.append("file", audioBlob, `rekaman.${ext}`);
   formData.append("model", WHISPER_MODEL);
   formData.append("language", "id"); // Bahasa Indonesia
   formData.append("response_format", "text");

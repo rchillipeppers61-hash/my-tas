@@ -22,6 +22,22 @@ const STATUS = {
   ERROR: "error",
 };
 
+// Safari/iOS gak support "audio/webm" sama sekali (limitation Apple, bukan soal
+// versi browser). Urutan preferensi: webm/opus (Chrome/Android/Desktop) ->
+// mp4/aac (Safari/iOS) -> biarin browser pilih default kalau semuanya gak match.
+function pickSupportedMimeType() {
+  if (typeof MediaRecorder === "undefined" || !MediaRecorder.isTypeSupported) {
+    return "";
+  }
+  const candidates = [
+    "audio/webm;codecs=opus",
+    "audio/webm",
+    "audio/mp4",
+    "audio/aac",
+  ];
+  return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
+}
+
 export default function RecorderWidget({ namaMataKuliah, onResult, onError }) {
   const [status, setStatus] = useState(STATUS.IDLE);
   const [seconds, setSeconds] = useState(0);
@@ -31,16 +47,33 @@ export default function RecorderWidget({ namaMataKuliah, onResult, onError }) {
   const chunksRef = useRef([]);
   const timerRef = useRef(null);
   const streamRef = useRef(null);
+  const mimeTypeRef = useRef(""); // dipakai lagi pas bikin Blob di handleStop
 
   async function startRecording() {
     setErrorMsg("");
+
+    if (typeof MediaRecorder === "undefined") {
+      const msg =
+        "Browser ini gak support rekam suara. Coba pakai Chrome atau Safari versi terbaru.";
+      setStatus(STATUS.ERROR);
+      setErrorMsg(msg);
+      onError?.(msg);
+      return;
+    }
+
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
         audio: true,
       });
       streamRef.current = stream;
 
-      const mediaRecorder = new MediaRecorder(stream);
+      const mimeType = pickSupportedMimeType();
+      mimeTypeRef.current = mimeType;
+
+      const mediaRecorder = new MediaRecorder(
+        stream,
+        mimeType ? { mimeType } : undefined,
+      );
       mediaRecorderRef.current = mediaRecorder;
       chunksRef.current = [];
 
@@ -72,7 +105,11 @@ export default function RecorderWidget({ namaMataKuliah, onResult, onError }) {
   }
 
   async function handleStop() {
-    const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+    // Pakai mime type asli yang beneran dipakai recorder (bukan hardcode webm),
+    // biar Blob-nya sesuai format sebenarnya -> penting buat Safari/iOS.
+    const actualType =
+      mediaRecorderRef.current?.mimeType || mimeTypeRef.current || "audio/webm";
+    const audioBlob = new Blob(chunksRef.current, { type: actualType });
     chunksRef.current = [];
 
     if (audioBlob.size === 0) {
