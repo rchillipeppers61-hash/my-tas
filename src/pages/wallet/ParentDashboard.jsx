@@ -503,8 +503,8 @@ export default function ParentDashboard({ user }) {
               Saldo {capitalize(childName) || "Anak"} Sekarang
             </p>
             <p
-              style={{ fontFamily: "'Fraunces', serif", color: "#FFFFFF" }}
-              className="mt-1 text-[27px] sm:text-[38px] lg:text-[40px] font-semibold leading-none">
+              style={{ fontFamily: "'Inter', serif", color: "#FFFFFF" }}
+              className="mt-1 text-[24px] sm:text-[38px] lg:text-[40px] font-semibold leading-none">
               {rupiah(summary.balance)}
             </p>
             <span

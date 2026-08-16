@@ -379,10 +379,10 @@ export default function ChildDashboard({ user }) {
                   </p>
                   <p
                     style={{
-                      fontFamily: "'Fraunces', serif",
+                      fontFamily: "'Inter', serif",
                       color: "#FFFFFF",
                     }}
-                    className="mt-1 text-[27px] sm:text-[38px] lg:text-[40px] font-semibold leading-none">
+                    className="mt-1 text-[24px] sm:text-[38px] lg:text-[40px] font-semibold leading-none">
                     {rupiah(saldo)}
                   </p>
                   <span
