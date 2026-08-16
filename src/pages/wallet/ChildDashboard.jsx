@@ -276,7 +276,10 @@ export default function ChildDashboard({ user }) {
     .filter((t) => t.type === "out")
     .reduce((s, t) => s + t.amount, 0);
   const saldo = totalIn - totalOut;
-  const isLow = saldo < LOW_BALANCE_LIMIT;
+  // Saldo dipecah jadi 3 kondisi biar gak nabrak: habis (<=0),
+  // menipis (0 < saldo < limit), aman (>= limit).
+  const isEmpty = saldo <= 0;
+  const isLow = saldo > 0 && saldo < LOW_BALANCE_LIMIT;
   const hasTransactionToday = transactions.some((t) => t.date === todayISO());
   const showReminder = !loading && !hasTransactionToday && !reminderDismissed;
   const currentMonthKey = todayISO().slice(0, 7);
@@ -389,9 +392,11 @@ export default function ChildDashboard({ user }) {
                       color: "#FFFFFF",
                       border: "1px solid rgba(255,255,255,0.3)",
                     }}>
-                    {isLow
-                      ? "⚠️ Saldo mulai menipis"
-                      : "🌱 Saldo dalam kondisi aman"}
+                    {isEmpty
+                      ? "🚫 Saldo Sudah Habis"
+                      : isLow
+                        ? "⚠️ Saldo Mulai Menipis"
+                        : "🌱 Saldo Dalam Kondisi Aman"}
                   </span>
                   <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-3.5 sm:mt-6">
                     <div
@@ -646,12 +651,12 @@ export default function ChildDashboard({ user }) {
                       <p
                         className="text-[13.5px] sm:text-[14px] font-medium"
                         style={{ color: C.ink }}>
-                        Belum ada transaksi tercatat
+                        Belum Ada Transaksi Tercatat
                       </p>
                       <p
                         className="text-[12px] sm:text-[12.5px] mt-1"
                         style={{ color: C.inkFaint }}>
-                        Yuk mulai catat pemasukan atau pengeluaran hari ini.
+                        Yuk Mulai Catat Pemasukan Atau Pengeluaran Hari Ini.
                       </p>
                     </div>
                   )}
@@ -815,13 +820,13 @@ export default function ChildDashboard({ user }) {
             </div>
             <h3
               style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-              className="text-[20px] font-semibold leading-snug">
-              Belum ada catatan transaksi hari ini
+              className="text-[18px] font-semibold leading-snug">
+              Belum Ada Catatan Transaksi Hari Ini
             </h3>
             <p
-              className="text-[13.5px] mt-2 leading-relaxed"
+              className="text-[12px] mt-2 leading-relaxed"
               style={{ color: C.inkSoft }}>
-              Yuk catat pemasukan atau pengeluaranmu biar gak lupa.
+              Yuk Catat Pemasukan & Pengeluaranmu Biar Gak Lupa.
             </p>
             <button
               onClick={() => setReminderDismissed(true)}
@@ -830,7 +835,7 @@ export default function ChildDashboard({ user }) {
                 background: `linear-gradient(135deg, ${C.amberDeep}, ${C.amber})`,
                 color: "#FFFFFF",
               }}>
-              Siap, catat sekarang!
+              Siap, Dicatat Sekarang!
             </button>
           </div>
         </div>

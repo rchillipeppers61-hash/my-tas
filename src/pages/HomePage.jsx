@@ -35,7 +35,6 @@ export default function HomePage({ user }) {
   const [error, setError] = useState(null);
 
   const [childName, setChildName] = useState("");
-  const [childProdi, setChildProdi] = useState("");
 
   // Jadwal
   const [jadwalHariIni, setJadwalHariIni] = useState([]);
@@ -165,12 +164,11 @@ export default function HomePage({ user }) {
     if (!isParent) return;
     const { data } = await supabase
       .from("users")
-      .select("nama_lengkap, username, prodi")
+      .select("nama_lengkap, username")
       .eq("id", targetId)
       .single();
     if (data) {
       setChildName(data.nama_lengkap || data.username);
-      setChildProdi(data.prodi || "");
     }
   }
 
@@ -225,9 +223,11 @@ export default function HomePage({ user }) {
     [tugasList],
   );
 
-  // Anak nampilin prodi dirinya sendiri (dari kolom users.prodi),
-  // ortu nampilin prodi anaknya (di-fetch bareng nama pas loadChildName).
-  const prodi = isParent ? childProdi : user?.prodi;
+  // Baris di bawah nama selalu nampilin kolom `prodi` milik akun yang
+  // login sendiri -- anak nampilin prodi kuliahnya, orang tua nampilin
+  // label relasi yang diisi di kolom prodi (misal "Ayah Aghnia"). Bukan
+  // prodi anaknya, karena itu bukan makna kolom ini buat akun ortu.
+  const prodi = user?.prodi;
 
   if (!targetLinked) {
     return (
@@ -245,7 +245,7 @@ export default function HomePage({ user }) {
         </h1>
         <Card accent={C.skyDeep} tint={`${C.sky}22`} border>
           <p style={{ color: C.ink }}>
-            Akun ini belum terhubung ke akun anak. Hubungi admin untuk mengatur{" "}
+            Akun Ini Belum Terhubung Ke Akun Anak. Hubungi Admin Untuk Mengatur{" "}
             <code>linked_child_id</code>.
           </p>
         </Card>
@@ -260,13 +260,13 @@ export default function HomePage({ user }) {
       <style>{FONT_IMPORT}</style>
 
       <p
-        className="text-[11px] tracking-[0.2em] uppercase font-semibold mb-1"
+        className="text-[12px] tracking-[0.2em] uppercase font-semibold mb-1"
         style={{ color: C.lavender }}>
         Selamat Datang
       </p>
       <h1
         style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-        className={`text-[24px] sm:text-[26px] font-semibold ${
+        className={`text-[22px] sm:text-[26px] font-semibold ${
           prodi ? "mb-0.5" : "mb-6 sm:mb-8"
         }`}>
         Halo, {name} 👋

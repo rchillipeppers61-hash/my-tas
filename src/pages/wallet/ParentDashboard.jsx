@@ -129,6 +129,11 @@ export default function ParentDashboard({ user }) {
     return { totalIn, totalOut, balance, categoryRows };
   }, [activeTransactions]);
 
+  // Sama kayak ChildDashboard: pecah jadi 3 kondisi biar gak nabrak --
+  // habis (<=0), menipis (0 < saldo < limit), aman (>= limit).
+  const isEmpty = summary.balance <= 0;
+  const isLow = summary.balance > 0 && summary.balance < LOW_BALANCE_LIMIT;
+
   const months = useMemo(() => {
     const set = new Set(transactions.map((t) => t.date.slice(0, 7)));
     set.add(todayISO().slice(0, 7));
@@ -375,7 +380,7 @@ export default function ParentDashboard({ user }) {
               </p>
               <h1
                 style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-                className="text-[24px] font-semibold truncate">
+                className="text-[21px] font-semibold truncate">
                 Keuangan {childName ? capitalize(childName) : "Anak"}
               </h1>
             </div>
@@ -402,19 +407,14 @@ export default function ParentDashboard({ user }) {
               </div>
               <h3
                 style={{ fontFamily: "'Fraunces', serif", color: C.ink }}
-                className="text-[20px] font-semibold leading-snug">
-                Saldo {capitalize(childName) || "anak"} tinggal{" "}
+                className="text-[18px] font-semibold leading-snug">
+                Saldo {capitalize(childName) || "anak"} Tinggal{" "}
                 {rupiah(summary.balance)}
               </h3>
               <p
-                className="text-[13.5px] mt-2 leading-relaxed"
-                style={{ color: C.inkSoft }}>
-                Sudah di bawah batas {rupiah(LOW_BALANCE_LIMIT)}.
-              </p>
-              <p
-                className="text-[17px] font-bold mt-1.5 leading-snug"
+                className="text-[20px] font-bold mt-1.5 leading-snug"
                 style={{ color: C.ink }}>
-                Saatnya kirim uang buat dia.
+                Saatnya Kirim Uang Buat Dia.
               </p>
               <button
                 onClick={() => setShowLowBalance(false)}
@@ -423,7 +423,7 @@ export default function ParentDashboard({ user }) {
                   background: `linear-gradient(135deg, ${C.amberDeep}, ${C.amber})`,
                   color: "#FFFFFF",
                 }}>
-                Siap, dicatat!
+                Siap, Dicatat!
               </button>
             </div>
           </div>
@@ -483,7 +483,7 @@ export default function ParentDashboard({ user }) {
         )}
 
         <div
-          className="rounded-[32px] p-6 sm:p-8 relative overflow-hidden mb-4"
+          className="rounded-[26px] sm:rounded-[32px] p-4 sm:p-7 relative overflow-hidden mb-4"
           style={{
             background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
             boxShadow: "0 24px 48px -20px rgba(70,63,92,0.5)",
@@ -496,59 +496,61 @@ export default function ParentDashboard({ user }) {
             className="absolute -bottom-14 -left-8 w-36 h-36 rounded-full"
             style={{ background: "rgba(255,255,255,0.08)" }}
           />
-          <div className="relative z-10">
+          <div className="relative z-10 text-center">
             <p
-              className="text-[11px] sm:text-[12px] uppercase tracking-[0.2em] font-semibold"
-              style={{ color: "rgba(255,255,255,0.75)" }}>
+              className="text-[10.5px] sm:text-[12px] uppercase tracking-[0.2em] font-semibold"
+              style={{ color: "rgba(255,255,255,0.92)" }}>
               Saldo {capitalize(childName) || "Anak"} Sekarang
             </p>
             <p
               style={{ fontFamily: "'Fraunces', serif", color: "#FFFFFF" }}
-              className="mt-1 text-[34px] sm:text-[42px] font-semibold leading-none">
+              className="mt-1 text-[27px] sm:text-[38px] lg:text-[40px] font-semibold leading-none">
               {rupiah(summary.balance)}
             </p>
             <span
-              className="inline-flex items-center gap-1.5 mt-3 sm:mt-4 px-3 py-1.5 rounded-full text-[11px] sm:text-[12px] font-semibold"
+              className="inline-flex items-center gap-1.5 mt-2.5 sm:mt-4 px-3 py-1.5 rounded-full text-[10.5px] sm:text-[12px] font-semibold"
               style={{
                 background: "rgba(255,255,255,0.18)",
                 color: "#FFFFFF",
                 border: "1px solid rgba(255,255,255,0.3)",
               }}>
-              {summary.balance < LOW_BALANCE_LIMIT
-                ? "⚠️ Saldo mulai menipis"
-                : "🌱 Saldo dalam kondisi aman"}
+              {isEmpty
+                ? "🚫 Saldo Sudah Habis"
+                : isLow
+                  ? "⚠️ Saldo Mulai Menipis"
+                  : "🌱 Saldo Dalam Kondisi Aman"}
             </span>
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-5 sm:mt-6">
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 mt-3.5 sm:mt-6">
               <div
-                className="rounded-2xl p-3 sm:p-3.5"
+                className="rounded-2xl p-2.5 sm:p-3.5"
                 style={{
                   background: "rgba(255,255,255,0.14)",
                   border: "1px solid rgba(255,255,255,0.22)",
                 }}>
                 <p
                   className="text-[9px] sm:text-[10px] uppercase tracking-wide font-semibold"
-                  style={{ color: "rgba(255,255,255,0.75)" }}>
+                  style={{ color: "rgba(255,255,255,0.92)" }}>
                   Masuk
                 </p>
                 <p
-                  className="text-[15px] sm:text-[17px] font-bold mt-0.5"
+                  className="text-[13.5px] sm:text-[17px] font-bold mt-0.5"
                   style={{ color: "#FFFFFF" }}>
                   {rupiah(summary.totalIn)}
                 </p>
               </div>
               <div
-                className="rounded-2xl p-3 sm:p-3.5"
+                className="rounded-2xl p-2.5 sm:p-3.5"
                 style={{
                   background: "rgba(255,255,255,0.14)",
                   border: "1px solid rgba(255,255,255,0.22)",
                 }}>
                 <p
                   className="text-[9px] sm:text-[10px] uppercase tracking-wide font-semibold"
-                  style={{ color: "rgba(255,255,255,0.75)" }}>
+                  style={{ color: "rgba(255,255,255,0.92)" }}>
                   Keluar
                 </p>
                 <p
-                  className="text-[15px] sm:text-[17px] font-bold mt-0.5"
+                  className="text-[13.5px] sm:text-[17px] font-bold mt-0.5"
                   style={{ color: "#FFFFFF" }}>
                   {rupiah(summary.totalOut)}
                 </p>
