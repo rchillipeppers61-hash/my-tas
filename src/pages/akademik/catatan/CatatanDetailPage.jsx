@@ -1,13 +1,14 @@
 // src/pages/catatan/CatatanDetailPage.jsx
 //
 // Halaman semua catatan untuk 1 mata kuliah.
-// - Panel "Catatan Baru": rekam suara (RecorderWidget) ATAU ketik manual
+// - Panel "Catatan Baru": 3 cara capture dalam 1 baris ikon (CaptureBar =
+//   rekam suara / foto / PDF) ATAU ketik manual di textarea
 // - Auto-save saat mengetik (debounce), tanpa tombol simpan manual
 // - Search + filter tag, buat manage catatan yang udah numpuk
 // - Pin catatan penting -> selalu nangkring di atas
 // - List catatan lama dikelompokin per rentang tanggal (Hari ini / Minggu
 //   ini / Bulan ini / Lebih lama), bisa expand buat edit inline, hapus,
-//   atau export PDF
+//   atau export PDF (tombol Export PDF sejajar heading "Catatan baru")
 //
 // Export PDF: generate & download langsung pakai jsPDF (lihat pdfExport.js),
 // gak lewat window.print() -> gak ada dialog print yang interupsi, user
@@ -24,7 +25,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
-import RecorderWidget from "./RecorderWidget";
+import CaptureBar from "./CaptureBar";
 import {
   stripMarkdownSyntax,
   exportCatatanPdf,
@@ -53,6 +54,20 @@ export default function CatatanDetailPage({ user }) {
 
   const [newText, setNewText] = useState("");
   const [creating, setCreating] = useState(false);
+  const newTextareaRef = useRef(null);
+
+  function handleImportDraft(text) {
+    setNewText(text);
+    // Auto-focus & scroll ke kotak teks biar user langsung liat & bisa
+    // review/edit hasil importnya sebelum simpan.
+    requestAnimationFrame(() => {
+      newTextareaRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      newTextareaRef.current?.focus();
+    });
+  }
 
   // --- Search & filter tag ---
   const [searchQuery, setSearchQuery] = useState("");
@@ -252,58 +267,71 @@ export default function CatatanDetailPage({ user }) {
         </button>
 
         {mataKuliah && (
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div>
-              <h1 className="mt-2 font-serif text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">
-                {mataKuliah.nama}
-              </h1>
-              {mataKuliah.dosen && (
-                <p className="mt-1 text-slate-500">{mataKuliah.dosen}</p>
-              )}
-            </div>
-
-            {catatanList.length > 0 && (
-              <button
-                onClick={() => setShowExportModal(true)}
-                className="mt-2 flex min-h-[40px] shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-white px-4 py-2 text-xs font-semibold text-violet-700 shadow-sm transition hover:bg-violet-50">
-                <DownloadIcon />
-                Export PDF
-              </button>
+          <div>
+            <h1 className="mt-2 font-serif text-xl font-bold text-slate-900 sm:text-2xl md:text-3xl">
+              {mataKuliah.nama}
+            </h1>
+            {mataKuliah.dosen && (
+              <p className="mt-1 text-slate-500">{mataKuliah.dosen}</p>
             )}
           </div>
         )}
 
         {/* Panel capture cepat */}
         <div className="mt-6 rounded-2xl bg-white p-4 shadow-sm sm:p-5">
-          <h2 className="text-sm font-semibold text-slate-700">Catatan baru</h2>
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="text-sm font-semibold text-slate-700">
+              Catatan baru
+            </h2>
 
-          <div className="mt-3">
-            <RecorderWidget
+            {catatanList.length > 0 && (
+              <button
+                onClick={() => setShowExportModal(true)}
+                className="flex min-h-[36px] shrink-0 items-center gap-1.5 rounded-full border border-violet-200 bg-white px-3.5 py-1.5 text-xs font-semibold text-violet-700 shadow-sm transition hover:bg-violet-50">
+                <DownloadIcon />
+                Export PDF
+              </button>
+            )}
+          </div>
+
+          <div className="mt-4">
+            <CaptureBar
               namaMataKuliah={mataKuliah?.nama}
-              onResult={handleRecorderResult}
+              onRecordResult={handleRecorderResult}
+              onDraftReady={handleImportDraft}
               onError={(msg) => setError(msg)}
             />
           </div>
 
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-xs text-slate-400">atau ketik manual</span>
+            <span className="text-xs text-slate-400">Atau Ketik Manual</span>
             <div className="h-px flex-1 bg-slate-100" />
           </div>
 
           <textarea
+            ref={newTextareaRef}
             value={newText}
             onChange={(e) => setNewText(e.target.value)}
             placeholder="Tulis catatan cepat di sini..."
-            rows={4}
-            className="mt-3 w-full resize-none rounded-xl border border-slate-200 px-4 py-3 text-base text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
+            rows={6}
+            className="mt-3 w-full resize-y rounded-xl border border-slate-200 px-4 py-3 text-base text-slate-800 placeholder:text-slate-400 focus:border-violet-400 focus:outline-none focus:ring-2 focus:ring-violet-100"
           />
-          <button
-            onClick={() => saveNewCatatan(newText)}
-            disabled={creating || !newText.trim()}
-            className="mt-2 min-h-[40px] rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40">
-            {creating ? "Menyimpan..." : "Simpan catatan"}
-          </button>
+          <div className="mt-2 flex items-center gap-2">
+            <button
+              onClick={() => saveNewCatatan(newText)}
+              disabled={creating || !newText.trim()}
+              className="min-h-[40px] rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40">
+              {creating ? "Menyimpan..." : "Simpan Catatan"}
+            </button>
+            {newText.trim() && !creating && (
+              <button
+                onClick={() => setNewText("")}
+                className="min-h-[40px] rounded-full px-5 py-2 text-sm font-semibold text-slate-500 transition hover:bg-slate-100">
+                Batal
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Error */}
