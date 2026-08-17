@@ -305,7 +305,7 @@ export default function CatatanDetailPage({ user }) {
 
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-xs text-slate-400">Atau Ketik Manual</span>
+            <span className="text-xs text-slate-400">atau ketik manual</span>
             <div className="h-px flex-1 bg-slate-100" />
           </div>
 
@@ -322,7 +322,7 @@ export default function CatatanDetailPage({ user }) {
               onClick={() => saveNewCatatan(newText)}
               disabled={creating || !newText.trim()}
               className="min-h-[40px] rounded-full bg-violet-600 px-5 py-2 text-sm font-semibold text-white transition hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-40">
-              {creating ? "Menyimpan..." : "Simpan Catatan"}
+              {creating ? "Menyimpan..." : "Simpan catatan"}
             </button>
             {newText.trim() && !creating && (
               <button
