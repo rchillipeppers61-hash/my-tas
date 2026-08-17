@@ -1,4 +1,4 @@
-// src/pages/catatan/CaptureBar.jsx
+// src/pages/catatan/CatatanCaptureBar.jsx
 //
 // Gabungan 4 cara capture catatan jadi 1 baris ikon compact, nyebar rata
 // kiri-kanan di layar HP:
@@ -65,7 +65,7 @@ function pickSupportedMimeType() {
   return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? "";
 }
 
-export default function CaptureBar({
+export default function CatatanCaptureBar({
   namaMataKuliah,
   onRecordResult,
   onDraftReady,

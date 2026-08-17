@@ -25,7 +25,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { supabase } from "../../../supabaseClient";
-import CaptureBar from "./CaptureBar";
+import CatatanCaptureBar from "./CatatanCaptureBar";
 import {
   stripMarkdownSyntax,
   exportCatatanPdf,
@@ -295,7 +295,7 @@ export default function CatatanDetailPage({ user }) {
           </div>
 
           <div className="mt-4">
-            <CaptureBar
+            <CatatanCaptureBar
               namaMataKuliah={mataKuliah?.nama}
               onRecordResult={handleRecorderResult}
               onDraftReady={handleImportDraft}
@@ -305,7 +305,7 @@ export default function CatatanDetailPage({ user }) {
 
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-xs text-slate-400">Atau Ketik Manual</span>
+            <span className="text-xs text-slate-400">atau ketik manual</span>
             <div className="h-px flex-1 bg-slate-100" />
           </div>
 
