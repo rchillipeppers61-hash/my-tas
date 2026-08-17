@@ -305,7 +305,7 @@ export default function CatatanDetailPage({ user }) {
 
           <div className="mt-4 flex items-center gap-3">
             <div className="h-px flex-1 bg-slate-100" />
-            <span className="text-xs text-slate-400">atau ketik manual</span>
+            <span className="text-xs text-slate-400">Atau Ketik Manual</span>
             <div className="h-px flex-1 bg-slate-100" />
           </div>
 
