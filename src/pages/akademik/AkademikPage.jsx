@@ -21,6 +21,15 @@ const MENU_ITEMS = [
     active: true,
   },
   {
+    to: "/akademik/persiapan",
+    icon: "✨",
+    title: "Persiapan Kuliah",
+    desc: "AI susunin Study Pack sebelum kelas: materi, quiz, uji pemahaman.",
+    accent: C.mintDeep,
+    tint: "#8FD8BE22",
+    active: true,
+  },
+  {
     to: "/akademik/tugas",
     icon: "📌",
     title: "Tugas & Deadline",
@@ -36,15 +45,6 @@ const MENU_ITEMS = [
     desc: "Simpen rangkuman materi per mata kuliah.",
     accent: C.skyDeep,
     tint: "#9FCBF01F",
-    active: true,
-  },
-  {
-    to: "/akademik/persiapan",
-    icon: "✨",
-    title: "Persiapan Kuliah",
-    desc: "AI susunin Study Pack sebelum kelas: materi, quiz, uji pemahaman.",
-    accent: C.mintDeep,
-    tint: "#8FD8BE22",
     active: true,
   },
   {

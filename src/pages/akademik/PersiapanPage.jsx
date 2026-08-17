@@ -83,7 +83,7 @@ export default function PersiapanPage({ user }) {
           <p
             className="text-[12px] sm:text-[13px] mt-1"
             style={{ color: C.inkFaint }}>
-            Study Pack dibuat AI buat bantu belajar sebelum kelas.
+            Study Pack Dibuat Buat Bantu Belajar Sebelum Kelas.
           </p>
         </div>
         <button
