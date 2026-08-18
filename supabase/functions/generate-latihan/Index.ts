@@ -17,7 +17,7 @@ import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 
 const GROQ_API_KEY = Deno.env.get("GROQ_API_KEY");
 const GROQ_BASE_URL = "https://api.groq.com/openai/v1";
-const LLM_MODEL = "llama-3.3-70b-versatile";
+const LLM_MODEL = "openai/gpt-oss-120b";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
