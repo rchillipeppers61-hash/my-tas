@@ -111,7 +111,7 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
         <p
           className="relative text-[13px] sm:text-[14px] px-6 sm:px-8 lg:px-12 mb-6 sm:mb-8 lg:mb-10 lg:max-w-xs"
           style={{ color: "#FFFFFF", opacity: 0.9 }}>
-          Uang jajan, jadwal, tugas kuliah — semua kesimpen rapi di satu tempat.
+          Management Kegiatan Ngampus
         </p>
 
         <FloatingDoodles />

@@ -9,7 +9,7 @@ import { C, FONT_IMPORT } from "../../lib/theme";
 // ============================================================
 
 // Tinggal nambah 1 entry di sini kalau ada sub-modul baru
-// (Catatan Kuliah, IPK Tracker) yang mau diaktifkan.
+// yang mau diaktifkan.
 const MENU_ITEMS = [
   {
     to: "/akademik/jadwal",
@@ -54,6 +54,15 @@ const MENU_ITEMS = [
     desc: "Pantau perkembangan IPK tiap semester.",
     accent: C.amberDeep,
     tint: "#F6C4531F",
+    active: true,
+  },
+  {
+    to: "/akademik/latihan",
+    icon: "🎯",
+    title: "Latihan & Kuis AI",
+    desc: "Ulang materi kuliah lewat soal latihan yang dibikin AI.",
+    accent: C.roseDeep,
+    tint: "#F4A6B71F",
     active: true,
   },
 ];

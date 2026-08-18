@@ -49,7 +49,9 @@ export default function StudyPackDetailPage() {
 
       {/* Header */}
       <div className="mb-5">
-        <p className="text-[11.5px] font-bold mb-1" style={{ color: C.mintDeep }}>
+        <p
+          className="text-[11.5px] font-bold mb-1"
+          style={{ color: C.mintDeep }}>
           {studyPack.mataKuliah}
         </p>
         <h1
@@ -69,7 +71,9 @@ export default function StudyPackDetailPage() {
         className="flex items-start gap-2.5 rounded-2xl px-4 py-3 mb-6"
         style={{ background: "#F6C4531F", border: "1.5px solid #F6C45355" }}>
         <span className="text-[15px] flex-shrink-0">ℹ️</span>
-        <p className="text-[11.5px] font-medium leading-relaxed" style={{ color: C.amberDeep }}>
+        <p
+          className="text-[11.5px] font-medium leading-relaxed"
+          style={{ color: C.amberDeep }}>
           {studyPack.disclaimer}
         </p>
       </div>
@@ -78,7 +82,10 @@ export default function StudyPackDetailPage() {
         <Section icon="🎯" title="Learning Objectives" accent={C.lavender}>
           <ul className="space-y-2">
             {studyPack.objectives.map((o, i) => (
-              <li key={i} className="flex gap-2 text-[13.5px] leading-relaxed" style={{ color: C.inkSoft }}>
+              <li
+                key={i}
+                className="flex gap-2 text-[13.5px] leading-relaxed"
+                style={{ color: C.inkSoft }}>
                 <span style={{ color: C.lavender }}>•</span>
                 <span>{o}</span>
               </li>
@@ -90,10 +97,14 @@ export default function StudyPackDetailPage() {
           <div className="space-y-4">
             {studyPack.materi.map((m, i) => (
               <div key={i}>
-                <h4 className="text-[14px] font-bold mb-1.5" style={{ color: C.ink, fontFamily: "'Fraunces', serif" }}>
+                <h4
+                  className="text-[14px] font-bold mb-1.5"
+                  style={{ color: C.ink, fontFamily: "'Fraunces', serif" }}>
                   {m.heading}
                 </h4>
-                <p className="text-[13.5px] leading-relaxed" style={{ color: C.inkSoft }}>
+                <p
+                  className="text-[13.5px] leading-relaxed"
+                  style={{ color: C.inkSoft }}>
                   {m.content}
                 </p>
               </div>
@@ -104,11 +115,18 @@ export default function StudyPackDetailPage() {
         <Section icon="📌" title="Key Concepts" accent={C.roseDeep}>
           <div className="space-y-2.5">
             {studyPack.keyConcepts.map((kc, i) => (
-              <div key={i} className="rounded-xl px-3.5 py-2.5" style={{ background: "#463F5C08" }}>
-                <p className="text-[13px] font-bold mb-0.5" style={{ color: C.ink }}>
+              <div
+                key={i}
+                className="rounded-xl px-3.5 py-2.5"
+                style={{ background: "#463F5C08" }}>
+                <p
+                  className="text-[13px] font-bold mb-0.5"
+                  style={{ color: C.ink }}>
                   {kc.term}
                 </p>
-                <p className="text-[12.5px] leading-relaxed" style={{ color: C.inkSoft }}>
+                <p
+                  className="text-[12.5px] leading-relaxed"
+                  style={{ color: C.inkSoft }}>
                   {kc.def}
                 </p>
               </div>
@@ -120,10 +138,14 @@ export default function StudyPackDetailPage() {
           <div className="space-y-3">
             {studyPack.contohKasus.map((c, i) => (
               <div key={i}>
-                <p className="text-[13.5px] font-bold mb-1" style={{ color: C.ink }}>
+                <p
+                  className="text-[13.5px] font-bold mb-1"
+                  style={{ color: C.ink }}>
                   {c.title}
                 </p>
-                <p className="text-[13px] leading-relaxed" style={{ color: C.inkSoft }}>
+                <p
+                  className="text-[13px] leading-relaxed"
+                  style={{ color: C.inkSoft }}>
                   {c.desc}
                 </p>
               </div>
@@ -131,18 +153,30 @@ export default function StudyPackDetailPage() {
           </div>
         </Section>
 
-        <Section icon="❓" title="Kemungkinan Pertanyaan Dosen" accent={C.lavender}>
+        <Section
+          icon="❓"
+          title="Kemungkinan Pertanyaan Dosen"
+          accent={C.lavender}>
           <ul className="space-y-2.5">
             {studyPack.pertanyaanDosen.map((q, i) => (
-              <li key={i} className="text-[13.5px] leading-relaxed italic" style={{ color: C.inkSoft }}>
+              <li
+                key={i}
+                className="text-[13.5px] leading-relaxed italic"
+                style={{ color: C.inkSoft }}>
                 "{q}"
               </li>
             ))}
           </ul>
         </Section>
 
-        <Section icon="⚡" title="Quick Review" accent={C.mintDeep} tint="#8FD8BE1A">
-          <p className="text-[13.5px] leading-relaxed font-medium" style={{ color: C.ink }}>
+        <Section
+          icon="⚡"
+          title="Quick Review"
+          accent={C.mintDeep}
+          tint="#8FD8BE1A">
+          <p
+            className="text-[13.5px] leading-relaxed font-medium"
+            style={{ color: C.ink }}>
             {studyPack.quickReview}
           </p>
         </Section>
@@ -187,10 +221,14 @@ function QuizSection({ quiz }) {
         <div
           className="rounded-2xl px-4 py-3 mb-4 text-center"
           style={{ background: "#8FD8BE22" }}>
-          <p className="text-[20px] font-bold" style={{ color: C.mintDeep, fontFamily: "'Fraunces', serif" }}>
+          <p
+            className="text-[20px] font-bold"
+            style={{ color: C.mintDeep, fontFamily: "'Fraunces', serif" }}>
             {score}/{quiz.length}
           </p>
-          <p className="text-[11.5px] font-medium" style={{ color: C.mintDeep }}>
+          <p
+            className="text-[11.5px] font-medium"
+            style={{ color: C.mintDeep }}>
             jawaban benar
           </p>
         </div>
@@ -201,7 +239,9 @@ function QuizSection({ quiz }) {
           const selected = answers[q.id];
           return (
             <div key={q.id}>
-              <p className="text-[13.5px] font-semibold mb-2" style={{ color: C.ink }}>
+              <p
+                className="text-[13.5px] font-semibold mb-2"
+                style={{ color: C.ink }}>
                 {qi + 1}. {q.question}
               </p>
               <div className="space-y-1.5">
@@ -232,14 +272,20 @@ function QuizSection({ quiz }) {
                       onClick={() => pick(q.id, oi)}
                       disabled={submitted}
                       className="w-full text-left px-3.5 py-2.5 rounded-xl text-[12.5px] font-medium transition-colors"
-                      style={{ background: bg, border: `1.5px solid ${borderColor}`, color: textColor }}>
+                      style={{
+                        background: bg,
+                        border: `1.5px solid ${borderColor}`,
+                        color: textColor,
+                      }}>
                       {opt}
                     </button>
                   );
                 })}
               </div>
               {submitted && (
-                <p className="text-[11.5px] mt-2 leading-relaxed" style={{ color: C.inkFaint }}>
+                <p
+                  className="text-[11.5px] mt-2 leading-relaxed"
+                  style={{ color: C.inkFaint }}>
                   💬 {q.explanation}
                 </p>
               )}
@@ -312,13 +358,16 @@ function UjiPemahamanSection({ items }) {
   return (
     <Card title="🎤  Uji Pemahaman" accent={C.lavender}>
       <p className="text-[12px] mb-4" style={{ color: C.inkFaint }}>
-        Jawab pertanyaan satu-satu pakai kata-kata sendiri, nanti dikasih feedback.
+        Jawab pertanyaan satu-satu pakai kata-kata sendiri, nanti dikasih
+        feedback.
       </p>
 
       {done ? (
         <div className="text-center py-4">
           <p className="text-[28px] mb-1">🎉</p>
-          <p className="text-[13.5px] font-semibold mb-3" style={{ color: C.ink }}>
+          <p
+            className="text-[13.5px] font-semibold mb-3"
+            style={{ color: C.ink }}>
             Selesai! Kamu udah jawab semua pertanyaan.
           </p>
           <button
@@ -340,7 +389,9 @@ function UjiPemahamanSection({ items }) {
             ))}
           </div>
 
-          <p className="text-[13.5px] font-semibold mb-3" style={{ color: C.ink }}>
+          <p
+            className="text-[13.5px] font-semibold mb-3"
+            style={{ color: C.ink }}>
             {current.question}
           </p>
 
@@ -351,17 +402,25 @@ function UjiPemahamanSection({ items }) {
             placeholder="Tulis jawabanmu di sini..."
             rows={3}
             className="w-full px-3.5 py-3 rounded-2xl text-[13.5px] outline-none border-[1.5px] resize-none mb-3 focus:ring-4 focus:ring-[#8B72C42A]"
-            style={{ background: "#463F5C08", color: C.ink, borderColor: "#463F5C1F" }}
+            style={{
+              background: "#463F5C08",
+              color: C.ink,
+              borderColor: "#463F5C1F",
+            }}
           />
 
           {showFeedback && (
             <div
               className="rounded-2xl px-3.5 py-3 mb-3"
               style={{ background: "#8B72C41A" }}>
-              <p className="text-[11px] font-bold mb-1" style={{ color: C.lavender }}>
+              <p
+                className="text-[11px] font-bold mb-1"
+                style={{ color: C.lavender }}>
                 💬 Feedback
               </p>
-              <p className="text-[12.5px] leading-relaxed" style={{ color: C.ink }}>
+              <p
+                className="text-[12.5px] leading-relaxed"
+                style={{ color: C.ink }}>
                 {current.feedback}
               </p>
             </div>
@@ -372,14 +431,20 @@ function UjiPemahamanSection({ items }) {
               onClick={submitAnswer}
               disabled={!answer.trim()}
               className="w-full py-3 rounded-2xl font-bold text-[13.5px] disabled:opacity-50"
-              style={{ background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`, color: "#FFFFFF" }}>
+              style={{
+                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+                color: "#FFFFFF",
+              }}>
               Kirim Jawaban
             </button>
           ) : (
             <button
               onClick={next}
               className="w-full py-3 rounded-2xl font-bold text-[13.5px]"
-              style={{ background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`, color: "#FFFFFF" }}>
+              style={{
+                background: `linear-gradient(135deg, ${C.lavender}, ${C.skyDeep})`,
+                color: "#FFFFFF",
+              }}>
               {isLast ? "Selesai" : "Pertanyaan Berikutnya →"}
             </button>
           )}

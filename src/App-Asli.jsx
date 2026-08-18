@@ -8,15 +8,14 @@ import WalletPage from "./pages/wallet/WalletPage";
 import AkademikPage from "./pages/akademik/AkademikPage";
 import JadwalPage from "./pages/akademik/JadwalPage";
 import JadwalFormPage from "./pages/akademik/JadwalFormPage";
-import PersiapanPage from "./pages/akademik/PersiapanPage";
 import TugasPage from "./pages/akademik/TugasPage";
 import TugasFormPage from "./pages/akademik/TugasFormPage";
 import IpkPage from "./pages/akademik/IpkPage";
 import CatatanPage from "./pages/akademik/catatan/CatatanPage";
 import CatatanDetailPage from "./pages/akademik/catatan/CatatanDetailPage";
-import LatihanPage from "./pages/akademik/latihan/LatihanPage";
-import LatihanSesiPage from "./pages/akademik/latihan/LatihanSesiPage";
-import LatihanHasilPage from "./pages/akademik/latihan/LatihanHasilPage";
+import PersiapanPage from "./pages/akademik/PersiapanPage";
+import PersiapanFormPage from "./pages/akademik/PersiapanFormPage";
+import StudyPackDetailPage from "./pages/akademik/StudyPackDetailPage";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -97,7 +96,7 @@ export default function App() {
           <Route path="home" element={<HomePage user={user} />} />
           <Route path="wallet" element={<WalletPage user={user} />} />
 
-          {/* Modul Akademik -- landing card menu + Jadwal, Persiapan & Tugas.
+          {/* Modul Akademik -- landing card menu + Jadwal & Tugas.
               Form pakai route yang sama buat tambah & edit (edit
               ngirim data lewat navigate state dari halaman list). */}
           <Route path="akademik" element={<AkademikPage user={user} />} />
@@ -106,10 +105,6 @@ export default function App() {
             path="akademik/jadwal/tambah"
             element={<JadwalFormPage user={user} />}
           />
-          <Route
-            path="akademik/persiapan"
-            element={<PersiapanPage user={user} />}
-          />
           <Route path="akademik/tugas" element={<TugasPage user={user} />} />
           <Route
             path="akademik/tugas/tambah"
@@ -117,22 +112,23 @@ export default function App() {
           />
           <Route path="akademik/ipk" element={<IpkPage user={user} />} />
 
-          {/* Modul Latihan & Kuis AI -- landing (setup buat anak /
-              monitoring buat ortu), sesi kuis berjalan, lalu hasil.
-              Soal digenerate on-the-fly lewat edge function, gak
-              disimpan ke DB -- cuma ringkasan hasil di halaman
-              terakhir. */}
+          {/* Modul Persiapan Kuliah (AI Study Preparation) -- Fase 1:
+              UI + flow + dummy data, belum nyambung Supabase/AI beneran.
+              Entry point dari kartu Jadwal ("✨ Persiapkan Kuliah") atau
+              langsung dari sini. Detail Study Pack dikirim lewat
+              navigate state, bukan dynamic :id, karena belum ada
+              persistensi (nunggu Fase 2/6). */}
           <Route
-            path="akademik/latihan"
-            element={<LatihanPage user={user} />}
+            path="akademik/persiapan"
+            element={<PersiapanPage user={user} />}
           />
           <Route
-            path="akademik/latihan/sesi"
-            element={<LatihanSesiPage user={user} />}
+            path="akademik/persiapan/tambah"
+            element={<PersiapanFormPage user={user} />}
           />
           <Route
-            path="akademik/latihan/hasil"
-            element={<LatihanHasilPage user={user} />}
+            path="akademik/persiapan/detail"
+            element={<StudyPackDetailPage user={user} />}
           />
 
           {/* Modul Catatan Kuliah -- landing (list mata kuliah) + detail
