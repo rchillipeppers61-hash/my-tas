@@ -9,6 +9,8 @@ import AkademikPage from "./pages/akademik/AkademikPage";
 import JadwalPage from "./pages/akademik/JadwalPage";
 import JadwalFormPage from "./pages/akademik/JadwalFormPage";
 import PersiapanPage from "./pages/akademik/PersiapanPage";
+import PersiapanFormPage from "./pages/akademik/PersiapanFormPage";
+import StudyPackDetailPage from "./pages/akademik/StudyPackDetailPage";
 import TugasPage from "./pages/akademik/TugasPage";
 import TugasFormPage from "./pages/akademik/TugasFormPage";
 import IpkPage from "./pages/akademik/IpkPage";
@@ -109,6 +111,14 @@ export default function App() {
           <Route
             path="akademik/persiapan"
             element={<PersiapanPage user={user} />}
+          />
+          <Route
+            path="akademik/persiapan/tambah"
+            element={<PersiapanFormPage user={user} />}
+          />
+          <Route
+            path="akademik/persiapan/detail"
+            element={<StudyPackDetailPage user={user} />}
           />
           <Route path="akademik/tugas" element={<TugasPage user={user} />} />
           <Route
