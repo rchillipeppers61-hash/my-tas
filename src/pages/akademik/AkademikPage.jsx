@@ -3,9 +3,8 @@ import { C, FONT_IMPORT } from "../../lib/theme";
 
 // ============================================================
 // AkademikPage — landing card menu buat modul Akademik.
-// Sub-modul lain (Jadwal, Tugas, dst) diakses dari sini, bukan
-// langsung dari nav utama -- pola sama kayak WalletPage yang jadi
-// pintu masuk ke ChildDashboard/ParentDashboard.
+// Gaya "Aksi Cepat": ikon kotak warna solid + judul singkat,
+// tanpa deskripsi panjang -- biar cepet discan mata.
 // ============================================================
 
 // Tinggal nambah 1 entry di sini kalau ada sub-modul baru
@@ -15,7 +14,6 @@ const MENU_ITEMS = [
     to: "/akademik/jadwal",
     icon: "🗓️",
     title: "Jadwal Kuliah",
-    desc: "Lihat jadwal mingguan & atur ruangan, dosen, jam kelas.",
     accent: C.lavender,
     tint: "#8B72C41A",
     active: true,
@@ -24,7 +22,6 @@ const MENU_ITEMS = [
     to: "/akademik/persiapan",
     icon: "✨",
     title: "Persiapan Kuliah",
-    desc: "AI susunin Study Pack sebelum kelas: materi, quiz, uji pemahaman.",
     accent: C.mintDeep,
     tint: "#8FD8BE22",
     active: true,
@@ -33,7 +30,6 @@ const MENU_ITEMS = [
     to: "/akademik/tugas",
     icon: "📌",
     title: "Tugas & Deadline",
-    desc: "Catat tugas kuliah biar gak ada yang kelewat deadline.",
     accent: C.roseDeep,
     tint: "#F4A6B71F",
     active: true,
@@ -42,7 +38,6 @@ const MENU_ITEMS = [
     to: "/journal",
     icon: "📝",
     title: "Catatan Kuliah",
-    desc: "Simpen rangkuman materi per mata kuliah.",
     accent: C.skyDeep,
     tint: "#9FCBF01F",
     active: true,
@@ -51,7 +46,6 @@ const MENU_ITEMS = [
     to: "/akademik/ipk",
     icon: "📊",
     title: "IPK Tracker",
-    desc: "Pantau perkembangan IPK tiap semester.",
     accent: C.amberDeep,
     tint: "#F6C4531F",
     active: true,
@@ -60,7 +54,6 @@ const MENU_ITEMS = [
     to: "/akademik/latihan",
     icon: "🎯",
     title: "Latihan & Kuis AI",
-    desc: "Ulang materi kuliah lewat soal latihan yang dibikin AI.",
     accent: C.roseDeep,
     tint: "#F4A6B71F",
     active: true,
@@ -89,58 +82,34 @@ export default function AkademikPage() {
   );
 }
 
-function MenuCard({ to, icon, title, desc, accent, tint, active }) {
+function MenuCard({ to, icon, title, accent, tint, active }) {
   const content = (
     <div
-      className="relative overflow-hidden rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 lg:p-6 h-full transition-transform border-2"
+      className="flex flex-col items-center justify-center text-center gap-2.5 sm:gap-3 rounded-2xl sm:rounded-3xl px-3 py-5 sm:py-6 h-full transition-transform border-2"
       style={{
         background: active ? tint : "#463F5C0a",
-        borderColor: active ? `${accent}80` : "#463F5C26",
-        boxShadow: active
-          ? "0 1px 0 rgba(70,63,92,0.04), 0 12px 28px -16px rgba(70,63,92,0.22)"
-          : "none",
+        borderColor: active ? `${accent}4D` : "#463F5C26",
       }}>
-      {active && (
-        <div
-          className="absolute inset-x-0 top-0 h-[3px]"
-          style={{ background: accent }}
-        />
-      )}
-
-      <div className="flex items-start justify-between gap-1.5 mb-2.5 sm:mb-3">
-        <div
-          className="w-9 h-9 sm:w-11 sm:h-11 lg:w-12 lg:h-12 rounded-xl sm:rounded-2xl flex items-center justify-center text-[16px] sm:text-[20px] lg:text-[22px] flex-shrink-0"
-          style={{ background: active ? "#FFFFFF" : "#463F5C10" }}>
-          {icon}
-        </div>
-        {!active && (
-          <span
-            className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full flex-shrink-0"
-            style={{ background: "#463F5C14", color: C.inkFaint }}>
-            Segera
-          </span>
-        )}
+      <div
+        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-[22px] sm:text-[26px] flex-shrink-0"
+        style={{
+          background: active ? accent : "#463F5C10",
+          boxShadow: active ? `0 8px 16px -8px ${accent}80` : "none",
+        }}>
+        {icon}
       </div>
 
       <h3
-        style={{
-          fontFamily: "'Fraunces', serif",
-          color: active ? C.ink : C.inkFaint,
-        }}
-        className="text-[13.5px] sm:text-[16px] lg:text-[17px] font-semibold mb-1 leading-snug">
+        style={{ color: active ? C.ink : C.inkFaint }}
+        className="text-[12.5px] sm:text-[13.5px] font-semibold leading-snug">
         {title}
       </h3>
-      <p
-        className="text-[11px] sm:text-[12.5px] leading-relaxed line-clamp-3 sm:line-clamp-none"
-        style={{ color: active ? C.inkSoft : C.inkFaint }}>
-        {desc}
-      </p>
 
-      {active && (
+      {!active && (
         <span
-          className="inline-flex items-center gap-1 mt-2.5 sm:mt-3.5 text-[11px] sm:text-[12px] font-semibold"
-          style={{ color: accent }}>
-          Buka →
+          className="text-[9px] sm:text-[10px] font-bold px-2 py-0.5 rounded-full"
+          style={{ background: "#463F5C14", color: C.inkFaint }}>
+          Segera
         </span>
       )}
     </div>
