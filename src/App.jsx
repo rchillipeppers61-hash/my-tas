@@ -28,23 +28,34 @@ export default function App() {
   const [authView, setAuthView] = useState("login");
 
   useEffect(() => {
-    const saved =
-      localStorage.getItem("mywallet_user") ||
-      sessionStorage.getItem("mywallet_user");
-    if (saved) {
-      try {
-        setUser(JSON.parse(saved));
-      } catch {
-        localStorage.removeItem("mywallet_user");
-        sessionStorage.removeItem("mywallet_user");
+    try {
+      const saved =
+        localStorage.getItem("mywallet_user") ||
+        sessionStorage.getItem("mywallet_user");
+      if (saved) {
+        try {
+          setUser(JSON.parse(saved));
+        } catch {
+          localStorage.removeItem("mywallet_user");
+          sessionStorage.removeItem("mywallet_user");
+        }
       }
+    } catch (err) {
+      // Safari/WebKit bisa nge-block akses localStorage & sessionStorage
+      // (mis. dibuka lewat in-app browser WhatsApp/Instagram, atau mode
+      // private yang strict). Jangan biarin ini crash seluruh app.
+      console.warn("Storage tidak bisa diakses:", err);
     }
     setLoading(false);
   }, []);
 
   function handleLogout() {
-    localStorage.removeItem("mywallet_user");
-    sessionStorage.removeItem("mywallet_user");
+    try {
+      localStorage.removeItem("mywallet_user");
+      sessionStorage.removeItem("mywallet_user");
+    } catch (err) {
+      console.warn("Storage tidak bisa diakses:", err);
+    }
     setUser(null);
     setAuthView("login");
   }
@@ -59,8 +70,12 @@ export default function App() {
       linked_child_id: newUser.linked_child_id,
       nama_lengkap: newUser.nama_lengkap,
     };
-    sessionStorage.removeItem("mywallet_user");
-    localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+    try {
+      sessionStorage.removeItem("mywallet_user");
+      localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+    } catch (err) {
+      console.warn("Storage tidak bisa diakses:", err);
+    }
     setUser(loggedInUser);
   }
 

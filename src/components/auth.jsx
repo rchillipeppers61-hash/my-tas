@@ -54,12 +54,18 @@ export function Login({ onLoginSuccess, onSwitchToSignUp }) {
 
     // "Ingat saya" checked -> persist across browser restarts (localStorage).
     // Unchecked -> only remember for this tab session (sessionStorage).
-    if (remember) {
-      sessionStorage.removeItem("mywallet_user");
-      localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
-    } else {
-      localStorage.removeItem("mywallet_user");
-      sessionStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+    try {
+      if (remember) {
+        sessionStorage.removeItem("mywallet_user");
+        localStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+      } else {
+        localStorage.removeItem("mywallet_user");
+        sessionStorage.setItem("mywallet_user", JSON.stringify(loggedInUser));
+      }
+    } catch (err) {
+      // Storage bisa diblok di beberapa browser/in-app browser iOS --
+      // login tetap lanjut, cuma gak ke-persist antar sesi.
+      console.warn("Storage tidak bisa diakses:", err);
     }
     onLoginSuccess?.(loggedInUser);
   }
